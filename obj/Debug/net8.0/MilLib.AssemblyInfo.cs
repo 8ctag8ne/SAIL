@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MilLib")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+756816f71046c5d7903b54e5bc7f46689ae05c1a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6e50032e35a9a23cc121f95840dfe5453d3fa1f7")]
 [assembly: System.Reflection.AssemblyProductAttribute("MilLib")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MilLib")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
