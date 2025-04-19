@@ -10,6 +10,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Author> Authors { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<BookTag> BookTags {get; set;}
+    public DbSet<BookList> BookLists {get; set;}
+    public DbSet<BookListBook> BookListBooks {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,5 +34,18 @@ public class ApplicationDbContext : DbContext
                 .HasOne(bt => bt.Tag)
                 .WithMany(t => t.Books)
                 .HasForeignKey(bt => bt.TagId);
+
+            modelBuilder.Entity<BookListBook>()
+                .HasKey(bl => new { bl.BookId, bl.BookListId });
+
+            modelBuilder.Entity<BookListBook>()
+                .HasOne(bt => bt.BookList)
+                .WithMany(b => b.Books)
+                .HasForeignKey(bt => bt.BookListId);
+
+            modelBuilder.Entity<BookListBook>()
+                .HasOne(bt => bt.Book)
+                .WithMany(t => t.BookLists)
+                .HasForeignKey(bt => bt.BookId);
         }
 }

@@ -79,7 +79,7 @@ namespace MilLib.Services.Implementations
             }
         }
 
-        public  string GetFullUrl(string relativePath)
+        public string GetFullUrl(string relativePath)
         {
             if (string.IsNullOrEmpty(relativePath))
             {

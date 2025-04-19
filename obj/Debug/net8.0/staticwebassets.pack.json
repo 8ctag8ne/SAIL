@@ -29,6 +29,10 @@
       "PackagePath": "staticwebassets\\Books\\Files\\563f3030-4aff-42f0-8d35-2b2d099b197b_istatp_2023_posibnik.pdf"
     },
     {
+      "Id": "C:\\Users\\nazar\\OneDrive\\Рабочий стол\\унік\\Прога\\mil_lib\\MilLib\\wwwroot\\Books\\Files\\888f839d-b5c8-4281-bc0c-3188e9344ef1_ЯготінЛ.Р.1.pdf",
+      "PackagePath": "staticwebassets\\Books\\Files\\888f839d-b5c8-4281-bc0c-3188e9344ef1_ЯготінЛ.Р.1.pdf"
+    },
+    {
       "Id": "C:\\Users\\nazar\\OneDrive\\Рабочий стол\\унік\\Прога\\mil_lib\\MilLib\\wwwroot\\Books\\Files\\ae114e4b-43ce-4f3d-ae7b-d4b8590a056d_istatp_2023_posibnik.pdf",
       "PackagePath": "staticwebassets\\Books\\Files\\ae114e4b-43ce-4f3d-ae7b-d4b8590a056d_istatp_2023_posibnik.pdf"
     },
@@ -47,6 +51,14 @@
     {
       "Id": "C:\\Users\\nazar\\OneDrive\\Рабочий стол\\унік\\Прога\\mil_lib\\MilLib\\wwwroot\\Books\\Images\\bf289f13-6c1c-48ec-8e35-4940f7231b2f_1488647550_tumblr_ojuewpEDYc1t3uwllo1_540.gif",
       "PackagePath": "staticwebassets\\Books\\Images\\bf289f13-6c1c-48ec-8e35-4940f7231b2f_1488647550_tumblr_ojuewpEDYc1t3uwllo1_540.gif"
+    },
+    {
+      "Id": "C:\\Users\\nazar\\OneDrive\\Рабочий стол\\унік\\Прога\\mil_lib\\MilLib\\wwwroot\\Books\\Images\\cec087fa-206f-4847-bc3f-eaea256bb868_12c20ecd-ee32-4d9e-8412-6cfb0ef154e8_завантаження.jpeg",
+      "PackagePath": "staticwebassets\\Books\\Images\\cec087fa-206f-4847-bc3f-eaea256bb868_12c20ecd-ee32-4d9e-8412-6cfb0ef154e8_завантаження.jpeg"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.MilLib.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.MilLib.Microsoft.AspNetCore.StaticWebAssets.props",

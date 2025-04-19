@@ -17,5 +17,6 @@ namespace MilLib.Models.Entities
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}
         public List<BookTag> Tags {get; set;} = new List<BookTag>();
+        public List<BookListBook> BookLists {get; set;} = new List<BookListBook>();
     }
 }
