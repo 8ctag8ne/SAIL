@@ -33,7 +33,7 @@ namespace MilLib.Controllers
             return Ok(res);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var Comment  = await _context.Comments.Include(a => a.Replies).FirstOrDefaultAsync(a => a.Id == id);
@@ -47,6 +47,19 @@ namespace MilLib.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CommentCreateDto CommentDto)
         {
+            var book = await _context.Books.FindAsync(CommentDto.BookId);
+            if (book == null)
+            {
+                return BadRequest($"Book with id {CommentDto.BookId} doesn't exists");
+            }
+            if(CommentDto.ReplyToId != null)
+            {
+                var parent = await _context.Comments.FindAsync(CommentDto.ReplyToId);
+                if (parent == null)
+                {
+                    return BadRequest($"Comment with id {CommentDto.ReplyToId} to reply to doesn't exists");
+                }
+            }
             var Comment = CommentDto.toCommentFromCreateDto();
             _context.Comments.Add(Comment);
             await _context.SaveChangesAsync();
@@ -54,7 +67,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPut]
-        [Route("{id}")]
+        [Route("{id:int}")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] CommentUpdateDto CommentDto)
         {
             var Comment = await _context.Comments.FindAsync(id);
@@ -62,7 +75,10 @@ namespace MilLib.Controllers
             {
                 return NotFound();
             }
-            Comment.Content = CommentDto.Content;
+            if(!CommentDto.Content.IsNullOrEmpty())
+            {
+                Comment.Content = CommentDto.Content;
+            }
 
             _context.Comments.Update(Comment);
             await _context.SaveChangesAsync();
@@ -71,7 +87,7 @@ namespace MilLib.Controllers
         }
 
         [HttpDelete]
-        [Route("{id}")]
+        [Route("{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var Comment = await _context.Comments.FindAsync(id);

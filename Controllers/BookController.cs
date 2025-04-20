@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MilLib.Helpers;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.Book;
 using MilLib.Models.Entities;
@@ -25,10 +26,30 @@ namespace MilLib.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] BookQueryObject query)
         {
-            var Books = await _context.Books.Include(a => a.Tags).ToListAsync();
-            var res = Books.Select(a => a.toBookDto());
+            var Books = _context.Books.Include(a => a.Tags)
+                                        .ThenInclude(bt => bt.Tag)
+                                        .AsQueryable();
+            if (!query.Title.IsNullOrEmpty())
+            {
+                Books = Books.Where(b => b.Title.Contains(query.Title));
+            }
+
+            if (query.TagIds != null && query.TagIds.Any())
+            {
+                foreach(var tagId in query.TagIds)
+                {
+                    Books = Books.Where(
+                        b => b.Tags.Select(t => t.TagId).Contains(tagId));
+                }
+            }
+
+            if (query.AuthorId != null)
+            {
+                Books = Books.Where(b => b.AuthorId == b.AuthorId);
+            }
+            var res = await Books.Select(a => a.toBookDto()).ToListAsync();
             return Ok(res);
         }
 

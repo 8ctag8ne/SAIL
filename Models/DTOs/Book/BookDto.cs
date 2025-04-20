@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MilLib.Models.Entities;
 using MilLib.Models.DTOs.Comment;
+using MilLib.Models.DTOs.Tag;
 
 namespace MilLib.Models.DTOs.Book
 {
@@ -15,7 +16,7 @@ namespace MilLib.Models.DTOs.Book
         public string? FileUrl {get; set;}
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}
-        public List<BookTag> Tags {get; set;} = new List<BookTag>();
+        public List<TagSimpleDto> Tags {get; set;} = new List<TagSimpleDto>();
         public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
     }
 }

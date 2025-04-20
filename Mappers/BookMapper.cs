@@ -19,7 +19,7 @@ namespace MilLib.Mappers
                 ImageUrl = book.ImageUrl,
                 FileUrl = book.FileUrl,
                 Info = book.Info,
-                Tags = book.Tags,
+                Tags = book.Tags.Select(bookTag => bookTag.Tag.toSimpleDto()).ToList(),
                 Comments = book.Comments.Select(c => c.toCommentDto()).ToList(),
             };
         }

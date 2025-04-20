@@ -30,6 +30,15 @@ namespace MilLib.Mappers
             };
         }
 
+        public static TagSimpleDto toTagSimpleDto(this BookTag bookTag)
+        {
+            return new TagSimpleDto
+            {
+                Id = bookTag.TagId,
+                Title = bookTag.Tag.Title,
+            };
+        }
+
         public static Tag toTagFromCreateDto(this TagCreateDto tag)
         {
             return new Tag
