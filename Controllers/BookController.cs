@@ -38,16 +38,12 @@ namespace MilLib.Controllers
 
             if (query.TagIds != null && query.TagIds.Any())
             {
-                foreach(var tagId in query.TagIds)
-                {
-                    Books = Books.Where(
-                        b => b.Tags.Select(t => t.TagId).Contains(tagId));
-                }
+                Books = Books.Where(b => b.Tags.Any(t => query.TagIds.Contains(t.TagId)));
             }
 
             if (query.AuthorId != null)
             {
-                Books = Books.Where(b => b.AuthorId == b.AuthorId);
+                Books = Books.Where(b => b.AuthorId == query.AuthorId);
             }
             var res = await Books.Select(a => a.toBookDto()).ToListAsync();
             return Ok(res);
@@ -56,7 +52,7 @@ namespace MilLib.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var Book  = await _context.Books.Include(a => a.Tags).Include(a => a.Comments).FirstOrDefaultAsync(a => a.Id == id);
+            var Book  = await _context.Books.Include(a => a.Tags).ThenInclude(t => t.Tag).Include(a => a.Comments).FirstOrDefaultAsync(a => a.Id == id);
             if (Book == null)
             {
                 return NotFound();
@@ -64,13 +60,19 @@ namespace MilLib.Controllers
             return Ok(Book.toBookDto());
         }
 
-        [HttpPost("{AuthorId}")]
-        public async Task<IActionResult> Create([FromRoute] int AuthorId, [FromForm] BookCreateDto BookDto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromForm] BookCreateDto BookDto)
         {
-            if(! await _context.Authors.AnyAsync(a => a.Id == AuthorId))
+            if(! await _context.Authors.AnyAsync(a => a.Id == BookDto.AuthorId))
             {
                 return BadRequest("Author does not exist");
             }
+
+            if (await TitleExists(BookDto.Title))
+            {
+                return BadRequest("Book with this title already exists");
+            }
+
             var Book = BookDto.toBookFromCreateDto();
             Book.ImageUrl = await _fileService.UploadAsync(BookDto.Image, "Books/Images");
             Book.FileUrl = await _fileService.UploadAsync(BookDto.File, "Books/Files");
@@ -92,6 +94,12 @@ namespace MilLib.Controllers
             {
                 return NotFound();
             }
+
+            if (await TitleExists(BookDto.Title))
+            {
+                return BadRequest("Book with this title already exists");
+            }
+
             Book.Title = BookDto.Title;
             Book.Info = BookDto.Info;
             if(BookDto.Image != null && BookDto.Image.Length > 0)
@@ -138,5 +146,9 @@ namespace MilLib.Controllers
             return NoContent();
         }
         
+        private async Task<bool> TitleExists(string title)
+        {
+            return await _context.Books.AnyAsync(b => b.Title == title);
+        }
     }
 }
