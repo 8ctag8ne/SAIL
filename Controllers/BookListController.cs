@@ -45,7 +45,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] BookListCreateDto BookListDto)
+        public async Task<IActionResult> Create([FromBody] BookListCreateDto BookListDto)
         {
             // if(! await _context.Authors.AnyAsync(a => a.Id == AuthorId))
             // {
@@ -63,7 +63,7 @@ namespace MilLib.Controllers
 
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] BookListUpdateDto BookListDto)
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] BookListUpdateDto BookListDto)
         {
             var BookList = await _context.BookLists.FindAsync(id);
             if (BookList == null)

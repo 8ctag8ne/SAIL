@@ -20,6 +20,7 @@ namespace MilLib.Mappers
                 FileUrl = book.FileUrl,
                 Info = book.Info,
                 Tags = book.Tags,
+                Comments = book.Comments.Select(c => c.toCommentDto()).ToList(),
             };
         }
 

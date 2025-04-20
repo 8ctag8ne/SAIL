@@ -35,7 +35,7 @@ namespace MilLib.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var Book  = await _context.Books.Include(a => a.Tags).FirstOrDefaultAsync(a => a.Id == id);
+            var Book  = await _context.Books.Include(a => a.Tags).Include(a => a.Comments).FirstOrDefaultAsync(a => a.Id == id);
             if (Book == null)
             {
                 return NotFound();

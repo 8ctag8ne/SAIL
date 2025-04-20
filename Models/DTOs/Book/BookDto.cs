@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MilLib.Models.Entities;
+using MilLib.Models.DTOs.Comment;
 
 namespace MilLib.Models.DTOs.Book
 {
@@ -15,5 +16,6 @@ namespace MilLib.Models.DTOs.Book
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}
         public List<BookTag> Tags {get; set;} = new List<BookTag>();
+        public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
     }
 }

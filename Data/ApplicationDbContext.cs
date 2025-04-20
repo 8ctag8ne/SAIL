@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<BookTag> BookTags {get; set;}
     public DbSet<BookList> BookLists {get; set;}
     public DbSet<BookListBook> BookListBooks {get; set;}
+    public DbSet<Comment> Comments {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,5 +48,17 @@ public class ApplicationDbContext : DbContext
                 .HasOne(bt => bt.Book)
                 .WithMany(t => t.BookLists)
                 .HasForeignKey(bt => bt.BookId);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Book)
+                .WithMany(b => b.Comments)
+                .HasForeignKey(c => c.BookId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.ReplyTo)
+                .WithMany(c => c.Replies)
+                .HasForeignKey(c => c.ReplyToId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
 }

@@ -18,5 +18,6 @@ namespace MilLib.Models.Entities
         public string? Info {get; set;}
         public List<BookTag> Tags {get; set;} = new List<BookTag>();
         public List<BookListBook> BookLists {get; set;} = new List<BookListBook>();
+        public List<Comment> Comments { get; set; } = new List<Comment>();
     }
 }
