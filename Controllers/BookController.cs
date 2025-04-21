@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MilLib.Helpers;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.Book;
-using MilLib.Models.Entities;
 using MilLib.Services.Interfaces;
+using MilLib.Repositories.Interfaces; // інтерфейс репозиторію
+using MilLib.Models.Entities;
 
 namespace MilLib.Controllers
 {
@@ -13,159 +13,104 @@ namespace MilLib.Controllers
     [ApiController]
     public class BookController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IBookRepository _bookRepository;
         private readonly IFileService _fileService;
-        public BookController(ApplicationDbContext context, IFileService fileService)
+
+        public BookController(IBookRepository bookRepository, IFileService fileService)
         {
-            _context = context;
+            _bookRepository = bookRepository;
             _fileService = fileService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] BookQueryObject query)
         {
-            //acuiring the object for lazy evaluation
-            var Books = _context.Books.Include(a => a.Tags)
-                                        .ThenInclude(bt => bt.Tag)
-                                        .AsQueryable();
-
-            //filtering
-            if (!query.Title.IsNullOrEmpty())
-            {
-                Books = Books.Where(b => b.Title.Contains(query.Title));
-            }
-
-            if (query.TagIds != null && query.TagIds.Any())
-            {
-                Books = Books.Where(b => b.Tags.Any(t => query.TagIds.Contains(t.TagId)));
-            }
-
-            if (query.AuthorId != null)
-            {
-                Books = Books.Where(b => b.AuthorId == query.AuthorId);
-            }
-
-            //sorting
-            if(query.SortBy is not null && query.SortBy.ToLower() == "title")
-            {
-                Books = query.IsDescenging ?  Books.OrderByDescending(b => b.Title) :  Books.OrderBy(b => b.Title);
-            }
-
-            //pagination
-            Books = Books.Skip(query.PageSize * (query.PageNumber - 1)).Take(query.PageSize);
-
-
-
-            var res = await Books.Select(a => a.toBookDto()).ToListAsync();
-            return Ok(res);
+            var books = await _bookRepository.GetAllAsync(query);
+            return Ok(books.Select(b => b.toBookDto()));
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var Book  = await _context.Books.Include(a => a.Tags).ThenInclude(t => t.Tag).Include(a => a.Comments).FirstOrDefaultAsync(a => a.Id == id);
-            if (Book == null)
-            {
-                return NotFound();
-            }
-            return Ok(Book.toBookDto());
+            var book = await _bookRepository.GetByIdWithDetailsAsync(id);
+            if (book == null) return NotFound();
+            return Ok(book.toBookDto());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] BookCreateDto BookDto)
+        public async Task<IActionResult> Create([FromForm] BookCreateDto bookDto)
         {
-            if(! await _context.Authors.AnyAsync(a => a.Id == BookDto.AuthorId))
+            if (!await _bookRepository.AuthorExistsAsync(bookDto.AuthorId))
             {
                 return BadRequest("Author does not exist");
             }
 
-            if (await TitleExists(BookDto.Title))
+            if (await _bookRepository.TitleExistsAsync(bookDto.Title))
             {
                 return BadRequest("Book with this title already exists");
             }
 
-            var Book = BookDto.toBookFromCreateDto();
-            Book.ImageUrl = await _fileService.UploadAsync(BookDto.Image, "Books/Images");
-            Book.FileUrl = await _fileService.UploadAsync(BookDto.File, "Books/Files");
+            var book = bookDto.toBookFromCreateDto();
+            book.ImageUrl = await _fileService.UploadAsync(bookDto.Image, "Books/Images");
+            book.FileUrl = await _fileService.UploadAsync(bookDto.File, "Books/Files");
 
-            var tags = await _context.Tags.Where(t => BookDto.TagIds.Contains(t.Id)).ToListAsync();
-            Book.Tags = tags.Select(t => new BookTag { Book = Book, Tag = t }).ToList();
+            await _bookRepository.AddAsync(book, bookDto.TagIds);
 
-            _context.Books.Add(Book);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new {id = Book.Id}, Book.toBookDto());
+            return CreatedAtAction(nameof(GetById), new { id = book.Id }, book.toBookDto());
         }
 
-        [HttpPut]
-        [Route("{id}")]
-        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] BookUpdateDto BookDto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] BookUpdateDto bookDto)
         {
-            var Book = await _context.Books.FindAsync(id);
-            if (Book == null)
-            {
-                return NotFound();
-            }
-            if(Book.Title == BookDto.Title)
-            {
-                BookDto.Title = null;
-            }
+            var book = await _bookRepository.GetByIdAsync(id);
+            if (book == null) return NotFound();
 
-            if (BookDto.Title is not null && await TitleExists(BookDto.Title))
+            if (book.Title == bookDto.Title)
+                bookDto.Title = null;
+
+            if (bookDto.Title is not null && await _bookRepository.TitleExistsAsync(bookDto.Title))
             {
                 return BadRequest("Book with this title already exists");
             }
-            if(!BookDto.Title.IsNullOrEmpty())
+
+            if (!bookDto.Title.IsNullOrEmpty())
             {
-                Book.Title = BookDto.Title;
+                book.Title = bookDto.Title;
             }
-            Book.Info = BookDto.Info;
-            if(BookDto.Image != null && BookDto.Image.Length > 0)
+
+            book.Info = bookDto.Info;
+
+            if (bookDto.Image != null && bookDto.Image.Length > 0)
             {
-                if(Book.ImageUrl != null)
+                if (book.ImageUrl != null)
                 {
-                    await _fileService.DeleteAsync(Book.ImageUrl);
+                    await _fileService.DeleteAsync(book.ImageUrl);
                 }
-                Book.ImageUrl = await _fileService.UploadAsync(BookDto.Image, "Books/Images");
+                book.ImageUrl = await _fileService.UploadAsync(bookDto.Image, "Books/Images");
             }
 
-            if(BookDto.File != null && BookDto.File.Length > 0)
+            if (bookDto.File != null && bookDto.File.Length > 0)
             {
-                if(Book.FileUrl != null)
+                if (book.FileUrl != null)
                 {
-                    await _fileService.DeleteAsync(Book.FileUrl);
+                    await _fileService.DeleteAsync(book.FileUrl);
                 }
-                Book.FileUrl = await _fileService.UploadAsync(BookDto.File, "Books/Files");
+                book.FileUrl = await _fileService.UploadAsync(bookDto.File, "Books/Files");
             }
-            var existingBookTags = await _context.BookTags.Where(bt => bt.BookId == Book.Id).ToListAsync();
-            _context.BookTags.RemoveRange(existingBookTags);
-            
-            var tags = await _context.Tags.Where(t => BookDto.TagIds.Contains(t.Id)).ToListAsync();
-            Book.Tags = tags.Select(t => new BookTag { Book = Book, Tag = t }).ToList();
 
-            _context.Books.Update(Book);
-            await _context.SaveChangesAsync();
+            await _bookRepository.UpdateAsync(book, bookDto.TagIds);
 
-            return Ok(Book.toBookDto());
+            return Ok(book.toBookDto());
         }
 
-        [HttpDelete]
-        [Route("{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var Book = await _context.Books.FindAsync(id);
-            if (Book == null)
-            {
-                return NotFound();
-            }
-            _context.Books.Remove(Book);
-            await _context.SaveChangesAsync();
+            var book = await _bookRepository.GetByIdAsync(id);
+            if (book == null) return NotFound();
 
+            await _bookRepository.DeleteAsync(book);
             return NoContent();
-        }
-        
-        private async Task<bool> TitleExists(string title)
-        {
-            return await _context.Books.AnyAsync(b => b.Title == title);
         }
     }
 }

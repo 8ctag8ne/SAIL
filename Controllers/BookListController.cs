@@ -47,10 +47,6 @@ namespace MilLib.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] BookListCreateDto BookListDto)
         {
-            // if(! await _context.Authors.AnyAsync(a => a.Id == AuthorId))
-            // {
-            //     return BadRequest("Author does not exist");
-            // }
             var BookList = BookListDto.toBookListFromCreateDto();
 
             var books = await _context.Books.Where(b => BookListDto.BookIds.Contains(b.Id)).ToListAsync();

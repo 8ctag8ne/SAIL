@@ -93,10 +93,10 @@ namespace MilLib.Controllers
             return NoContent();
         }
 
-        // public Task<bool> Exists(int id)
-        // {
-        //     return _context.Authors.AnyAsync(author => author.Id == id);
-        // }
+        private Task<bool> Exists(int id)
+        {
+            return _context.Authors.AnyAsync(author => author.Id == id);
+        }
         
     }
 }

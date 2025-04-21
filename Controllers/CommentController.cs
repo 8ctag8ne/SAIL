@@ -18,11 +18,9 @@ namespace MilLib.Controllers
     public class CommentController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IFileService _fileService;
         public CommentController(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
-            _fileService = fileService;
         }
 
         [HttpGet]
