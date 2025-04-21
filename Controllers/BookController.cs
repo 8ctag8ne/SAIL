@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -28,9 +24,12 @@ namespace MilLib.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] BookQueryObject query)
         {
+            //acuiring the object for lazy evaluation
             var Books = _context.Books.Include(a => a.Tags)
                                         .ThenInclude(bt => bt.Tag)
                                         .AsQueryable();
+
+            //filtering
             if (!query.Title.IsNullOrEmpty())
             {
                 Books = Books.Where(b => b.Title.Contains(query.Title));
@@ -45,6 +44,18 @@ namespace MilLib.Controllers
             {
                 Books = Books.Where(b => b.AuthorId == query.AuthorId);
             }
+
+            //sorting
+            if(query.SortBy is not null && query.SortBy.ToLower() == "title")
+            {
+                Books = query.IsDescenging ?  Books.OrderByDescending(b => b.Title) :  Books.OrderBy(b => b.Title);
+            }
+
+            //pagination
+            Books = Books.Skip(query.PageSize * (query.PageNumber - 1)).Take(query.PageSize);
+
+
+
             var res = await Books.Select(a => a.toBookDto()).ToListAsync();
             return Ok(res);
         }
@@ -94,13 +105,19 @@ namespace MilLib.Controllers
             {
                 return NotFound();
             }
+            if(Book.Title == BookDto.Title)
+            {
+                BookDto.Title = null;
+            }
 
-            if (await TitleExists(BookDto.Title))
+            if (BookDto.Title is not null && await TitleExists(BookDto.Title))
             {
                 return BadRequest("Book with this title already exists");
             }
-
-            Book.Title = BookDto.Title;
+            if(!BookDto.Title.IsNullOrEmpty())
+            {
+                Book.Title = BookDto.Title;
+            }
             Book.Info = BookDto.Info;
             if(BookDto.Image != null && BookDto.Image.Length > 0)
             {

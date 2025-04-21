@@ -7,7 +7,7 @@ namespace MilLib.Models.DTOs.Book
 {
     public class BookUpdateDto
     {
-        public required string Title {get; set;}
+        public string? Title {get; set;}
         public int AuthorId {get; set;}
         public IFormFile? File {get; set;}
         public IFormFile? Image {get; set;}
