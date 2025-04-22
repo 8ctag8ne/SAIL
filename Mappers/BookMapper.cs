@@ -23,6 +23,15 @@ namespace MilLib.Mappers
                 Comments = book.Comments.Select(c => c.toCommentDto()).ToList(),
             };
         }
+        public static BookSimpleDto toSimpleBookDto(this Book book)
+        {
+            return new BookSimpleDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                ImageUrl = book.ImageUrl
+            };
+        }
 
         public static Book toBookFromCreateDto(this BookCreateDto book)
         {

@@ -15,5 +15,6 @@ namespace MilLib.Repositories.Interfaces
         Task AddAsync(Book book, List<int> tagIds);
         Task UpdateAsync(Book book, List<int> tagIds);
         Task DeleteAsync(Book book);
+        Task<List<Book>> GetByIdsAsync(List<int> Ids);
     }
 }

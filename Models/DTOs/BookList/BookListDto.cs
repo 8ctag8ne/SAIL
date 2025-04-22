@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MilLib.Models.DTOs.Book;
 using MilLib.Models.Entities;
 
 namespace MilLib.Models.DTOs.BookList
@@ -14,6 +15,6 @@ namespace MilLib.Models.DTOs.BookList
         // public User? User { get; set; }
         public string? Description { get; set; }
         public bool? IsPrivate {get; set;}
-        public List<BookListBook> Books { get; set;} = new List<BookListBook>();
+        public List<BookSimpleDto> Books { get; set;} = new List<BookSimpleDto>();
     }
 }

@@ -102,5 +102,10 @@ namespace MilLib.Repositories.Implementations
             _context.Books.Remove(book);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<Book>> GetByIdsAsync(List<int> Ids)
+        {
+            return await _context.Books.Where(b => Ids.Contains(b.Id)).ToListAsync();
+        }
     }
 }

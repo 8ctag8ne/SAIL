@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using MilLib.Repositories;
 using MilLib.Repositories.Implementations;
 using MilLib.Repositories.Interfaces;
 using MilLib.Services.Implementations;
@@ -18,6 +19,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IFileService, LocalFileService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
+builder.Services.AddScoped<IBookListRepository, BookListRepository>();
 
 var app = builder.Build();
 

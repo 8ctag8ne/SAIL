@@ -17,7 +17,7 @@ namespace MilLib.Mappers
                 Title = bookList.Title,
                 Description = bookList.Description,
                 IsPrivate = bookList.IsPrivate,
-                Books = bookList.Books,
+                Books = bookList.Books.Select(b => b.Book.toSimpleBookDto()).ToList(),
             };
         }
 
