@@ -9,7 +9,7 @@ using MilLib.Mappers;
 using MilLib.Models.DTOs.Book;
 using MilLib.Models.DTOs.Comment;
 using MilLib.Models.Entities;
-using MilLib.Services.Interfaces;
+using MilLib.Repositories.Interfaces;
 
 namespace MilLib.Controllers
 {
@@ -17,98 +17,102 @@ namespace MilLib.Controllers
     [ApiController]
     public class CommentController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        public CommentController(ApplicationDbContext context, IFileService fileService)
+        private readonly ICommentRepository _commentRepository;
+        private readonly IBookRepository _bookRepository;
+
+        public CommentController(ICommentRepository commentRepository, IBookRepository bookRepository)
         {
-            _context = context;
+            _commentRepository = commentRepository;
+            _bookRepository = bookRepository;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var Comments = await _context.Comments.Include(a => a.Replies).ToListAsync();
-            var res = Comments.Select(a => a.toCommentDto());
+            var comments = await _commentRepository.GetAllWithRepliesAsync();
+            var res = comments.Select(a => a.toCommentDto());
             return Ok(res);
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var Comment  = await _context.Comments.Include(a => a.Replies).FirstOrDefaultAsync(a => a.Id == id);
-            if (Comment == null)
+            var comment = await _commentRepository.GetByIdWithRepliesAsync(id);
+            if (comment == null)
             {
                 return NotFound();
             }
-            return Ok(Comment.toCommentDto());
+            return Ok(comment.toCommentDto());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CommentCreateDto CommentDto)
+        public async Task<IActionResult> Create([FromBody] CommentCreateDto commentDto)
         {
-            var book = await _context.Books.FindAsync(CommentDto.BookId);
+            var book = await _bookRepository.GetByIdAsync(commentDto.BookId);
             if (book == null)
             {
-                return BadRequest($"Book with id {CommentDto.BookId} doesn't exists");
+                return BadRequest($"Book with id {commentDto.BookId} doesn't exists");
             }
-            if(CommentDto.ReplyToId != null)
+            
+            if(commentDto.ReplyToId != null)
             {
-                var parent = await _context.Comments.FindAsync(CommentDto.ReplyToId);
+                var parent = await _commentRepository.GetByIdAsync(commentDto.ReplyToId.Value);
                 if (parent == null)
                 {
-                    return BadRequest($"Comment with id {CommentDto.ReplyToId} to reply to doesn't exists");
+                    return BadRequest($"Comment with id {commentDto.ReplyToId} to reply to doesn't exists");
                 }
             }
-            var Comment = CommentDto.toCommentFromCreateDto();
-            _context.Comments.Add(Comment);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new {id = Comment.Id}, Comment.toCommentDto());
+            
+            var comment = commentDto.toCommentFromCreateDto();
+            await _commentRepository.AddAsync(comment);
+            await _commentRepository.SaveChangesAsync();
+            
+            return CreatedAtAction(nameof(GetById), new {id = comment.Id}, comment.toCommentDto());
         }
 
         [HttpPut]
         [Route("{id:int}")]
-        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] CommentUpdateDto CommentDto)
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] CommentUpdateDto commentDto)
         {
-            var Comment = await _context.Comments.FindAsync(id);
-            if (Comment == null)
+            var comment = await _commentRepository.GetByIdAsync(id);
+            if (comment == null)
             {
                 return NotFound();
             }
-            if(!CommentDto.Content.IsNullOrEmpty())
+            
+            if(!commentDto.Content.IsNullOrEmpty())
             {
-                Comment.Content = CommentDto.Content;
+                comment.Content = commentDto.Content;
             }
 
-            _context.Comments.Update(Comment);
-            await _context.SaveChangesAsync();
+            await _commentRepository.UpdateAsync(comment);
+            await _commentRepository.SaveChangesAsync();
 
-            return Ok(Comment.toCommentDto());
+            return Ok(comment.toCommentDto());
         }
 
         [HttpDelete]
         [Route("{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var Comment = await _context.Comments.FindAsync(id);
-            if (Comment == null)
+            var comment = await _commentRepository.GetByIdAsync(id);
+            if (comment == null)
             {
                 return NotFound();
             }
 
-            var replies = await _context.Comments
-                .Where(c => c.ReplyToId == Comment.Id)
-                .ToListAsync();
-
+            var replies = await _commentRepository.GetRepliesForCommentAsync(id);
+            
             foreach (var reply in replies)
             {
                 reply.ReplyToId = null;
             }
-            _context.Comments.UpdateRange(replies);
+            await _commentRepository.UpdateRangeAsync(replies);
 
-            _context.Comments.Remove(Comment);
-            await _context.SaveChangesAsync();
+            await _commentRepository.DeleteAsync(comment);
+            await _commentRepository.SaveChangesAsync();
 
             return NoContent();
         }
-        
     }
 }

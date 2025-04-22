@@ -17,7 +17,7 @@ namespace MilLib.Mappers
                 Title = tag.Title,
                 ImageUrl = tag.ImageUrl,
                 Info = tag.Info,
-                Books = tag.Books,
+                Books = tag.Books.Select(bt => bt.Book.toSimpleBookDto()).ToList(),
             };
         }
 
