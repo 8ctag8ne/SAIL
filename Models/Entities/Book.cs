@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Models.Entities;
 
 namespace MilLib.Models.Entities
 {
@@ -19,5 +20,7 @@ namespace MilLib.Models.Entities
         public List<BookTag> Tags {get; set;} = new List<BookTag>();
         public List<BookListBook> BookLists {get; set;} = new List<BookListBook>();
         public List<Comment> Comments { get; set; } = new List<Comment>();
+        public List<Like> Likes { get; set; } = new List<Like>();
+        public int LikesCount {get; set;} = 0;
     }
 }

@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<BookList> BookLists {get; set;}
     public DbSet<BookListBook> BookListBooks {get; set;}
     public DbSet<Comment> Comments {get; set;}
+    public DbSet<Like> Likes {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,10 +60,30 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Comment>()
+            .HasOne(c => c.User)
+            .WithMany(u => u.Comments)
+            .HasForeignKey(c => c.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Comment>()
             .HasOne(c => c.ReplyTo)
             .WithMany(c => c.Replies)
             .HasForeignKey(c => c.ReplyToId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Like>()
+            .HasKey(l => new { l.BookId, l.UserId });
+
+        modelBuilder.Entity<Like>()
+            .HasOne(l => l.Book)
+            .WithMany(b => b.Likes)
+            .HasForeignKey(l => l.BookId);
+
+        modelBuilder.Entity<Like>()
+            .HasOne(l => l.User)
+            .WithMany(b => b.Likes)
+            .HasForeignKey(l => l.UserId);
+
 
         List<IdentityRole> roles = new List<IdentityRole>
         {

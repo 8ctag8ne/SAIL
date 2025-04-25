@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.Author;
@@ -42,6 +43,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromForm] AuthorCreateDto authorDto)
         {
             var author = authorDto.toAuthorFromCreateDto();
@@ -54,6 +56,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromForm] AuthorUpdateDto authorDto)
         {
             var author = await _authorRepository.GetByIdAsync(id);
@@ -78,6 +81,7 @@ namespace MilLib.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var author = await _authorRepository.GetByIdAsync(id);

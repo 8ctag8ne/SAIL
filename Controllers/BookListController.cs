@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.BookList;
@@ -20,6 +21,7 @@ namespace MilLib.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var bookLists = await _bookListRepository.GetAllWithBooksAsync();
@@ -39,6 +41,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] BookListCreateDto bookListDto)
         {
             var bookList = bookListDto.toBookListFromCreateDto();
@@ -57,6 +60,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] BookListUpdateDto bookListDto)
         {
             var bookList = await _bookListRepository.GetByIdWithBooksAsync(id);
@@ -85,6 +89,7 @@ namespace MilLib.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var bookList = await _bookListRepository.GetByIdAsync(id);

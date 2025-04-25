@@ -13,8 +13,9 @@ namespace MilLib.Repositories.Interfaces
         Task<bool> TitleExistsAsync(string title);
         Task<bool> AuthorExistsAsync(int authorId);
         Task AddAsync(Book book, List<int> tagIds);
-        Task UpdateAsync(Book book, List<int> tagIds);
+        Task UpdateAsync(Book book, List<int>? tagIds = null);
         Task DeleteAsync(Book book);
         Task<List<Book>> GetByIdsAsync(List<int> Ids);
+        Task<List<Book>> GetByIdsWithDetailsAsync(List<int> Ids);
     }
 }

@@ -15,6 +15,7 @@ namespace MilLib.Mappers
             return new CommentDto
             {
                 Id = Comment.Id,
+                UserId = Comment.UserId,
                 CreatedAt = Comment.CreatedAt,
                 Content = Comment.Content,
                 BookId = Comment.BookId,
@@ -38,6 +39,7 @@ namespace MilLib.Mappers
             return new CommentSimpleDto
             {
                 Id = Comment.Id,
+                UserId = Comment.UserId,
                 CreatedAt = Comment.CreatedAt,
                 Content = Comment.Content,
                 BookId = Comment.BookId,

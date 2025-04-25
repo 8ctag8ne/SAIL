@@ -63,6 +63,7 @@ namespace MilLib.Repositories.Implementations
                 .Include(b => b.Tags)
                     .ThenInclude(t => t.Tag)
                 .Include(b => b.Comments)
+                    .ThenInclude(c => c.User)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
 
@@ -85,13 +86,16 @@ namespace MilLib.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Book book, List<int> tagIds)
+        public async Task UpdateAsync(Book book, List<int>? tagIds = null)
         {
-            var existingBookTags = await _context.BookTags.Where(bt => bt.BookId == book.Id).ToListAsync();
-            _context.BookTags.RemoveRange(existingBookTags);
+            if(tagIds != null)
+            {
+                var existingBookTags = await _context.BookTags.Where(bt => bt.BookId == book.Id).ToListAsync();
+                _context.BookTags.RemoveRange(existingBookTags);
 
-            var tags = await _context.Tags.Where(t => tagIds.Contains(t.Id)).ToListAsync();
-            book.Tags = tags.Select(t => new BookTag { Book = book, Tag = t }).ToList();
+                var tags = await _context.Tags.Where(t => tagIds.Contains(t.Id)).ToListAsync();
+                book.Tags = tags.Select(t => new BookTag { Book = book, Tag = t }).ToList();
+            }
 
             _context.Books.Update(book);
             await _context.SaveChangesAsync();
@@ -106,6 +110,16 @@ namespace MilLib.Repositories.Implementations
         public async Task<List<Book>> GetByIdsAsync(List<int> Ids)
         {
             return await _context.Books.Where(b => Ids.Contains(b.Id)).ToListAsync();
+        }
+
+        public async Task<List<Book>> GetByIdsWithDetailsAsync(List<int> Ids)
+        {
+            return await _context.Books.Where(b => Ids.Contains(b.Id))
+                .Include(b => b.Tags)
+                    .ThenInclude(t => t.Tag)
+                .Include(b => b.Comments)
+                    .ThenInclude(c => c.User)
+                .ToListAsync();
         }
     }
 }

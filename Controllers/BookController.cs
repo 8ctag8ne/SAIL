@@ -6,6 +6,11 @@ using MilLib.Models.DTOs.Book;
 using MilLib.Services.Interfaces;
 using MilLib.Repositories.Interfaces; // інтерфейс репозиторію
 using MilLib.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
+using api.Extensions;
+using Microsoft.AspNetCore.Identity;
+using api.Models.Entities;
+using api.Data.Repositories.Interfaces;
 
 namespace MilLib.Controllers
 {
@@ -14,12 +19,17 @@ namespace MilLib.Controllers
     public class BookController : ControllerBase
     {
         private readonly IBookRepository _bookRepository;
+        private readonly ILikeRepository _likeRepository;
         private readonly IFileService _fileService;
 
-        public BookController(IBookRepository bookRepository, IFileService fileService)
+        private readonly UserManager<User> _userManager;
+
+        public BookController(IBookRepository bookRepository, IFileService fileService, UserManager<User> userManager, ILikeRepository likeRepository)
         {
             _bookRepository = bookRepository;
             _fileService = fileService;
+            _userManager = userManager;
+            _likeRepository = likeRepository;
         }
 
         [HttpGet]
@@ -38,6 +48,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Create([FromForm] BookCreateDto bookDto)
         {
             if (!await _bookRepository.AuthorExistsAsync(bookDto.AuthorId))
@@ -60,6 +71,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromForm] BookUpdateDto bookDto)
         {
             var book = await _bookRepository.GetByIdAsync(id);
@@ -104,6 +116,7 @@ namespace MilLib.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var book = await _bookRepository.GetByIdAsync(id);
@@ -111,6 +124,64 @@ namespace MilLib.Controllers
 
             await _bookRepository.DeleteAsync(book);
             return NoContent();
+        }
+
+        [Authorize]
+        [HttpPost("{bookId}/toggle-like")]
+        public async Task<IActionResult> ToggleLike([FromRoute] int bookId)
+        {
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+                return Unauthorized();
+
+            var book = await _bookRepository.GetByIdAsync(bookId);
+            if (book == null)
+                return NotFound();
+
+            var existingLike = await _likeRepository.GetAsync(bookId, user.Id);
+
+            if (existingLike != null)
+            {
+                await _likeRepository.RemoveAsync(existingLike);
+                book.LikesCount = Math.Max(0, book.LikesCount - 1);
+            }
+            else
+            {
+                await _likeRepository.AddAsync(new Like
+                {
+                    BookId = bookId,
+                    UserId = user.Id,
+                });
+                book.LikesCount += 1;
+            }
+
+            await _bookRepository.UpdateAsync(book, null);
+
+            return Ok(new 
+            { 
+                LikesCount = book.LikesCount, 
+                IsLiked = (existingLike is null) ? true : false 
+            });
+        }
+
+        [Authorize]
+        [HttpPost("get-liked-books")]
+        public async Task<IActionResult> GetLikedBooks()
+        {
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var likes = await _likeRepository.GetUserLikesAsync(user);
+            var bookIds = likes.Select(like => like.BookId).ToList();
+
+            var books = await _bookRepository.GetByIdsWithDetailsAsync(bookIds);
+
+            return Ok(books);
         }
     }
 }

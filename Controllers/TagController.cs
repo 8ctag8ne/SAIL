@@ -11,6 +11,7 @@ using MilLib.Models.DTOs.Tag;
 using MilLib.Models.Entities;
 using MilLib.Services.Interfaces;
 using MilLib.Repositories.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MilLib.Controllers
 {
@@ -49,6 +50,7 @@ namespace MilLib.Controllers
         }
         
         [HttpPost]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Create([FromForm] TagCreateDto tagDto)
         {
             var tag = tagDto.toTagFromCreateDto();
@@ -65,6 +67,7 @@ namespace MilLib.Controllers
         
         [HttpPut]
         [Route("{id}")]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromForm] TagUpdateDto tagDto)
         {
             var tag = await _tagRepository.GetByIdAsync(id);
@@ -99,6 +102,7 @@ namespace MilLib.Controllers
         
         [HttpDelete]
         [Route("{id}")]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var tag = await _tagRepository.GetByIdAsync(id);

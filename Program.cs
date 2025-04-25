@@ -1,9 +1,14 @@
 using System.Text.Json.Serialization;
+using api.Data.Repositories.Implementations;
+using api.Data.Repositories.Interfaces;
 using api.Models.Entities;
+using api.Services.Implementations;
+using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MilLib.Repositories;
 using MilLib.Repositories.Implementations;
 using MilLib.Repositories.Interfaces;
@@ -56,6 +61,34 @@ builder.Services.AddAuthentication(options => {
 // builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(option =>
+{
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
+    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IFileService, LocalFileService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
@@ -63,6 +96,9 @@ builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IBookListRepository, BookListRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+
 
 var app = builder.Build();
 
@@ -77,6 +113,13 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var tokenService = services.GetRequiredService<ITokenService>();
+    await RoleHelper.SeedRolesAndAdmin(services, tokenService);
+}
 
 app.MapControllers();
 

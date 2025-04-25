@@ -19,6 +19,7 @@ namespace MilLib.Mappers
                 ImageUrl = book.ImageUrl,
                 FileUrl = book.FileUrl,
                 Info = book.Info,
+                LikesCount = book.LikesCount,
                 Tags = book.Tags.Select(bookTag => bookTag.Tag.toSimpleDto()).ToList(),
                 Comments = book.Comments.Select(c => c.toCommentDto()).ToList(),
             };
@@ -40,6 +41,7 @@ namespace MilLib.Mappers
                 AuthorId = book.AuthorId,
                 Title = book.Title,
                 Info = book.Info,
+                LikesCount = 0,
             };
         }
     }

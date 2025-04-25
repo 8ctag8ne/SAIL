@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Extensions;
+using api.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -20,10 +24,13 @@ namespace MilLib.Controllers
         private readonly ICommentRepository _commentRepository;
         private readonly IBookRepository _bookRepository;
 
-        public CommentController(ICommentRepository commentRepository, IBookRepository bookRepository)
+        private readonly UserManager<User> _userManager;
+
+        public CommentController(ICommentRepository commentRepository, IBookRepository bookRepository, UserManager<User> userManager)
         {
             _commentRepository = commentRepository;
             _bookRepository = bookRepository;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -46,6 +53,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] CommentCreateDto commentDto)
         {
             var book = await _bookRepository.GetByIdAsync(commentDto.BookId);
@@ -64,6 +72,8 @@ namespace MilLib.Controllers
             }
             
             var comment = commentDto.toCommentFromCreateDto();
+            var currentUser = await _userManager.FindByNameAsync(User.GetUsername());
+            comment.UserId = currentUser.Id;
             await _commentRepository.AddAsync(comment);
             await _commentRepository.SaveChangesAsync();
             
@@ -72,6 +82,7 @@ namespace MilLib.Controllers
 
         [HttpPut]
         [Route("{id:int}")]
+        [Authorize]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] CommentUpdateDto commentDto)
         {
             var comment = await _commentRepository.GetByIdAsync(id);
@@ -93,6 +104,7 @@ namespace MilLib.Controllers
 
         [HttpDelete]
         [Route("{id:int}")]
+        [Authorize]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var comment = await _commentRepository.GetByIdAsync(id);

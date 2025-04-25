@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Models.Entities;
 
 namespace MilLib.Models.DTOs.Comment
 {
     public class CommentDto
     {
         public int Id { get; set; }
-        // public string? CreatedBy { get; set; }
-        // public User User {get; set;}
+        public string? UserId { get; set; }
         public int BookId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? Content { get; set; }
