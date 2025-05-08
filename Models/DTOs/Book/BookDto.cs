@@ -17,6 +17,7 @@ namespace MilLib.Models.DTOs.Book
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}
         public int? LikesCount {get; set;}
+        public bool IsLiked {get; set;} = false;
         public List<TagSimpleDto> Tags {get; set;} = new List<TagSimpleDto>();
         public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
     }

@@ -35,8 +35,26 @@ namespace MilLib.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] BookQueryObject query)
         {
-            var books = await _bookRepository.GetAllAsync(query);
-            return Ok(books.Select(b => b.toBookDto()));
+            var result = await _bookRepository.GetAllAsync(query);
+
+            var dtoResult = new PaginatedResult<BookDto>
+            {
+                Items = result.Items.Select(b => b.toBookDto()).ToList(),
+                TotalItems = result.TotalItems,
+                TotalPages = result.TotalPages,
+                CurrentPage = result.CurrentPage
+            };
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user != null)
+            {
+                foreach(var item in dtoResult.Items)
+                {
+                    var like = await _likeRepository.GetAsync(item.Id, user.Id);
+                    item.IsLiked = like != null;
+                }
+            }
+            return Ok(dtoResult);
         }
 
         [HttpGet("{id}")]
@@ -44,7 +62,15 @@ namespace MilLib.Controllers
         {
             var book = await _bookRepository.GetByIdWithDetailsAsync(id);
             if (book == null) return NotFound();
-            return Ok(book.toBookDto());
+
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+                return Unauthorized();
+
+            var like = await _likeRepository.GetAsync(id, user.Id);
+
+            return Ok(book.toBookDto(like is not null));
         }
 
         [HttpPost]

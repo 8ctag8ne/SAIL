@@ -22,11 +22,13 @@ namespace api.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ITokenService _tokenService;
         // public async Task<User> CurrentUser () => await _userManager.FindByNameAsync(User.GetUsername());
-        public AccountController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager)
+        public AccountController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
         }
@@ -221,11 +223,22 @@ namespace api.Controllers
             if (user == null)
                 return NotFound();
 
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, currentRoles); // якщо треба перезаписати ролі
-            var result = await _userManager.AddToRoleAsync(user, dto.NewRole);
+            if (string.IsNullOrWhiteSpace(dto.NewRole))
+                return BadRequest("NewRole is required.");
 
-            return result.Succeeded ? Ok() : BadRequest(result.Errors);
+            if (!await _roleManager.RoleExistsAsync(dto.NewRole))
+                return BadRequest("Specified role does not exist.");
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            var resultRemove = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!resultRemove.Succeeded)
+                return BadRequest(resultRemove.Errors);
+
+            var resultAdd = await _userManager.AddToRoleAsync(user, dto.NewRole);
+            if (!resultAdd.Succeeded)
+                return BadRequest(resultAdd.Errors);
+
+            return resultAdd.Succeeded ? Ok() : BadRequest(resultAdd.Errors);
         }
     }
 }

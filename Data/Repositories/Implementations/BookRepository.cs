@@ -1,3 +1,4 @@
+using api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MilLib.Helpers;
@@ -16,40 +17,57 @@ namespace MilLib.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<Book>> GetAllAsync(BookQueryObject query)
+        public async Task<PaginatedResult<Book>> GetAllAsync(BookQueryObject query)
         {
-            var books = _context.Books
+            var booksQuery = _context.Books
                 .Include(b => b.Tags)
                     .ThenInclude(bt => bt.Tag)
                 .AsQueryable();
 
-            if (!query.Title.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(query.Title))
             {
-                books = books.Where(b => b.Title.Contains(query.Title));
+                booksQuery = booksQuery.Where(b => b.Title.Contains(query.Title));
             }
 
             if (query.TagIds != null && query.TagIds.Any())
             {
-                books = books.Where(b => b.Tags.Any(t => query.TagIds.Contains(t.TagId)));
+                booksQuery = booksQuery.Where(b => b.Tags.Any(t => query.TagIds.Contains(t.TagId)));
             }
 
             if (query.AuthorId != null)
             {
-                books = books.Where(b => b.AuthorId == query.AuthorId);
+                booksQuery = booksQuery.Where(b => b.AuthorId == query.AuthorId);
             }
 
-            if (query.SortBy is not null && query.SortBy.ToLower() == "title")
+            if (!string.IsNullOrEmpty(query.SortBy) && query.SortBy.ToLower() == "title")
             {
-                books = query.IsDescenging
-                    ? books.OrderByDescending(b => b.Title)
-                    : books.OrderBy(b => b.Title);
+                booksQuery = query.IsDescenging
+                    ? booksQuery.OrderByDescending(b => b.Title)
+                    : booksQuery.OrderBy(b => b.Title);
             }
 
-            books = books
-                .Skip(query.PageSize * (query.PageNumber - 1))
-                .Take(query.PageSize);
+            var totalItems = await booksQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)query.PageSize);
 
-            return await books.ToListAsync();
+            // Коригування номера сторінки
+            var currentPage = query.PageNumber;
+            if (currentPage < 1)
+                currentPage = 1;
+            else if (currentPage > totalPages && totalPages > 0)
+                currentPage = totalPages;
+
+            var items = await booksQuery
+                .Skip(query.PageSize * (currentPage - 1))
+                .Take(query.PageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<Book>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CurrentPage = currentPage
+            };
         }
 
         public async Task<Book?> GetByIdAsync(int id)

@@ -9,7 +9,7 @@ namespace MilLib.Mappers
 {
     public static class BookMapper
     {
-        public static BookDto toBookDto(this Book book)
+        public static BookDto toBookDto(this Book book, bool isLiked = false)
         {
             return new BookDto
             {
@@ -20,6 +20,7 @@ namespace MilLib.Mappers
                 FileUrl = book.FileUrl,
                 Info = book.Info,
                 LikesCount = book.LikesCount,
+                IsLiked = isLiked,
                 Tags = book.Tags.Select(bookTag => bookTag.Tag.toSimpleDto()).ToList(),
                 Comments = book.Comments.Select(c => c.toCommentDto()).ToList(),
             };

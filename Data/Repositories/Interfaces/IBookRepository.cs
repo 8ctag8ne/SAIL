@@ -3,11 +3,12 @@ using MilLib.Services.Interfaces;
 using MilLib.Models;
 using MilLib.Models.Entities;
 using MilLib.Helpers;
+using api.Models.Entities;
 namespace MilLib.Repositories.Interfaces
 {
     public interface IBookRepository
     {
-        Task<IEnumerable<Book>> GetAllAsync(BookQueryObject query);
+        Task<PaginatedResult<Book>> GetAllAsync(BookQueryObject query);
         Task<Book?> GetByIdAsync(int id);
         Task<Book?> GetByIdWithDetailsAsync(int id);
         Task<bool> TitleExistsAsync(string title);
