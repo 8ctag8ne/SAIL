@@ -209,6 +209,20 @@ namespace api.Controllers
             return Ok(userDtos);
         }
 
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if(user == null)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(await user.toUserDto(_userManager));
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] string id)
         {

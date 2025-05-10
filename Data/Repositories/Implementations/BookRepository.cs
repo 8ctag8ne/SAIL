@@ -83,6 +83,7 @@ namespace MilLib.Repositories.Implementations
                     .ThenInclude(t => t.Tag)
                 .Include(b => b.Comments)
                     .ThenInclude(c => c.User)
+                .Include(b => b.Author)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
 
@@ -138,6 +139,7 @@ namespace MilLib.Repositories.Implementations
                     .ThenInclude(t => t.Tag)
                 .Include(b => b.Comments)
                     .ThenInclude(c => c.User)
+                .Include(b => b.Author)
                 .ToListAsync();
         }
     }

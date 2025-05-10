@@ -121,6 +121,8 @@ namespace MilLib.Controllers
                 book.Title = bookDto.Title;
             }
 
+            book.AuthorId = bookDto.AuthorId;
+
             book.Info = bookDto.Info;
 
             if (bookDto.Image != null && bookDto.Image.Length > 0)
