@@ -16,6 +16,7 @@ namespace MilLib.Mappers
             {
                 Id = Comment.Id,
                 UserId = Comment.UserId,
+                UserName = Comment.User?.UserName,
                 CreatedAt = Comment.CreatedAt,
                 Content = Comment.Content,
                 BookId = Comment.BookId,

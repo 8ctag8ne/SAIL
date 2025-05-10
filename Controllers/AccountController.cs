@@ -61,6 +61,7 @@ namespace api.Controllers
                             {
                                 UserName = user.UserName,
                                 Email = user.Email,
+                                Roles = (List<string>)await _userManager.GetRolesAsync(user),
                                 Token = await _tokenService.CreateTokenAsync(user),
                             }
                         );
@@ -107,6 +108,7 @@ namespace api.Controllers
             {
                 UserName = user.UserName,
                 Email = user.Email,
+                Roles = (List<string>)await _userManager.GetRolesAsync(user),
                 Token = await _tokenService.CreateTokenAsync(user),
             });
         }

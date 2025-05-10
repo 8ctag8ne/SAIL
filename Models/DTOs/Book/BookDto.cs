@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MilLib.Models.Entities;
 using MilLib.Models.DTOs.Comment;
 using MilLib.Models.DTOs.Tag;
+using MilLib.Models.DTOs.Author;
 
 namespace MilLib.Models.DTOs.Book
 {
@@ -13,6 +14,7 @@ namespace MilLib.Models.DTOs.Book
         public int Id {get; set;}
         public required string Title {get; set;}
         public int AuthorId {get; set;}
+        public string? AuthorName {get; set;}
         public string? FileUrl {get; set;}
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}

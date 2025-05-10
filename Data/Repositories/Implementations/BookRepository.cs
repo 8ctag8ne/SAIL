@@ -22,6 +22,7 @@ namespace MilLib.Repositories.Implementations
             var booksQuery = _context.Books
                 .Include(b => b.Tags)
                     .ThenInclude(bt => bt.Tag)
+                .Include(b => b.Author)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(query.Title))

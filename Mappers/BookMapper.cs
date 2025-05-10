@@ -15,6 +15,7 @@ namespace MilLib.Mappers
             {
                 Id = book.Id,
                 AuthorId = book.AuthorId,
+                AuthorName = book.Author?.Name,
                 Title = book.Title,
                 ImageUrl = book.ImageUrl,
                 FileUrl = book.FileUrl,

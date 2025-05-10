@@ -44,14 +44,17 @@ namespace MilLib.Controllers
                 TotalPages = result.TotalPages,
                 CurrentPage = result.CurrentPage
             };
-            var username = User.GetUsername();
-            var user = await _userManager.FindByNameAsync(username);
-            if (user != null)
+            if(User.Identity?.IsAuthenticated == true)
             {
-                foreach(var item in dtoResult.Items)
+                var username = User.GetUsername();
+                var user = await _userManager.FindByNameAsync(username);
+                if (user != null)
                 {
-                    var like = await _likeRepository.GetAsync(item.Id, user.Id);
-                    item.IsLiked = like != null;
+                    foreach(var item in dtoResult.Items)
+                    {
+                        var like = await _likeRepository.GetAsync(item.Id, user.Id);
+                        item.IsLiked = like != null;
+                    }
                 }
             }
             return Ok(dtoResult);
@@ -62,15 +65,17 @@ namespace MilLib.Controllers
         {
             var book = await _bookRepository.GetByIdWithDetailsAsync(id);
             if (book == null) return NotFound();
+            if(User.Identity?.IsAuthenticated == true)
+            {
+                var username = User.GetUsername();
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                    return Unauthorized();
 
-            var username = User.GetUsername();
-            var user = await _userManager.FindByNameAsync(username);
-            if (user == null)
-                return Unauthorized();
-
-            var like = await _likeRepository.GetAsync(id, user.Id);
-
-            return Ok(book.toBookDto(like is not null));
+                var like = await _likeRepository.GetAsync(id, user.Id);
+                return Ok(book.toBookDto(like is not null));
+            }
+            return Ok(book.toBookDto());
         }
 
         [HttpPost]

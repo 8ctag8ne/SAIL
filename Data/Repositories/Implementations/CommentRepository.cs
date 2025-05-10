@@ -18,7 +18,7 @@ namespace MilLib.Repositories
 
         public async Task<IEnumerable<Comment>> GetAllWithRepliesAsync()
         {
-            return await _context.Comments.Include(a => a.Replies).ToListAsync();
+            return await _context.Comments.Include(a => a.Replies).Include(c => c.User).ToListAsync();
         }
 
         public async Task<Comment> GetByIdAsync(int id)
