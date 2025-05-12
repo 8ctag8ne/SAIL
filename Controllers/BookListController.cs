@@ -1,4 +1,7 @@
+using api.Extensions;
+using api.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.BookList;
@@ -13,11 +16,13 @@ namespace MilLib.Controllers
     {
         private readonly IBookListRepository _bookListRepository;
         private readonly IBookRepository _bookRepository;
+        private readonly UserManager<User> _userManager;
 
-        public BookListController(IBookListRepository bookListRepository, IBookRepository bookRepository)
+        public BookListController(IBookListRepository bookListRepository, IBookRepository bookRepository, UserManager<User> userManager)
         {
             _bookListRepository = bookListRepository;
             _bookRepository = bookRepository;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -29,13 +34,29 @@ namespace MilLib.Controllers
             return Ok(res);
         }
 
+        // [HttpGet("get-booklists/{userId}")]
+        // public async Task<IActionResult> GetBookListsForUser([FromRoute] string userId)
+        // {
+        //     var bookLists = await _bookListRepository.GetAllWithBooksAsync();
+        //     var res = bookLists.Where(bl => bl.UserId == userId).Select(b => b.toBookListDto());
+        //     return Ok(res);
+        // }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var bookList = await _bookListRepository.GetByIdWithBooksAsync(id);
+
             if (bookList == null)
             {
                 return NotFound();
+            }
+
+            string? username = null;
+            if(bookList?.UserId != null)
+            {
+                var user = await _userManager.FindByIdAsync(bookList.UserId);
+                username = user?.UserName;
             }
             return Ok(bookList.toBookListDto());
         }
@@ -45,6 +66,15 @@ namespace MilLib.Controllers
         public async Task<IActionResult> Create([FromBody] BookListCreateDto bookListDto)
         {
             var bookList = bookListDto.toBookListFromCreateDto();
+
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            bookList.UserId = user.Id;
             var books = await _bookRepository.GetByIdsAsync(bookListDto.BookIds);
 
             bookList.Books = books.Select(b => new Models.Entities.BookListBook

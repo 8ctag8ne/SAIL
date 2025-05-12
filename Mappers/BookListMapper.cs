@@ -14,6 +14,8 @@ namespace MilLib.Mappers
             return new BookListDto
             {
                 Id = bookList.Id,
+                UserId = bookList.UserId,
+                UserName = bookList.User?.UserName,
                 Title = bookList.Title,
                 Description = bookList.Description,
                 IsPrivate = bookList.IsPrivate,

@@ -8,8 +8,6 @@ namespace MilLib.Models.DTOs.BookList
     public class BookListCreateDto
     {
         public string? Title { get; set; }
-        // public string? CreatedBy { get; set; }
-        // public User? User { get; set; }
         public string? Description { get; set; }
         public bool? IsPrivate {get; set;}
         public List<int> BookIds { get; set;} = new List<int>();

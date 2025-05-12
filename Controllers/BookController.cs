@@ -199,14 +199,14 @@ namespace MilLib.Controllers
         }
 
         [Authorize]
-        [HttpPost("get-liked-books")]
-        public async Task<IActionResult> GetLikedBooks()
+        [HttpPost("get-liked-books/{userId}")]
+        public async Task<IActionResult> GetLikedBooks([FromRoute] string userId)
         {
-            var username = User.GetUsername();
-            var user = await _userManager.FindByNameAsync(username);
+            // var username = User.GetUsername();
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return Unauthorized();
+                return BadRequest();
             }
 
             var likes = await _likeRepository.GetUserLikesAsync(user);

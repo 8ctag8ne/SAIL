@@ -27,6 +27,11 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany(a => a.Books)
             .HasForeignKey(b => b.AuthorId);
 
+        modelBuilder.Entity<BookList>()
+            .HasOne(b => b.User)
+            .WithMany(a => a.BookLists)
+            .HasForeignKey(b => b.UserId);
+
         modelBuilder.Entity<BookTag>()
             .HasKey(bt => new { bt.BookId, bt.TagId });
 

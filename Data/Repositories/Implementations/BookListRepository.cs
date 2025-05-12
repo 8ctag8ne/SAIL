@@ -18,12 +18,17 @@ namespace MilLib.Repositories
 
         public async Task<IEnumerable<BookList>> GetAllWithBooksAsync()
         {
-            return await _context.BookLists.Include(b => b.Books).ThenInclude(bb => bb.Book).ToListAsync();
+            return await _context.BookLists.Include(b => b.Books)
+                                                .ThenInclude(bb => bb.Book)
+                                            .Include(b => b.User)
+                                            .ToListAsync();
         }
 
         public async Task<BookList?> GetByIdWithBooksAsync(int id)
         {
-            return await _context.BookLists.Include(b => b.Books).ThenInclude(bb => bb.Book)
+            return await _context.BookLists.Include(b => b.Books)
+                                                .ThenInclude(bb => bb.Book)
+                                            .Include(b => b.User)
                                            .FirstOrDefaultAsync(b => b.Id == id);
         }
 
