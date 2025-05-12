@@ -198,11 +198,10 @@ namespace MilLib.Controllers
             });
         }
 
-        [Authorize]
-        [HttpPost("get-liked-books/{userId}")]
+        // [Authorize]
+        [HttpGet("get-liked-books/{userId}")]
         public async Task<IActionResult> GetLikedBooks([FromRoute] string userId)
         {
-            // var username = User.GetUsername();
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
@@ -213,8 +212,22 @@ namespace MilLib.Controllers
             var bookIds = likes.Select(like => like.BookId).ToList();
 
             var books = await _bookRepository.GetByIdsWithDetailsAsync(bookIds);
+            var bookDtos = books.Select(b => b.toBookDto()).ToList();
+            if(User.Identity?.IsAuthenticated == true)
+            {
+                var username = User.GetUsername();
+                var currentUser = await _userManager.FindByNameAsync(username);
+                if (currentUser != null)
+                {
+                    foreach(var book in bookDtos)
+                    {
+                        var like = await _likeRepository.GetAsync(book.Id, currentUser.Id);
+                        book.IsLiked = like != null;
+                    }
+                }
+            }
 
-            return Ok(books);
+            return Ok(bookDtos);
         }
     }
 }

@@ -137,8 +137,8 @@ namespace MilLib.Repositories.Implementations
             return await _context.Books.Where(b => Ids.Contains(b.Id))
                 .Include(b => b.Tags)
                     .ThenInclude(t => t.Tag)
-                .Include(b => b.Comments)
-                    .ThenInclude(c => c.User)
+                // .Include(b => b.Comments)
+                    // .ThenInclude(c => c.User)
                 .Include(b => b.Author)
                 .ToListAsync();
         }

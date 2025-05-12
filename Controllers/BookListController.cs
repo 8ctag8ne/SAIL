@@ -34,13 +34,19 @@ namespace MilLib.Controllers
             return Ok(res);
         }
 
-        // [HttpGet("get-booklists/{userId}")]
-        // public async Task<IActionResult> GetBookListsForUser([FromRoute] string userId)
-        // {
-        //     var bookLists = await _bookListRepository.GetAllWithBooksAsync();
-        //     var res = bookLists.Where(bl => bl.UserId == userId).Select(b => b.toBookListDto());
-        //     return Ok(res);
-        // }
+        [HttpGet("get-booklists/{userId}")]
+        public async Task<IActionResult> GetBookListsForUser([FromRoute] string userId)
+        {
+            var bookLists = await _bookListRepository.GetAllWithBooksAsync();
+            var res = bookLists.Where(bl => bl.UserId == userId).Select(b => b.toBookListDto());
+            var currentUser = await _userManager.FindByNameAsync(User.GetUsername());
+            var currentUserId = currentUser?.Id;
+            if(User.Identity?.IsAuthenticated == false || (!User.IsInRole("Admin") && currentUserId != userId))
+            {
+                res = res.Where(bl => (bool)!bl.IsPrivate);
+            }
+            return Ok(res);
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
