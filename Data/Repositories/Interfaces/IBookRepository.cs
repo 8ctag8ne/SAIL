@@ -18,5 +18,6 @@ namespace MilLib.Repositories.Interfaces
         Task DeleteAsync(Book book);
         Task<List<Book>> GetByIdsAsync(List<int> Ids);
         Task<List<Book>> GetByIdsWithDetailsAsync(List<int> Ids);
+        Task<List<int>> GetUserBookListIdsAsync(string userId, int bookId);
     }
 }

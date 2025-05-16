@@ -47,6 +47,8 @@ namespace MilLib.Repositories.Implementations
                     : booksQuery.OrderBy(b => b.Title);
             }
 
+            booksQuery = booksQuery.OrderByDescending(b => b.Id); //сортування у зворотньому порядку (відображення нових книг спочатку)
+
             var totalItems = await booksQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)query.PageSize);
 
@@ -69,6 +71,15 @@ namespace MilLib.Repositories.Implementations
                 TotalPages = totalPages,
                 CurrentPage = currentPage
             };
+        }
+
+        public async Task<List<int>> GetUserBookListIdsAsync(string userId, int bookId)
+        {
+            return await _context.BookListBooks
+            .Include(ubl => ubl.BookList)
+                .Where(ubl => ubl.BookList != null && ubl.BookList.UserId == userId && ubl.BookId == bookId && ubl.BookListId != null)
+                .Select(ubl => ubl.BookListId.Value)
+                .ToListAsync();
         }
 
         public async Task<Book?> GetByIdAsync(int id)

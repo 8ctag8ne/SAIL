@@ -229,5 +229,38 @@ namespace MilLib.Controllers
 
             return Ok(bookDtos);
         }
+
+        [HttpGet("{bookId}/user-booklists")]
+        [Authorize]
+        public async Task<ActionResult<List<int>>> GetBookListIdsForBook(int bookId)
+        {
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if(user == null)
+            {
+                return Unauthorized();
+            }
+            var userId = user.Id;
+            var listIds = await _bookRepository.GetUserBookListIdsAsync(userId, bookId);
+            return Ok(listIds);
+        }
+
+        [HttpGet("{id}/download")]
+        public async Task<IActionResult> DownloadBook(int id)
+        {
+            var book = await _bookRepository.GetByIdWithDetailsAsync(id);
+            if (book == null || string.IsNullOrWhiteSpace(book.FileUrl))
+                return NotFound("Book or file not found");
+
+            try
+            {
+                var (fileContent, contentType, fileName) = await _fileService.GetBookFileAsync(book.FileUrl, book.Title, book.Author.Name);
+                return File(fileContent, contentType, fileName);
+            }
+            catch (FileServiceException ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

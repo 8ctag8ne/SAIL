@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.StaticFiles;
 using MilLib.Services.Interfaces;
+using System.Net.Mime;
 
 namespace MilLib.Services.Implementations
 {
@@ -88,6 +90,29 @@ namespace MilLib.Services.Implementations
 
             return $"{request.Scheme}://{request.Host}{request.PathBase}/{relativePath.TrimStart('/')}";
         }
+
+        public async Task<(byte[] FileContent, string ContentType, string DownloadFileName)> GetBookFileAsync(string relativePath, string title, string authorFullName)
+        {
+            if (string.IsNullOrEmpty(relativePath))
+                throw new ArgumentException("File path is null or empty");
+
+            var fullPath = Path.Combine(_environment.WebRootPath, relativePath.TrimStart('/'));
+            if (!File.Exists(fullPath))
+                throw new FileServiceException($"File not found: {relativePath}");
+
+            var fileContent = await File.ReadAllBytesAsync(fullPath);
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(fullPath, out var contentType))
+            {
+                contentType = "application/octet-stream"; // дефолтний MIME, якщо не вдалося визначити
+            }
+            var safeTitle = string.Join("_", title.Split(Path.GetInvalidFileNameChars()));
+            var safeAuthor = string.Join("_", authorFullName.Split(Path.GetInvalidFileNameChars()));
+            var fileName = $"{safeTitle} ({safeAuthor}){Path.GetExtension(fullPath)}";
+
+            return (fileContent, contentType, fileName);
+        }
+
     }
 
 // Custom exception for file service errors

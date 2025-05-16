@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.BookList;
+using MilLib.Models.Entities;
 using MilLib.Repositories.Interfaces;
 using MilLib.Services.Interfaces;
 
@@ -39,11 +40,19 @@ namespace MilLib.Controllers
         {
             var bookLists = await _bookListRepository.GetAllWithBooksAsync();
             var res = bookLists.Where(bl => bl.UserId == userId).Select(b => b.toBookListDto());
-            var currentUser = await _userManager.FindByNameAsync(User.GetUsername());
-            var currentUserId = currentUser?.Id;
-            if(User.Identity?.IsAuthenticated == false || (!User.IsInRole("Admin") && currentUserId != userId))
+            var username = User.GetUsername();
+            if(username == null)
             {
                 res = res.Where(bl => (bool)!bl.IsPrivate);
+            }
+            else
+            {
+                var currentUser = await _userManager.FindByNameAsync(User.GetUsername());
+                var currentUserId = currentUser?.Id;
+                if(!User.IsInRole("Admin") && currentUserId != userId)
+                {
+                    res = res.Where(bl => (bool)!bl.IsPrivate);
+                }
             }
             return Ok(res);
         }
@@ -123,6 +132,70 @@ namespace MilLib.Controllers
 
             return Ok(bookList.toBookListDto());
         }
+
+        [HttpPost("add-book")]
+        [Authorize]
+        public async Task<IActionResult> AddBookToLists([FromBody] AddBookToListsDto dto)
+        {
+            var book = await _bookRepository.GetByIdAsync(dto.BookId);
+            if (book == null)
+            {
+                return NotFound($"Book with id {dto.BookId} not found.");
+            }
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            foreach (var listId in dto.BookListIds)
+            {
+                var bookList = await _bookListRepository.GetByIdWithBooksAsync(listId);
+                if (bookList == null)
+                    continue;
+
+                if (!bookList.Books.Any(b => b.BookId == dto.BookId) && user.Id ==bookList.UserId)
+                {
+                    bookList.Books.Add(new BookListBook
+                    {
+                        BookId = dto.BookId,
+                        BookListId = listId
+                    });
+                }
+            }
+
+            await _bookListRepository.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpDelete("remove-book")]
+        [Authorize]
+        public async Task<IActionResult> RemoveBookFromList([FromQuery] int bookId, [FromQuery] int listId)
+        {
+            var bookList = await _bookListRepository.GetByIdWithBooksAsync(listId);
+            if (bookList == null)
+            {
+                return NotFound();
+            }
+
+            var username = User.GetUsername();
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var entry = bookList.Books.FirstOrDefault(b => b.BookId == bookId);
+            if (entry != null && user.Id == bookList.UserId)
+            {
+                bookList.Books.Remove(entry);
+                await _bookListRepository.SaveChangesAsync();
+            }
+
+            return NoContent();
+        }
+
 
         [HttpDelete("{id}")]
         [Authorize]
