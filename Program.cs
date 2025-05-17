@@ -108,7 +108,8 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ILikeRepository, LikeRepository>();
-builder.Services.AddScoped<IPdfRenderService, PdfRenderService>();
+builder.Services.AddScoped<IPdfRenderService, PdfService>();
+builder.Services.AddScoped<IPdfTextExtractorService, PdfService>();
 builder.Services.AddScoped<IOcrService, OcrService>();
 
 

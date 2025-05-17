@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using api.Models.DTOs.PDFFile;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -16,10 +17,13 @@ namespace MilLib.Controllers
         private readonly IPdfRenderService _pdfRenderService;
         private readonly IOcrService _ocrService;
 
-        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService)
+        private readonly IPdfTextExtractorService _pdfTextExtractor;
+
+        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor)
         {
             _ocrService = ocrService;
             _pdfRenderService = pdfRenderService;
+            _pdfTextExtractor = pdfTextExtractor;
         }
 
         [HttpPost("render-first-page")]
@@ -36,7 +40,7 @@ namespace MilLib.Controllers
 
             try
             {
-                // Рендеримо першу сторінку з DPI 300
+                // Рендеримо першу сторінку з DPI 50
                 using var image = await _pdfRenderService.RenderPageAsync(pdfBytes, 0, 50);
                 
                 // Конвертуємо у PNG
@@ -65,9 +69,40 @@ namespace MilLib.Controllers
         [HttpPost("ocr")]
         public async Task<IActionResult> ExtractText([FromForm] OcrRequestDto dto)
         {
-            using var stream = dto.PdfFile.OpenReadStream();
-            var text = await _ocrService.ExtractTextAsync(stream, dto.PageCount);
-            return Ok(text);
+            try
+            {
+                var file = dto.PdfFile;
+                if (file == null || file.Length == 0)
+                    return BadRequest("PDF file is required.");
+
+                // // Читання PDF
+                using var stream = file.OpenReadStream();
+                var pdfBytes = await ReadAllBytesAsync(stream);
+
+                // Спроба витягти текст через PDF Text Extractor
+                var pdfText = _pdfTextExtractor.ExtractText(pdfBytes, dto.PageCount);
+                if (IsTextValid(pdfText))
+                    return Ok(pdfText);
+
+                // // Якщо текст невалідний — використовуємо OCR з DPI=300
+                using var ocrStream = file.OpenReadStream();
+                var ocrText = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
+                return Ok(ocrText);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("OCR processing failed: " + ex.Message);
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+        private bool IsTextValid(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return false;
+
+            // Приклад перевірки: мінімум 50 слів довжиною від 3 літер
+            var wordMatches = Regex.Matches(text, @"\b\w{3,}\b");
+            return wordMatches.Count >= 50;
         }
     }
 }

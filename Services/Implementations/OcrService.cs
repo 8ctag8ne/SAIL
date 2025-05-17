@@ -24,10 +24,11 @@ namespace MilLib.Services.Implementations
             _pdfRenderService = pdfRenderService;
             _engine = new TesseractEngine(
                 Path.Combine(AppContext.BaseDirectory, "tessdata"),
-                "ukr+eng", 
+                "ukr+eng",
                 EngineMode.LstmOnly
             );
             _engine.DefaultPageSegMode = PageSegMode.Auto;
+            _disposed = false;
         }
 
         public void Dispose()
@@ -42,7 +43,7 @@ namespace MilLib.Services.Implementations
         {
             var pdfBytes = await ReadAllBytesAsync(pdfStream);
             using var docReader = DocLib.Instance.GetDocReader(pdfBytes, new PageDimensions(1, 1));
-            
+
             pageCount = Math.Min(pageCount, docReader.GetPageCount());
             var result = new StringBuilder();
 
