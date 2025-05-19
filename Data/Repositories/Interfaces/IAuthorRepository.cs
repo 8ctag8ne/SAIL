@@ -1,3 +1,4 @@
+using MilLib.Models.DTOs.Author;
 using MilLib.Models.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,5 +15,6 @@ namespace MilLib.Repositories.Interfaces
         void Remove(Author author);
         Task<bool> ExistsAsync(int id);
         Task SaveChangesAsync();
+        Task<IEnumerable<AuthorSimpleDto>> GetAllSimpleAsync();
     }
 }

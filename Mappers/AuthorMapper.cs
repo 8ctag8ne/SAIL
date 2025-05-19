@@ -21,6 +21,14 @@ namespace MilLib.Mappers
                 Books = author.Books.Select(a => a.toBookDto()).ToList(),
             };
         }
+        public static AuthorSimpleDto toSimpleDto(this Author author)
+        {
+            return new AuthorSimpleDto
+            {
+                Id = author.Id,
+                Name = author.Name,
+            };
+        }
 
         public static Author toAuthorFromCreateDto(this AuthorCreateDto author)
         {

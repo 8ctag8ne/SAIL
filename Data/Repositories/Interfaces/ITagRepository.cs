@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MilLib.Models.DTOs.Tag;
 using MilLib.Models.Entities;
 
 namespace MilLib.Repositories.Interfaces
@@ -7,6 +8,7 @@ namespace MilLib.Repositories.Interfaces
     public interface ITagRepository
     {
         Task<IEnumerable<Tag>> GetAllWithBooksAsync();
+        Task<IEnumerable<TagSimpleDto>> GetAllSimpleAsync();
         Task<Tag> GetByIdWithBooksAsync(int id);
         Task<Tag> GetByIdAsync(int id);
         Task AddAsync(Tag tag);

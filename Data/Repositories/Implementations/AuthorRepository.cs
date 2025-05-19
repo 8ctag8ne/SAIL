@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using MilLib.Mappers;
+using MilLib.Models.DTOs.Author;
 using MilLib.Models.Entities;
 using MilLib.Repositories.Interfaces;
 using System.Collections.Generic;
@@ -20,6 +22,10 @@ namespace MilLib.Repositories
             return await _context.Authors
                 .Include(a => a.Books)
                 .ToListAsync();
+        }
+        public async Task<IEnumerable<AuthorSimpleDto>> GetAllSimpleAsync()
+        {
+            return await _context.Authors.Select(a => a.toSimpleDto()).ToListAsync();
         }
 
         public async Task<Author?> GetByIdWithBooksAsync(int id)

@@ -4,6 +4,7 @@ using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Models.DTOs.Pdf;
+using MilLib.Repositories.Interfaces;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
 using SixLabors.ImageSharp.Formats.Png;
@@ -16,14 +17,20 @@ namespace MilLib.Controllers
     {
         private readonly IPdfRenderService _pdfRenderService;
         private readonly IOcrService _ocrService;
-
         private readonly IPdfTextExtractorService _pdfTextExtractor;
+        private readonly IBookInfoAnalyzerService _bookInfoAnalyzer;
 
-        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor)
+        private readonly IAuthorRepository _authorRepository;
+        private readonly ITagRepository _tagRepository;
+
+        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorRepository authorRepository, ITagRepository tagRepository)
         {
             _ocrService = ocrService;
             _pdfRenderService = pdfRenderService;
             _pdfTextExtractor = pdfTextExtractor;
+            _bookInfoAnalyzer = bookInfoAnalyzer;
+            _authorRepository = authorRepository;
+            _tagRepository = tagRepository;
         }
 
         [HttpPost("render-first-page")]
@@ -42,11 +49,11 @@ namespace MilLib.Controllers
             {
                 // Рендеримо першу сторінку з DPI 50
                 using var image = await _pdfRenderService.RenderPageAsync(pdfBytes, 0, 50);
-                
+
                 // Конвертуємо у PNG
                 using var ms = new MemoryStream();
                 await image.SaveAsync(ms, new PngEncoder());
-                
+
                 return File(ms.ToArray(), "image/png");
             }
             catch (ArgumentOutOfRangeException ex)
@@ -103,6 +110,51 @@ namespace MilLib.Controllers
             // Приклад перевірки: мінімум 50 слів довжиною від 3 літер
             var wordMatches = Regex.Matches(text, @"\b\w{3,}\b");
             return wordMatches.Count >= 50;
+        }
+
+        [HttpPost("analyze-book")]
+        // [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> AnalyzeBookAsync([FromForm] OcrRequestDto dto)
+        {
+            try
+            {
+                var file = dto.PdfFile;
+                if (file == null || file.Length == 0)
+                    return BadRequest("PDF file is required.");
+
+                // Зчитування PDF
+                using var stream = file.OpenReadStream();
+                var pdfBytes = await ReadAllBytesAsync(stream);
+
+                // Спроба витягнути текст як searchable
+                var text = _pdfTextExtractor.ExtractText(pdfBytes, dto.PageCount);
+                if (!IsTextValid(text))
+                {
+                    // Якщо текст невалідний — виконуємо OCR
+                    using var ocrStream = file.OpenReadStream();
+                    text = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
+                }
+
+                if (!IsTextValid(text))
+                    return BadRequest("Не вдалося витягнути достатньо тексту для аналізу.");
+
+
+                var tags = await _tagRepository.GetAllSimpleAsync();
+                var authors = await _authorRepository.GetAllSimpleAsync();
+
+                var result = await _bookInfoAnalyzer.AnalyzeBookInfoAsync(text, tags, authors);
+                if (result.StartsWith("```json"))
+                {
+                    result = result.Substring(7);
+                }
+                result = result.TrimEnd('`');
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("AnalyzeBook failed: " + ex.Message);
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
         }
     }
 }

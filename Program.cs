@@ -4,6 +4,9 @@ using api.Data.Repositories.Interfaces;
 using api.Models.Entities;
 using api.Services.Implementations;
 using api.Services.Interfaces;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.AIPlatform.V1;
+using Grpc.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +17,7 @@ using MilLib.Repositories.Implementations;
 using MilLib.Repositories.Interfaces;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
+using Mscc.GenerativeAI.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -111,6 +115,26 @@ builder.Services.AddScoped<ILikeRepository, LikeRepository>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
 builder.Services.AddScoped<IPdfTextExtractorService, PdfService>();
 builder.Services.AddScoped<IOcrService, OcrService>();
+// Реєстрація PredictionServiceClient через JSON-ключ
+builder.Services.AddScoped<PredictionServiceClient>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var location = config["Gemini:Location"] ?? "us-central1";
+    var jsonPath = config["Gemini:JsonKeyPath"]!;
+
+    var credential = GoogleCredential
+        .FromFile(jsonPath)
+        .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+
+    return new PredictionServiceClientBuilder
+    {
+        Endpoint = $"{location}-aiplatform.googleapis.com",
+        ChannelCredentials = credential.ToChannelCredentials()
+    }.Build();
+});
+
+// Реєстрація сервісу з інтерфейсом
+builder.Services.AddScoped<IBookInfoAnalyzerService, GeminiVertexAiService>();
 
 
 var app = builder.Build();
