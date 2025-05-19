@@ -82,21 +82,34 @@ namespace MilLib.Controllers
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Create([FromForm] BookCreateDto bookDto)
         {
-            if (!await _bookRepository.AuthorExistsAsync(bookDto.AuthorId))
+            if (bookDto.AuthorIds == null || bookDto.AuthorIds.Count == 0)
             {
-                return BadRequest("Author does not exist");
+                return BadRequest("Authors are required");
+            }
+
+            var missingAuthors = await _bookRepository.GetMissingAuthorIdsAsync(bookDto.AuthorIds);
+            if (missingAuthors.Any())
+            {
+                return BadRequest($"Authors not found: {string.Join(", ", missingAuthors)}");
             }
 
             if (await _bookRepository.TitleExistsAsync(bookDto.Title))
-            {
-                return BadRequest("Book with this title already exists");
-            }
+                {
+                    return BadRequest("Book with this title already exists");
+                }
 
             var book = bookDto.toBookFromCreateDto();
             book.ImageUrl = await _fileService.UploadAsync(bookDto.Image, "Books/Images");
             book.FileUrl = await _fileService.UploadAsync(bookDto.File, "Books/Files");
 
+            foreach (var authorId in bookDto.AuthorIds)
+            {
+                book.Authors.Add(new AuthorBook { AuthorId = authorId, Book = book });
+            }
+
             await _bookRepository.AddAsync(book, bookDto.TagIds);
+            book = await _bookRepository.GetByIdWithDetailsAsync(book.Id);
+
 
             return CreatedAtAction(nameof(GetById), new { id = book.Id }, book.toBookDto());
         }
@@ -105,7 +118,7 @@ namespace MilLib.Controllers
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromForm] BookUpdateDto bookDto)
         {
-            var book = await _bookRepository.GetByIdAsync(id);
+            var book = await _bookRepository.GetByIdWithDetailsAsync(id);
             if (book == null) return NotFound();
 
             if (book.Title == bookDto.Title)
@@ -120,8 +133,6 @@ namespace MilLib.Controllers
             {
                 book.Title = bookDto.Title;
             }
-
-            book.AuthorId = bookDto.AuthorId;
 
             book.Info = bookDto.Info;
 
@@ -143,7 +154,10 @@ namespace MilLib.Controllers
                 book.FileUrl = await _fileService.UploadAsync(bookDto.File, "Books/Files");
             }
 
-            await _bookRepository.UpdateAsync(book, bookDto.TagIds);
+            // Передаємо і теги, і авторів у репозиторій
+            await _bookRepository.UpdateAsync(book, bookDto.TagIds, bookDto.AuthorIds);
+
+            book = await _bookRepository.GetByIdWithDetailsAsync(id);
 
             return Ok(book.toBookDto());
         }
@@ -254,7 +268,9 @@ namespace MilLib.Controllers
 
             try
             {
-                var (fileContent, contentType, fileName) = await _fileService.GetBookFileAsync(book.FileUrl, book.Title, book.Author.Name);
+                // Формуємо список імен авторів
+                var authorNames = string.Join(", ", book.Authors.Select(ab => ab.Author.Name));
+                var (fileContent, contentType, fileName) = await _fileService.GetBookFileAsync(book.FileUrl, book.Title, authorNames);
                 return File(fileContent, contentType, fileName);
             }
             catch (FileServiceException ex)

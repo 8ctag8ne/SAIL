@@ -22,7 +22,8 @@ namespace MilLib.Repositories.Implementations
             var booksQuery = _context.Books
                 .Include(b => b.Tags)
                     .ThenInclude(bt => bt.Tag)
-                .Include(b => b.Author)
+                .Include(b => b.Authors)
+                    .ThenInclude(ab => ab.Author)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(query.Title))
@@ -37,7 +38,7 @@ namespace MilLib.Repositories.Implementations
 
             if (query.AuthorId != null)
             {
-                booksQuery = booksQuery.Where(b => b.AuthorId == query.AuthorId);
+                booksQuery = booksQuery.Where(b => b.Authors.Any(ab => ab.AuthorId == query.AuthorId));
             }
 
             if (!string.IsNullOrEmpty(query.SortBy) && query.SortBy.ToLower() == "title")
@@ -94,13 +95,23 @@ namespace MilLib.Repositories.Implementations
                     .ThenInclude(t => t.Tag)
                 .Include(b => b.Comments)
                     .ThenInclude(c => c.User)
-                .Include(b => b.Author)
+                .Include(b => b.Authors)
+                    .ThenInclude(ab => ab.Author)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
 
         public async Task<bool> TitleExistsAsync(string title)
         {
             return await _context.Books.AnyAsync(b => b.Title == title);
+        }
+
+        public async Task<List<int>> GetMissingAuthorIdsAsync(List<int> authorIds)
+        {
+            var existingIds = await _context.Authors
+                .Where(a => authorIds.Contains(a.Id))
+                .Select(a => a.Id)
+                .ToListAsync();
+            return authorIds.Except(existingIds).ToList();
         }
 
         public async Task<bool> AuthorExistsAsync(int authorId)
@@ -117,7 +128,7 @@ namespace MilLib.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Book book, List<int>? tagIds = null)
+        public async Task UpdateAsync(Book book, List<int>? tagIds = null, List<int>? authorIds = null)
         {
             if(tagIds != null)
             {
@@ -126,6 +137,17 @@ namespace MilLib.Repositories.Implementations
 
                 var tags = await _context.Tags.Where(t => tagIds.Contains(t.Id)).ToListAsync();
                 book.Tags = tags.Select(t => new BookTag { Book = book, Tag = t }).ToList();
+            }
+
+            if(authorIds != null)
+            {
+                var existingAuthorBooks = await _context.AuthorBooks.Where(ab => ab.BookId == book.Id).ToListAsync();
+                _context.AuthorBooks.RemoveRange(existingAuthorBooks);
+
+                foreach (var authorId in authorIds)
+                {
+                    book.Authors.Add(new AuthorBook { AuthorId = authorId, BookId = book.Id });
+                }
             }
 
             _context.Books.Update(book);
@@ -150,7 +172,8 @@ namespace MilLib.Repositories.Implementations
                     .ThenInclude(t => t.Tag)
                 // .Include(b => b.Comments)
                     // .ThenInclude(c => c.User)
-                .Include(b => b.Author)
+                .Include(b => b.Authors)
+                    .ThenInclude(ab => ab.Author)
                 .ToListAsync();
         }
     }

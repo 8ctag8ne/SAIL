@@ -21,6 +21,7 @@ namespace MilLib.Repositories
         {
             return await _context.Authors
                 .Include(a => a.Books)
+                    .ThenInclude(ab => ab.Book)
                 .ToListAsync();
         }
         public async Task<IEnumerable<AuthorSimpleDto>> GetAllSimpleAsync()
@@ -32,6 +33,7 @@ namespace MilLib.Repositories
         {
             return await _context.Authors
                 .Include(a => a.Books)
+                    .ThenInclude(ab => ab.Book)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 

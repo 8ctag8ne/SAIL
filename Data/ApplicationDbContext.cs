@@ -13,6 +13,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<Author> Authors { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<BookTag> BookTags {get; set;}
+    public DbSet<AuthorBook> AuthorBooks {get; set;}
     public DbSet<BookList> BookLists {get; set;}
     public DbSet<BookListBook> BookListBooks {get; set;}
     public DbSet<Comment> Comments {get; set;}
@@ -22,15 +23,11 @@ public class ApplicationDbContext : IdentityDbContext<User>
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Book>()
-            .HasOne(b => b.Author)
-            .WithMany(a => a.Books)
-            .HasForeignKey(b => b.AuthorId);
-
         modelBuilder.Entity<BookList>()
             .HasOne(b => b.User)
             .WithMany(a => a.BookLists)
-            .HasForeignKey(b => b.UserId);
+            .HasForeignKey(b => b.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<BookTag>()
             .HasKey(bt => new { bt.BookId, bt.TagId });
@@ -44,6 +41,19 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasOne(bt => bt.Tag)
             .WithMany(t => t.Books)
             .HasForeignKey(bt => bt.TagId);
+
+        modelBuilder.Entity<AuthorBook>()
+            .HasKey(bt => new { bt.BookId, bt.AuthorId });
+
+        modelBuilder.Entity<AuthorBook>()
+            .HasOne(bt => bt.Book)
+            .WithMany(b => b.Authors)
+            .HasForeignKey(bt => bt.BookId);
+
+        modelBuilder.Entity<AuthorBook>()
+            .HasOne(bt => bt.Author)
+            .WithMany(a => a.Books)
+            .HasForeignKey(bt => bt.AuthorId);
 
         modelBuilder.Entity<BookListBook>()
             .HasKey(bl => new { bl.BookId, bl.BookListId });

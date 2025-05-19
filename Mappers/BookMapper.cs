@@ -14,8 +14,6 @@ namespace MilLib.Mappers
             return new BookDto
             {
                 Id = book.Id,
-                AuthorId = book.AuthorId,
-                AuthorName = book.Author?.Name,
                 Title = book.Title,
                 ImageUrl = book.ImageUrl,
                 FileUrl = book.FileUrl,
@@ -24,6 +22,7 @@ namespace MilLib.Mappers
                 IsLiked = isLiked,
                 Tags = book.Tags.Select(bookTag => bookTag.Tag.toSimpleDto()).ToList(),
                 Comments = book.Comments.Select(c => c.toCommentDto()).ToList(),
+                Authors = book.Authors.Select(ab => ab.Author.toSimpleDto()).ToList(),
             };
         }
         public static BookSimpleDto toSimpleBookDto(this Book book)
@@ -40,7 +39,6 @@ namespace MilLib.Mappers
         {
             return new Book
             {
-                AuthorId = book.AuthorId,
                 Title = book.Title,
                 Info = book.Info,
                 LikesCount = 0,

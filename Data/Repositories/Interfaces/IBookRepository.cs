@@ -14,10 +14,11 @@ namespace MilLib.Repositories.Interfaces
         Task<bool> TitleExistsAsync(string title);
         Task<bool> AuthorExistsAsync(int authorId);
         Task AddAsync(Book book, List<int> tagIds);
-        Task UpdateAsync(Book book, List<int>? tagIds = null);
+        Task UpdateAsync(Book book, List<int>? tagIds = null, List<int>? authorIds = null);
         Task DeleteAsync(Book book);
         Task<List<Book>> GetByIdsAsync(List<int> Ids);
         Task<List<Book>> GetByIdsWithDetailsAsync(List<int> Ids);
         Task<List<int>> GetUserBookListIdsAsync(string userId, int bookId);
+        Task<List<int>> GetMissingAuthorIdsAsync(List<int> authorIds);
     }
 }

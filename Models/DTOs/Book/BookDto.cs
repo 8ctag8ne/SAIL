@@ -13,8 +13,7 @@ namespace MilLib.Models.DTOs.Book
     {
         public int Id {get; set;}
         public required string Title {get; set;}
-        public int AuthorId {get; set;}
-        public string? AuthorName {get; set;}
+        public List<AuthorSimpleDto> Authors {get; set;} = new List<AuthorSimpleDto>();
         public string? FileUrl {get; set;}
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}

@@ -17,7 +17,6 @@ using MilLib.Repositories.Implementations;
 using MilLib.Repositories.Interfaces;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
-using Mscc.GenerativeAI.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(options =>

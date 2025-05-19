@@ -63,8 +63,10 @@ namespace MilLib.Controllers
             if (author == null)
                 return NotFound();
 
-            author.Name = authorDto.Name;
-            author.Info = authorDto.Info;
+            if (authorDto.Name != null)
+                author.Name = authorDto.Name;
+            if (authorDto.Info != null)
+                author.Info = authorDto.Info;
 
             if (authorDto.Image != null && authorDto.Image.Length > 0)
             {
