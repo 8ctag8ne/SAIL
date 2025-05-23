@@ -71,7 +71,12 @@ namespace MilLib.Repositories
 
         public async Task<IEnumerable<TagSimpleDto>> GetAllSimpleAsync()
         {
-            return await _context.Tags.Select(t =>t.toSimpleDto()).ToListAsync();
+            return await _context.Tags.Select(t => t.toSimpleDto()).ToListAsync();
+        }
+        
+        public async Task<Tag?> GetByTitleAsync(string title)
+        {
+            return await _context.Tags.FirstOrDefaultAsync(t => t.Title == title);
         }
     }
 }

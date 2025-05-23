@@ -134,6 +134,7 @@ builder.Services.AddScoped<PredictionServiceClient>(provider =>
 
 // Реєстрація сервісу з інтерфейсом
 builder.Services.AddScoped<IBookInfoAnalyzerService, GeminiVertexAiService>();
+builder.Services.AddScoped<ICheatSheetService, GeminiVertexAiService>();
 
 
 var app = builder.Build();

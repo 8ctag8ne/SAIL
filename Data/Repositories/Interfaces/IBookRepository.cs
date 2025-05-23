@@ -20,5 +20,6 @@ namespace MilLib.Repositories.Interfaces
         Task<List<Book>> GetByIdsWithDetailsAsync(List<int> Ids);
         Task<List<int>> GetUserBookListIdsAsync(string userId, int bookId);
         Task<List<int>> GetMissingAuthorIdsAsync(List<int> authorIds);
+        Task<List<Book>> SearchByKeywords(List<string> keywords, int limit = 20);
     }
 }

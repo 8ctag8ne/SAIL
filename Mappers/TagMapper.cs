@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Models.DTOs.Tag;
 using MilLib.Models.DTOs.Tag;
 using MilLib.Models.Entities;
 
@@ -18,6 +19,15 @@ namespace MilLib.Mappers
                 ImageUrl = tag.ImageUrl,
                 Info = tag.Info,
                 Books = tag.Books.Select(bt => bt.Book.toSimpleBookDto()).ToList(),
+            };
+        }
+        public static TagDescriptiveDto toDescriptiveDto(this Tag tag)
+        {
+            return new TagDescriptiveDto
+            {
+                Id = tag.Id,
+                Title = tag.Title,
+                Info = tag.Info,
             };
         }
 

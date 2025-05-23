@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Models.DTOs.Book;
 using MilLib.Models.DTOs.Book;
 using MilLib.Models.Entities;
 
@@ -22,6 +23,18 @@ namespace MilLib.Mappers
                 IsLiked = isLiked,
                 Tags = book.Tags.Select(bookTag => bookTag.Tag.toSimpleDto()).ToList(),
                 Comments = book.Comments.Select(c => c.toCommentDto()).ToList(),
+                Authors = book.Authors.Select(ab => ab.Author.toSimpleDto()).ToList(),
+            };
+        }
+        public static BookDescriptiveDto toDescriptiveDto(this Book book, bool isLiked = false)
+        {
+            return new BookDescriptiveDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Info = book.Info,
+                LikesCount = book.LikesCount,
+                Tags = book.Tags.Select(bookTag => bookTag.Tag.toSimpleDto()).ToList(),
                 Authors = book.Authors.Select(ab => ab.Author.toSimpleDto()).ToList(),
             };
         }

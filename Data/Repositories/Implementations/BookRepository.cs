@@ -130,7 +130,7 @@ namespace MilLib.Repositories.Implementations
 
         public async Task UpdateAsync(Book book, List<int>? tagIds = null, List<int>? authorIds = null)
         {
-            if(tagIds != null)
+            if (tagIds != null)
             {
                 var existingBookTags = await _context.BookTags.Where(bt => bt.BookId == book.Id).ToListAsync();
                 _context.BookTags.RemoveRange(existingBookTags);
@@ -139,7 +139,7 @@ namespace MilLib.Repositories.Implementations
                 book.Tags = tags.Select(t => new BookTag { Book = book, Tag = t }).ToList();
             }
 
-            if(authorIds != null)
+            if (authorIds != null)
             {
                 var existingAuthorBooks = await _context.AuthorBooks.Where(ab => ab.BookId == book.Id).ToListAsync();
                 _context.AuthorBooks.RemoveRange(existingAuthorBooks);
@@ -171,10 +171,23 @@ namespace MilLib.Repositories.Implementations
                 .Include(b => b.Tags)
                     .ThenInclude(t => t.Tag)
                 // .Include(b => b.Comments)
-                    // .ThenInclude(c => c.User)
+                // .ThenInclude(c => c.User)
                 .Include(b => b.Authors)
                     .ThenInclude(ab => ab.Author)
                 .ToListAsync();
+        }
+        public async Task<List<Book>> SearchByKeywords(List<string> keywords, int limit = 20)
+        {
+            var books = await _context.Books
+                .Include(b => b.Tags)
+                    .ThenInclude(bt => bt.Tag)
+                .Include(b => b.Authors)
+                    .ThenInclude(ab => ab.Author)
+                .Where(b => keywords.Any(k => b.Title.Contains(k) || b.Info.Contains(k)))
+                .Take(limit)
+                .ToListAsync();
+
+            return books;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using api.Models.DTOs;
 using api.Models.DTOs.PDFFile;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -22,8 +23,9 @@ namespace MilLib.Controllers
 
         private readonly IAuthorRepository _authorRepository;
         private readonly ITagRepository _tagRepository;
+        private readonly ICheatSheetService _cheatSheetService;
 
-        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorRepository authorRepository, ITagRepository tagRepository)
+        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorRepository authorRepository, ITagRepository tagRepository, ICheatSheetService cheatSheetService)
         {
             _ocrService = ocrService;
             _pdfRenderService = pdfRenderService;
@@ -31,6 +33,7 @@ namespace MilLib.Controllers
             _bookInfoAnalyzer = bookInfoAnalyzer;
             _authorRepository = authorRepository;
             _tagRepository = tagRepository;
+            _cheatSheetService = cheatSheetService;
         }
 
         [HttpPost("render-first-page")]
@@ -154,6 +157,21 @@ namespace MilLib.Controllers
             {
                 Console.WriteLine("AnalyzeBook failed: " + ex.Message);
                 return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("search-by-request")]
+        public async Task<IActionResult> GetCheatSheet([FromBody] string userRequest)
+        {
+            try
+            {
+                var cheatSheet = await _cheatSheetService.GenerateCheatSheet(userRequest);
+                return Ok(cheatSheet);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("GetCheatSheet failed: " + ex.Message);
+                throw;
             }
         }
     }

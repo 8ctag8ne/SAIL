@@ -20,16 +20,18 @@ namespace MilLib.Controllers
     {
         private readonly IBookRepository _bookRepository;
         private readonly ILikeRepository _likeRepository;
+        private readonly ITagRepository _tagRepository;
         private readonly IFileService _fileService;
 
         private readonly UserManager<User> _userManager;
 
-        public BookController(IBookRepository bookRepository, IFileService fileService, UserManager<User> userManager, ILikeRepository likeRepository)
+        public BookController(IBookRepository bookRepository, IFileService fileService, UserManager<User> userManager, ILikeRepository likeRepository, ITagRepository tagRepository)
         {
             _bookRepository = bookRepository;
             _fileService = fileService;
             _userManager = userManager;
             _likeRepository = likeRepository;
+            _tagRepository = tagRepository;
         }
 
         [HttpGet]
@@ -83,20 +85,37 @@ namespace MilLib.Controllers
         public async Task<IActionResult> Create([FromForm] BookCreateDto bookDto)
         {
             if (bookDto.AuthorIds == null || bookDto.AuthorIds.Count == 0)
-            {
                 return BadRequest("Authors are required");
-            }
 
             var missingAuthors = await _bookRepository.GetMissingAuthorIdsAsync(bookDto.AuthorIds);
             if (missingAuthors.Any())
-            {
                 return BadRequest($"Authors not found: {string.Join(", ", missingAuthors)}");
-            }
 
             if (await _bookRepository.TitleExistsAsync(bookDto.Title))
+                return BadRequest("Book with this title already exists");
+
+            // Додаємо нові теги, якщо вони є
+            var allTagIds = new List<int>(bookDto.TagIds ?? new List<int>());
+            if (bookDto.NewTagTitles != null && bookDto.NewTagTitles.Any())
+            {
+                foreach (var tagTitle in bookDto.NewTagTitles.Where(t => !string.IsNullOrWhiteSpace(t)))
                 {
-                    return BadRequest("Book with this title already exists");
+                    var normalizedTitle = tagTitle.Trim();
+                    // Перевіряємо, чи вже існує тег з такою назвою
+                    var existingTag = await _tagRepository.GetByTitleAsync(normalizedTitle);
+                    if (existingTag != null)
+                    {
+                        allTagIds.Add(existingTag.Id);
+                    }
+                    else
+                    {
+                        var newTag = new Tag { Title = normalizedTitle };
+                        await _tagRepository.AddAsync(newTag);
+                        await _tagRepository.SaveChangesAsync();
+                        allTagIds.Add(newTag.Id);
+                    }
                 }
+            }
 
             var book = bookDto.toBookFromCreateDto();
             book.ImageUrl = await _fileService.UploadAsync(bookDto.Image, "Books/Images");
@@ -107,9 +126,8 @@ namespace MilLib.Controllers
                 book.Authors.Add(new AuthorBook { AuthorId = authorId, Book = book });
             }
 
-            await _bookRepository.AddAsync(book, bookDto.TagIds);
+            await _bookRepository.AddAsync(book, allTagIds);
             book = await _bookRepository.GetByIdWithDetailsAsync(book.Id);
-
 
             return CreatedAtAction(nameof(GetById), new { id = book.Id }, book.toBookDto());
         }
@@ -125,42 +143,54 @@ namespace MilLib.Controllers
                 bookDto.Title = null;
 
             if (bookDto.Title is not null && await _bookRepository.TitleExistsAsync(bookDto.Title))
-            {
                 return BadRequest("Book with this title already exists");
-            }
 
             if (!bookDto.Title.IsNullOrEmpty())
-            {
                 book.Title = bookDto.Title;
-            }
 
             book.Info = bookDto.Info;
 
             if (bookDto.Image != null && bookDto.Image.Length > 0)
             {
                 if (book.ImageUrl != null)
-                {
                     await _fileService.DeleteAsync(book.ImageUrl);
-                }
                 book.ImageUrl = await _fileService.UploadAsync(bookDto.Image, "Books/Images");
             }
 
             if (bookDto.File != null && bookDto.File.Length > 0)
             {
                 if (book.FileUrl != null)
-                {
                     await _fileService.DeleteAsync(book.FileUrl);
-                }
                 book.FileUrl = await _fileService.UploadAsync(bookDto.File, "Books/Files");
             }
 
-            // Передаємо і теги, і авторів у репозиторій
-            await _bookRepository.UpdateAsync(book, bookDto.TagIds, bookDto.AuthorIds);
+            // Додаємо нові теги, якщо вони є
+            var allTagIds = new List<int>(bookDto.TagIds ?? new List<int>());
+            if (bookDto.NewTagTitles != null && bookDto.NewTagTitles.Any())
+            {
+                foreach (var tagTitle in bookDto.NewTagTitles.Where(t => !string.IsNullOrWhiteSpace(t)))
+                {
+                    var normalizedTitle = tagTitle.Trim();
+                    var existingTag = await _tagRepository.GetByTitleAsync(normalizedTitle);
+                    if (existingTag != null)
+                    {
+                        allTagIds.Add(existingTag.Id);
+                    }
+                    else
+                    {
+                        var newTag = new Tag { Title = normalizedTitle };
+                        await _tagRepository.AddAsync(newTag);
+                        await _tagRepository.SaveChangesAsync();
+                        allTagIds.Add(newTag.Id);
+                    }
+                }
+            }
 
-            book = await _bookRepository.GetByIdWithDetailsAsync(id);
+        await _bookRepository.UpdateAsync(book, allTagIds, bookDto.AuthorIds);
+        book = await _bookRepository.GetByIdWithDetailsAsync(id);
 
-            return Ok(book.toBookDto());
-        }
+        return Ok(book.toBookDto());
+    }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin,Librarian")]

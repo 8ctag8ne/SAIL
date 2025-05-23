@@ -17,5 +17,6 @@ namespace MilLib.Repositories.Interfaces
         Task<IEnumerable<BookTag>> GetBookTagsByTagIdAsync(int tagId);
         Task RemoveBookTagsRangeAsync(IEnumerable<BookTag> bookTags);
         Task SaveChangesAsync();
+        Task<Tag?> GetByTitleAsync(string title);
     }
 }
