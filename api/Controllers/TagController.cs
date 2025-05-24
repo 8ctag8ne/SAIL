@@ -12,6 +12,8 @@ using MilLib.Models.Entities;
 using MilLib.Services.Interfaces;
 using MilLib.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using MilLib.Helpers;
+using api.Models.Entities;
 
 namespace MilLib.Controllers
 {
@@ -31,11 +33,19 @@ namespace MilLib.Controllers
         }
         
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] TagQueryObject query)
         {
-            var tags = await _tagRepository.GetAllWithBooksAsync();
-            var res = tags.Select(a => a.toTagDto());
-            return Ok(res);
+            var result = await _tagRepository.GetAllAsync(query);
+            
+            var dtoResult = new PaginatedResult<TagDto>
+            {
+                Items = result.Items.Select(t => t.toTagDto()).ToList(),
+                TotalItems = result.TotalItems,
+                TotalPages = result.TotalPages,
+                CurrentPage = result.CurrentPage
+            };
+            
+            return Ok(dtoResult);
         }
         
         [HttpGet("{id}")]

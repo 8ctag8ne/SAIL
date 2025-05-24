@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using MilLib.Helpers;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.Tag;
 using MilLib.Models.Entities;
@@ -73,10 +75,61 @@ namespace MilLib.Repositories
         {
             return await _context.Tags.Select(t => t.toSimpleDto()).ToListAsync();
         }
-        
+
         public async Task<Tag?> GetByTitleAsync(string title)
         {
             return await _context.Tags.FirstOrDefaultAsync(t => t.Title == title);
+        }
+        
+        public async Task<PaginatedResult<Tag>> GetAllAsync(TagQueryObject query)
+        {
+            var tagsQuery = _context.Tags
+                .Include(t => t.Books)
+                .ThenInclude(bt => bt.Book)
+                .AsQueryable();
+
+            // Фільтрація
+            if (!string.IsNullOrEmpty(query.Title))
+            {
+                tagsQuery = tagsQuery.Where(t => t.Title.Contains(query.Title));
+            }
+
+            // Сортування
+            if (!string.IsNullOrEmpty(query.SortBy))
+            {
+                tagsQuery = query.SortBy.ToLower() switch
+                {
+                    "title" => query.IsDescenging 
+                        ? tagsQuery.OrderByDescending(t => t.Title) 
+                        : tagsQuery.OrderBy(t => t.Title),
+                    _ => tagsQuery
+                };
+            }
+            else
+            {
+                tagsQuery = tagsQuery.OrderByDescending(t => t.Id);
+            }
+
+            // Пагінація
+            var totalItems = await tagsQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)query.PageSize);
+            
+            var currentPage = query.PageNumber;
+            if (currentPage < 1) currentPage = 1;
+            else if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+
+            var items = await tagsQuery
+                .Skip(query.PageSize * (currentPage - 1))
+                .Take(query.PageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<Tag>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CurrentPage = currentPage
+            };
         }
     }
 }

@@ -1,3 +1,5 @@
+using api.Models.Entities;
+using MilLib.Helpers;
 using MilLib.Models.DTOs.Author;
 using MilLib.Models.Entities;
 using System.Collections.Generic;
@@ -16,5 +18,6 @@ namespace MilLib.Repositories.Interfaces
         Task<bool> ExistsAsync(int id);
         Task SaveChangesAsync();
         Task<IEnumerable<AuthorSimpleDto>> GetAllSimpleAsync();
+        Task<PaginatedResult<Author>> GetAllAsync(AuthorQueryObject query);
     }
 }

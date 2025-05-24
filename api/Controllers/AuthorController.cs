@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MilLib.Helpers;
 using MilLib.Mappers;
 using MilLib.Models.DTOs.Author;
 using MilLib.Models.Entities;
@@ -25,11 +27,19 @@ namespace MilLib.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] AuthorQueryObject query)
         {
-            var authors = await _authorRepository.GetAllWithBooksAsync();
-            var res = authors.Select(a => a.toAuthorDto());
-            return Ok(res);
+            var result = await _authorRepository.GetAllAsync(query);
+            
+            var dtoResult = new PaginatedResult<AuthorDto>
+            {
+                Items = result.Items.Select(a => a.toAuthorDto()).ToList(),
+                TotalItems = result.TotalItems,
+                TotalPages = result.TotalPages,
+                CurrentPage = result.CurrentPage
+            };
+            
+            return Ok(dtoResult);
         }
 
         [HttpGet("{id}")]

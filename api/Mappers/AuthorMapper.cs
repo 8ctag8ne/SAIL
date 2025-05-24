@@ -18,7 +18,7 @@ namespace MilLib.Mappers
                 Name = author.Name,
                 ImageUrl = author.ImageUrl,
                 Info = author.Info,
-                Books = author.Books.Select(ab => ab.Book.toBookDto()).ToList(),
+                Books = author.Books.Select(ab => ab.Book.toSimpleBookDto()).ToList(),
             };
         }
         public static AuthorSimpleDto toSimpleDto(this Author author)
