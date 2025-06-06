@@ -15,9 +15,9 @@ const getRoleIcon = (roles: string[]) => {
 };
 
 const getHighestRole = (roles: string[]): string => {
-  if (roles.includes("Admin")) return "Admin";
-  if (roles.includes("Librarian")) return "Librarian";
-  return "User";
+  if (roles.includes("Admin")) return "Адміністратор";
+  if (roles.includes("Librarian")) return "Бібліотекар";
+  return "Користувач";
 };
 
 type Props = {
@@ -38,7 +38,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
           <Typography variant="h6">{user.userName}</Typography>
           <Typography variant="body2" color="text.secondary">{user.email}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Role: <b>{getHighestRole(user.roles)}</b>
+            Роль: <b>{getHighestRole(user.roles)}</b>
           </Typography>
         </Box>
         {showEdit && isAdmin && (

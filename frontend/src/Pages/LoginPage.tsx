@@ -3,6 +3,7 @@ import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { login } from "../Api/Account";
 import { useAuth } from "../Contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ id: "", userName: "", password: "" });
@@ -16,7 +17,7 @@ export default function LoginPage() {
       doLogin(response.token, { id: response.id, username: response.userName, roles: response.roles });
       navigate("/");
     } catch (err) {
-      alert("Login failed");
+      toast.error("Логін не вдався. Перевірте ім'я користувача та пароль.");
     }
   };
 
@@ -39,24 +40,24 @@ export default function LoginPage() {
         }}
       >
         <Typography variant="h5" gutterBottom>
-          Login
+          Логін
         </Typography>
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Username"
+            label="Ім'я користувача"
             fullWidth
             margin="normal"
             onChange={(e) => setForm({ ...form, userName: e.target.value })}
           />
           <TextField
-            label="Password"
+            label="Пароль"
             type="password"
             fullWidth
             margin="normal"
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
           <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: 2 }}>
-            Login
+            Вхід
           </Button>
         </form>
         <Button
@@ -65,7 +66,7 @@ export default function LoginPage() {
           sx={{ marginTop: 2 }}
           onClick={() => navigate("/register")}
         >
-          Don't have an account? Register
+          Не маєте акаунту? Зареєструйтесь
         </Button>
       </Paper>
     </Box>

@@ -8,6 +8,7 @@ import BASE_URL from "../../config";
 import { useAuth } from "../../Contexts/AuthContext";
 import { deleteTag } from "../../Api/TagApi";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import { toast } from "react-fox-toast";
 
 type TagCardProps = {
   tag: Tag;
@@ -24,14 +25,14 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
 
   const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this tag?")) {
+    if (window.confirm("Ви впевнені, що хочете видалити цей тег?")) {
       try {
         await deleteTag(tag.id);
-        alert("Tag deleted successfully!");
+        toast.success("Тег видалений успішно!");
         navigate("/tags");
       } catch (error) {
         console.error("Failed to delete tag:", error);
-        alert("Failed to delete tag.");
+        toast.error("не вдалося видалити тег.");
       }
     }
   };
@@ -85,7 +86,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
           </Typography>
         )}
         <Typography variant="caption" color="text.secondary">
-          Books: {tag.books.length}
+          Книги: {tag.books.length}
         </Typography>
         {canEditOrDelete && (
           <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>

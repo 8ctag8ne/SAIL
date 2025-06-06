@@ -1,38 +1,41 @@
-import React, { useEffect, useState } from "react";
-import { Typography, CircularProgress, Box } from "@mui/material";
-import AuthorCard from "../Components/AuthorCard/AuthorCard";
-import { getAuthors } from "../Api/AuthorApi";
+import React from "react";
+import { Typography, Box } from "@mui/material";
 import PageContainer from "../Components/PageContainer/PageContainer";
-import { Author } from "../types";
+import AuthorsPageComponent from "../Components/AuthorsPageComponent/AuthorsPageComponent";
+import SearchBar from "../Components/SearchBar/SearchBar";
+import { useSearchParams } from "react-router-dom";
 
 const AuthorListPage: React.FC = () => {
-  const [authors, setAuthors] = useState<Author[]>([]);
-  const [loading, setLoading] = useState(true);
+    const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => {
-    getAuthors()
-      .then(setAuthors)
-      .finally(() => setLoading(false));
-  }, []);
+    const handleSearch = (query: string) => {
+        const newParams = new URLSearchParams();
+        if (query) newParams.set("title", query);
+        newParams.set("page", "1");
+        setSearchParams(newParams);
+    };
 
-  return (
-    <PageContainer>
-      <Typography variant="h4" gutterBottom>
-        Authors
-      </Typography>
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <Box sx={{ display: "flex", flexDirection: "column"}}>
-          {authors.map((author) => (
-            <Box key={author.id}>
-              <AuthorCard author={author} />
+    return (
+        <PageContainer>
+            <Box 
+                sx={{ 
+                    mb: 3, 
+                    width: "100%", 
+                    display: "flex", 
+                    justifyContent: "center" 
+                }}
+            >
+                <Box sx={{ width: "100%", maxWidth: 700 }}>
+                    <SearchBar
+                        placeholder="Пошук авторів..."
+                        onSearch={handleSearch}
+                        value={searchParams.get("title") || ""}
+                    />
+                </Box>
             </Box>
-          ))}
-        </Box>
-      )}
-    </PageContainer>
-  );
+            <AuthorsPageComponent />
+        </PageContainer>
+    );
 };
 
 export default AuthorListPage;

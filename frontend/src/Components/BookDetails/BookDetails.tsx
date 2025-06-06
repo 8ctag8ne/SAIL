@@ -24,6 +24,7 @@ import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 type BookDetailsProps = {
   title: string;
@@ -99,11 +100,11 @@ const BookDetails: React.FC<BookDetailsProps> = ({
     if (window.confirm("Are you sure you want to delete this book?")) {
       try {
         await deleteBook(Number(id));
-        alert("Book deleted successfully!");
+        toast.success("Book deleted successfully!");
         navigate("/");
       } catch (error) {
         console.error("Failed to delete book:", error);
-        alert("Failed to delete book.");
+        toast.error("Failed to delete book.");
       }
     }
   };
@@ -147,7 +148,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               target="_blank"
               sx={{ width: "100%" }}
             >
-              Read
+              Читати
             </Button>
             <Button
               variant="contained"
@@ -158,7 +159,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               href={`${BASE_URL}/api/book/${id}/download`}
               download
             >
-              Download
+              Завантажити
             </Button>
           </Box>
         )}
@@ -182,7 +183,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
       </Typography>
         {authors.length > 0 && (
           <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>
-            By{" "}
+            Авторство:{" "}
             {authors.map((a, idx) => (
               <span
                 key={a.id}

@@ -5,6 +5,7 @@ import { useAuth } from "../Contexts/AuthContext";
 import AuthorForm from "../Components/AuthorForm/AuthorForm";
 import ForbiddenPage from "./ForbiddenPage";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 const AuthorEditPage: React.FC = () => {
   const { user } = useAuth();
@@ -40,15 +41,15 @@ const AuthorEditPage: React.FC = () => {
       // Convert image: null to image: undefined to match AuthorUpdate type
       const fixedData = { ...data, image: data.image ?? undefined };
       await updateAuthor(Number(id), fixedData);
-      alert("Author updated successfully!");
+      toast.success("Автор оновлений успішно!");
       navigate(location.state?.from || "/authors");
     } catch (error) {
       console.error("Failed to update author:", error);
-      alert("Failed to update author.");
+      toast.error("Не вдалося оновити автора.");
     }
   };
 
-  if (!initialData) return <p>Loading...</p>;
+  if (!initialData) return <p>Завантаження...</p>;
 
   return <AuthorForm initialData={initialData} onSubmit={handleUpdateAuthor} />;
 };

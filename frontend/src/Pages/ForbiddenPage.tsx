@@ -20,10 +20,10 @@ const ForbiddenPage: React.FC = () => {
         403 Forbidden
       </Typography>
       <Typography variant="body1" gutterBottom>
-        You do not have permission to access this page.
+        Ви не маєте прав для доступу до цієї сторінки.
       </Typography>
       <Button variant="contained" color="primary" onClick={() => navigate("/")}>
-        Go to Home
+        Повернутися на головну
       </Button>
     </Box>
   );

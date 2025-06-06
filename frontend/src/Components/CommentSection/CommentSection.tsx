@@ -76,14 +76,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     return (
         <Box>
             <Typography variant="h5" gutterBottom>
-                Comments
+                Коментарі
             </Typography>
             {user && bookId && (
                 <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                     <TextField
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Add a comment..."
+                        placeholder="Додати коментар..."
                         size="small"
                         fullWidth
                         multiline
@@ -97,7 +97,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                         onClick={handleAddComment}
                         disabled={!newComment.trim()}
                     >
-                        Add
+                        Коментувати
                     </Button>
                 </Box>
             )}
@@ -119,7 +119,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                                 sx={{ cursor: "pointer", textDecoration: "underline", display: "inline-block" }}
                                 onClick={() => navigate(`/users/${comment.userId}`)}
                             >
-                                {comment.userName || "User"}
+                                {comment.userName || "Користувач"}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                                 {new Date(comment.createdAt).toLocaleString()}
@@ -142,7 +142,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                                             onClick={() => handleEditComment(comment.id)}
                                             disabled={!editingContent.trim()}
                                         >
-                                            Save
+                                            Зберегти
                                         </Button>
                                         <Button
                                             variant="outlined"
@@ -152,7 +152,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                                                 setEditingContent("");
                                             }}
                                         >
-                                            Cancel
+                                            Скасувати
                                         </Button>
                                     </Box>
                                 </Box>
@@ -187,7 +187,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                 ))
             ) : (
                 <Typography variant="body2" color="text.secondary">
-                    No comments yet.
+                    Коментарі відсутні.
                 </Typography>
             )}
             {/* Delete confirmation dialog */}
@@ -195,17 +195,17 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                 open={!!deleteDialogId}
                 onClose={() => setDeleteDialogId(null)}
             >
-                <DialogTitle>Delete Comment</DialogTitle>
+                <DialogTitle>Видалення коментаря</DialogTitle>
                 <DialogContent>
-                    <Typography>Are you sure you want to delete this comment?</Typography>
+                    <Typography>Ви впевнені, що хочете видалити цей коментар?</Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDeleteDialogId(null)}>Cancel</Button>
+                    <Button onClick={() => setDeleteDialogId(null)}>Скасувати</Button>
                     <Button
                         color="error"
                         onClick={() => deleteDialogId && handleDeleteComment(deleteDialogId)}
                     >
-                        Delete
+                        Видалити
                     </Button>
                 </DialogActions>
             </Dialog>

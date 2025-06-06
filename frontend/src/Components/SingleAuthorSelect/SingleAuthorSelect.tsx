@@ -30,12 +30,15 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
   const setSearchValue = onSearchChange || setInternalSearch;
 
   useEffect(() => {
-    setLoading(true);
-    getAuthors().then((data) => {
-      setAuthors(data.map((a: any) => ({ id: a.id, name: a.name })));
+  setLoading(true);
+  // Додаємо параметри для отримання всіх авторів (без пагінації)
+  getAuthors({ PageSize: 1000, Title: search })
+    .then((data) => {
+      setAuthors(data.items.map((a) => ({ id: a.id, name: a.name || "" })));
       setLoading(false);
-    });
-  }, []);
+    })
+    .catch(() => setLoading(false));
+}, [search]);
 
   // Додаємо selectedAuthor у список, якщо його там немає
   useEffect(() => {
@@ -78,7 +81,7 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Author"
+            label="Автор"
             size="small"
             fullWidth
             InputProps={{
@@ -108,10 +111,10 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
                   setNewAuthorName(search);
                 }}
               >
-                Add new author "{search}"
+                Додати нового автора "{search}"
               </Button>
             )
-            : "No authors"
+            : "Автори не знайдені"
         }
       />
 
@@ -127,15 +130,15 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
             setNewAuthorName(search);
           }}
         >
-          Add new author "{search}"
+          Додати нового автора "{search}"
         </Button>
       )}
 
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
-        <DialogTitle>Add New Author</DialogTitle>
+        <DialogTitle>Додати нового автора</DialogTitle>
         <DialogContent>
           <TextField
-            label="Author name"
+            label="Ім'я"
             value={newAuthorName}
             onChange={e => setNewAuthorName(e.target.value)}
             fullWidth
@@ -144,13 +147,13 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setAddDialogOpen(false)}>Скасувати</Button>
           <Button
             onClick={handleAddAuthor}
             disabled={!newAuthorName.trim() || adding}
             variant="contained"
           >
-            Add
+            Додати
           </Button>
         </DialogActions>
       </Dialog>

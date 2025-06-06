@@ -1,38 +1,41 @@
-import React, { useEffect, useState } from "react";
-import { Typography, CircularProgress, Box } from "@mui/material";
-import TagCard from "../Components/TagCard/TagCard";
-import { getTags } from "../Api/TagApi";
+import React from "react";
+import { Typography, Box } from "@mui/material";
 import PageContainer from "../Components/PageContainer/PageContainer";
-import { Tag } from "../types";
+import TagsPageComponent from "../Components/TagsPageComponent/TagsPageComponent";
+import SearchBar from "../Components/SearchBar/SearchBar";
+import { useSearchParams } from "react-router-dom";
 
 const TagListPage: React.FC = () => {
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
+    const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => {
-    getTags()
-      .then(setTags)
-      .finally(() => setLoading(false));
-  }, []);
+    const handleSearch = (query: string) => {
+        const newParams = new URLSearchParams();
+        if (query) newParams.set("title", query);
+        newParams.set("page", "1");
+        setSearchParams(newParams);
+    };
 
-  return (
-    <PageContainer>
-      <Typography variant="h4" gutterBottom>
-        Tags
-      </Typography>
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <Box sx={{ display: "flex", flexDirection: "column"}}>
-          {tags.map((tag) => (
-            <Box key={tag.id}>
-              <TagCard tag={tag} />
+    return (
+        <PageContainer>
+            <Box 
+                sx={{ 
+                    mb: 3, 
+                    width: "100%", 
+                    display: "flex", 
+                    justifyContent: "center" 
+                }}
+            >
+                <Box sx={{ width: "100%", maxWidth: 700 }}>
+                    <SearchBar
+                        placeholder="Пошук тегів..."
+                        onSearch={handleSearch}
+                        value={searchParams.get("title") || ""}
+                    />
+                </Box>
             </Box>
-          ))}
-        </Box>
-      )}
-    </PageContainer>
-  );
+            <TagsPageComponent />
+        </PageContainer>
+    );
 };
 
 export default TagListPage;

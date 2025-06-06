@@ -20,13 +20,24 @@ import BookListPage from "./Pages/BookListPage";
 import EditUserPage from "./Pages/EditUserPage";
 import UsersPage from "./Pages/UsersPage";
 import CheatSheetPage from "./Pages/CheatSheetPage";
-// import EditBookPage from "./Pages/EditBookPage";
+import { Box } from "@mui/material";
+import {ToastContainer, toast} from "react-fox-toast";
 
 function App() {
     return (
         <AuthProvider>
+            <ToastContainer position="top-center"/>
             <BrowserRouter>
                 <Navbar />
+                <Box 
+                    component="main"
+                    sx={{
+                        pt: '80px', // Відступ висоти навбару
+                        minHeight: '100vh',
+                        px: 3, // Бокові відступи
+                        // py: 5  // Вертикальні відступи
+                    }}
+                >
                 <Routes>
                     <Route path="/" element={<BookSearchPage />} />
                     <Route path="/books" element={<BookSearchPage />} />
@@ -49,6 +60,7 @@ function App() {
                     <Route path="/users" element={<UsersPage />} />
                     <Route path="/cheatsheet" element={<CheatSheetPage />} />
                 </Routes>
+                </Box>
             </BrowserRouter>
         </AuthProvider>
     );

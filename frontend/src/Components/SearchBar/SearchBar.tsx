@@ -9,7 +9,7 @@ type SearchBarProps = {
   icon?: ReactNode;
 };
 
-const SearchBar: React.FC<SearchBarProps> = ({ placeholder = "Search...", onSearch, value = "", icon }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ placeholder = "Пошук...", onSearch, value = "", icon }) => {
   const [query, setQuery] = useState<string>(value);
 
   useEffect(() => {

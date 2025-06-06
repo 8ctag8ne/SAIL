@@ -11,6 +11,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { SimpleAuthor, SimpleTag } from "../../types";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 type BookCardProps = {
   id: number;
@@ -72,14 +73,14 @@ const BookCard: React.FC<BookCardProps> = ({ id, title, imageUrl, info, tags, li
   
     const handleDeleteClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
-      if (window.confirm("Are you sure you want to delete this book?")) {
+      if (window.confirm("Ви впевнені, що хочете видалити цю книгу?")) {
         try {
           await deleteBook(Number(id));
-          alert("Book deleted successfully!");
+          toast.success("Книга успішно видалена!");
           navigate("/");
         } catch (error) {
           console.error("Failed to delete book:", error);
-          alert("Failed to delete book.");
+          toast.error("Не вдалося видалити книгу.");
         }
       }
     };
@@ -145,7 +146,7 @@ const BookCard: React.FC<BookCardProps> = ({ id, title, imageUrl, info, tags, li
     </Typography>
         {authors.length > 0 && (
           <Typography variant="subtitle2" color="primary" sx={{ cursor: "pointer" }}>
-            By{" "}
+            Авторство:{" "}
             {authors.map((a, idx) => (
               <span
                 key={a.id}

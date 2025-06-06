@@ -4,6 +4,7 @@ import { Box, Typography, Pagination } from "@mui/material";
 import BookCard from "../BookCard/BookCard";
 import { getBooks } from "../../Api/BookApi";
 import { Book } from "../../types";
+import LoadingIndicator from "../LoadingIndicator";
 
 type BooksPageComponentProps = {
   queryParams?: Record<string, any>; // Додаткові параметри для запиту
@@ -37,9 +38,9 @@ const BooksPageComponent: React.FC<BooksPageComponentProps> = ({ queryParams = {
   return (
     <Box sx={{ padding: 2 }}>
       {loading ? (
-        <Typography>Loading...</Typography>
+        <LoadingIndicator />
       ) : books.length === 0 ? (
-        <Typography>No books found.</Typography>
+        <Typography>Нічого не знайдено.</Typography>
       ) : (
         <>
           {books.map((book) => (

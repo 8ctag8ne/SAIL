@@ -68,7 +68,7 @@ const BookListPage: React.FC = () => {
     navigate("/users/" + user?.id); // або на головну, або на профіль користувача
   };
 
-  if (!bookList) return <Typography>Loading...</Typography>;
+  if (!bookList) return <Typography>Завантаження...</Typography>;
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
@@ -163,7 +163,7 @@ const BookListPage: React.FC = () => {
                     color="primary"
                   />
                 }
-                label="Private"
+                label="Приватний"
                 sx={{ mt: 1 }}
               />
             </>
@@ -177,11 +177,11 @@ const BookListPage: React.FC = () => {
         </CardContent>
       </Card>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        Books in this list:
+        Книги в списку:
       </Typography>
       <Box>
         {bookList.books.length === 0 ? (
-          <Typography color="text.secondary">No books in this list.</Typography>
+          <Typography color="text.secondary">Цей список порожній.</Typography>
         ) : (
           bookList.books.map(book => (
             <Box key={book.id} sx={{ position: "relative", mb: 2 }}>

@@ -1,10 +1,11 @@
 import instance from "./axios";
-import { Author, AuthorCreate, AuthorUpdate } from "../types";
+import { Author, AuthorCreate, AuthorUpdate, PaginatedAuthors } from "../types";
 
 // Отримати всіх авторів
-export const getAuthors = async (): Promise<Author[]> => {
-  const res = await instance.get<Author[]>(`/Author`);
-  return res.data;
+export const getAuthors = async (query: Record<string, any> = {}): Promise<PaginatedAuthors> => {
+    const queryString = new URLSearchParams(query).toString();
+    const res = await instance.get<PaginatedAuthors>(`/Author?${queryString}`);
+    return res.data;
 };
 
 // Отримати автора за ID

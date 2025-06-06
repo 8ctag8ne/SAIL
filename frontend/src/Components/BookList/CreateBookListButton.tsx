@@ -23,13 +23,13 @@ const CreateBookListButton: React.FC<Props> = ({ onCreated }) => {
   return (
     <>
       <Button startIcon={<AddIcon />} variant="contained" onClick={() => setOpen(true)}>
-        New Book List
+        Новий список
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Create Book List</DialogTitle>
+        <DialogTitle>Створити список книг</DialogTitle>
         <DialogContent>
           <TextField
-            label="Title"
+            label="Назва"
             value={title}
             onChange={e => setTitle(e.target.value)}
             fullWidth
@@ -42,13 +42,13 @@ const CreateBookListButton: React.FC<Props> = ({ onCreated }) => {
                 onChange={e => setIsPrivate(e.target.checked)}
               />
             }
-            label="Private"
+            label="Приватний"
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={() => setOpen(false)}>Скасувати</Button>
           <Button onClick={handleCreate} disabled={!title.trim()} variant="contained">
-            Create
+            Створити
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,9 +1,10 @@
 import instance from "./axios";
-import { Tag, TagCreate, TagUpdate } from "../types";
+import { PaginatedTags, Tag, TagCreate, TagUpdate } from "../types";
 
 // Отримати всі теги
-export const getTags = async (): Promise<Tag[]> => {
-    const res = await instance.get<Tag[]>(`/Tag`);
+export const getTags = async (query: Record<string, any> = {}): Promise<PaginatedTags> => {
+    const queryString = new URLSearchParams(query).toString();
+    const res = await instance.get<PaginatedTags>(`/Tag?${queryString}`);
     return res.data;
 };
 

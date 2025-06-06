@@ -6,12 +6,16 @@ import PageContainer from "../Components/PageContainer/PageContainer";
 import BooksPageComponent from "../Components/BooksPageComponent/BooksPageComponent";
 import AuthorDetails from "../Components/AuthorDetails/AuthorDetails";
 import { Typography } from "@mui/material";
+import { toast } from "react-fox-toast";
+import LoadingIndicator from "../Components/LoadingIndicator";
+import ConfirmDialog from "../Components/ConfirmDialog";
 
 const AuthorDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [author, setAuthor] = useState<Author | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     const fetchAuthor = async () => {
@@ -31,33 +35,42 @@ const AuthorDetailsPage: React.FC = () => {
   }, [id]);
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this author?")) {
-      try {
-        if (id) {
-          await deleteAuthor(Number(id));
-          alert("Author deleted successfully!");
-          navigate("/authors");
-        }
-      } catch (error) {
-        console.error("Failed to delete author:", error);
-        alert("Failed to delete author.");
+    try {
+      if (id) {
+        await deleteAuthor(Number(id));
+        toast.success("Автор видалений успішно!");
+        navigate("/authors");
       }
+    } catch (error) {
+      console.error("Failed to delete author:", error);
+      toast.error("Не вдалося видалити автора.");
     }
   };
 
   if (loading) {
-    return <Typography>Loading...</Typography>;
+    return <LoadingIndicator />;
   }
 
   if (!author) {
-    return <Typography>Author not found.</Typography>;
+    return <Typography>Автор не знайдений.</Typography>;
   }
 
   return (
     <PageContainer>
-      <AuthorDetails author={author} onDelete={handleDelete} />
+      <AuthorDetails author={author} onDelete={() => setConfirmOpen(true)} />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Ви впевнені, що хочете видалити цього автора?"
+        onConfirm={() => {
+          setConfirmOpen(false);
+          handleDelete();
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+
       <Typography variant="h5" gutterBottom>
-        Books by {author.name}:
+        Книги від автора {author.name}:
       </Typography>
       <BooksPageComponent queryParams={{ AuthorId: id }} />
     </PageContainer>

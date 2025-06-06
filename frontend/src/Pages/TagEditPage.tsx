@@ -6,6 +6,7 @@ import TagForm from "../Components/TagForm/TagForm";
 import { SimpleBook } from "../types";
 import ForbiddenPage from "./ForbiddenPage";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 const TagEditPage: React.FC = () => {
   const { user } = useAuth();
@@ -44,15 +45,15 @@ const TagEditPage: React.FC = () => {
       image: data.image ?? undefined,
       bookIds: data.bookIds,
     });
-    alert("Tag updated successfully!");
+    toast.success("Тег оновлений успішно!");
     navigate(location.state?.from || "/tags");
   } catch (error) {
     console.log(error);
-    alert("Failed to update tag.");
+    toast.error("Не вдалося оновити тег.");
   }
 };
 
-  return initialData ? <TagForm initialData={initialData} onSubmit={handleUpdateTag} /> : <p>Loading...</p>;
+  return initialData ? <TagForm initialData={initialData} onSubmit={handleUpdateTag} /> : <p>Завантаження...</p>;
 };
 
 export default TagEditPage;

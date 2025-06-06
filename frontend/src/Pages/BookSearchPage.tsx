@@ -47,7 +47,7 @@ const BookSearchPage: React.FC = () => {
           <Box sx={{ flex: 1 }}>
             <SearchBar
               onSearch={handleSearch}
-              placeholder="Search for books..."
+              placeholder="Пошук книг..."
               value={searchQuery}
             />
           </Box>

@@ -12,7 +12,7 @@ type TagNameMultiInputProps = {
 const TagNameMultiInput: React.FC<TagNameMultiInputProps> = ({
   tagNames = [],
   onChange,
-  label = "Add tags",
+  label = "Додати теги",
 }) => {
   const [input, setInput] = useState("");
 
@@ -69,7 +69,7 @@ const TagNameMultiInput: React.FC<TagNameMultiInputProps> = ({
       >
         {tagNames.length === 0 && (
           <Typography variant="body2" color="text.secondary">
-            No tags added
+            Нічого не додано
           </Typography>
         )}
         {tagNames.map((name) => (

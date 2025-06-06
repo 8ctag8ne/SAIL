@@ -10,6 +10,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useAuth } from "../Contexts/AuthContext";
 import BASE_URL from "../config";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import { toast } from "react-fox-toast";
 
 
 const TagDetailsPage: React.FC = () => {
@@ -42,26 +43,26 @@ const TagDetailsPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this tag?")) {
+    if (window.confirm("Ви впевнені, що хочете видалити цей тег?")) {
       try {
         if (id) {
           await deleteTag(Number(id));
-          alert("Tag deleted successfully!");
+          toast.success("тег видалений успішно!");
           navigate("/tags");
         }
       } catch (error) {
         console.error("Failed to delete tag:", error);
-        alert("Failed to delete tag.");
+        toast.error("не вдалося видалити тег.");
       }
     }
   };
 
   if (loading) {
-    return <Typography>Loading...</Typography>;
+    return <Typography>Завантаження...</Typography>;
   }
 
   if (!tag) {
-    return <Typography>Tag not found.</Typography>;
+    return <Typography>Тег не знайдений.</Typography>;
   }
 
   return (
@@ -112,7 +113,7 @@ const TagDetailsPage: React.FC = () => {
         </CardContent>
       </Card>
       <Typography variant="h5" gutterBottom>
-        Books with tag "{tag.title}":
+        Книги з тегом "{tag.title}":
       </Typography>
       <BooksPageComponent queryParams={{ TagIds: [Number(id)] }} />
     </PageContainer>

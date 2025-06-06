@@ -81,7 +81,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
             fullWidth
             sx={{ mt: 1 }}
           >
-            Upload Image
+            Завантажити фото
             <input
               type="file"
               hidden
@@ -90,18 +90,18 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
             />
           </Button>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {imagePreview && !form.image && initialData?.imageUrl && "Current image"}
+            {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
             {form.image && form.image.name}
           </Typography>
         </Box>
         {/* Права частина: форма */}
         <Box sx={{ flex: 1 }}>
           <Typography variant="h5" gutterBottom>
-            {initialData ? "Edit Tag" : "Add Tag"}
+            {initialData ? "Редагувати тег" : "Додати тег"}
           </Typography>
           <form onSubmit={handleSubmit}>
             <TextField
-              label="Title"
+              label="Назва"
               fullWidth
               margin="normal"
               value={form.title}
@@ -109,7 +109,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
               required
             />
             <TextField
-              label="Info"
+              label="Інформація"
               fullWidth
               margin="normal"
               multiline
@@ -128,7 +128,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
               fullWidth
               sx={{ marginTop: 2 }}
             >
-              {initialData ? "Update Tag" : "Add Tag"}
+              {initialData ? "Оновити тег" : "Додати тег"}
             </Button>
           </form>
         </Box>

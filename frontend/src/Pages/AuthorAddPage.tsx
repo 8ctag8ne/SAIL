@@ -5,6 +5,7 @@ import { useAuth } from "../Contexts/AuthContext";
 import AuthorForm from "../Components/AuthorForm/AuthorForm";
 import ForbiddenPage from "./ForbiddenPage";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 const AuthorAddPage: React.FC = () => {
   const { user } = useAuth();
@@ -24,11 +25,11 @@ const AuthorAddPage: React.FC = () => {
   const handleAddAuthor = async (data: { name: string; info?: string; image: File | null }) => {
     try {
       await addAuthor({ ...data, image: data.image ?? undefined });
-      alert("Author added successfully!");
+      toast.success("Автор успішно створений!");
       navigate(location.state?.from || "/authors");
     } catch (error) {
       console.error("Failed to add author:", error);
-      alert("Failed to add author.");
+      toast.error("Не вдалося створити автора.");
     }
   };
 

@@ -5,6 +5,7 @@ import { useAuth } from "../Contexts/AuthContext";
 import BookForm from "../Components/BookForm/BookForm";
 import ForbiddenPage from "./ForbiddenPage";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 const AddBookPage: React.FC = () => {
   const { user } = useAuth();
@@ -23,11 +24,11 @@ const AddBookPage: React.FC = () => {
   const handleAddBook = async (formData: FormData) => {
     try {
       await addBook(formData);
-      alert("Book added successfully!");
+      toast.success("Книга створена успішно!");
       navigate(location.state?.from || "/");
     } catch (error) {
       console.error("Failed to add book:", error);
-      alert("Failed to add book.");
+      toast.error("Не вдалося створити книгу.");
     }
   };
 

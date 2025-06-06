@@ -8,6 +8,7 @@ import { deleteAuthor } from "../../Api/AuthorApi";
 import BASE_URL from "../../config";
 import { Author } from "../../types";
 import PersonIcon from "@mui/icons-material/Person";
+import { toast } from "react-fox-toast";
 
 type AuthorCardProps = {
   author: Author;
@@ -27,11 +28,11 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
     if (window.confirm("Are you sure you want to delete this author?")) {
       try {
         await deleteAuthor(author.id);
-        alert("Author deleted successfully!");
+        toast.success("Author deleted successfully!");
         navigate("/authors");
       } catch (error) {
         console.error("Failed to delete author:", error);
-        alert("Failed to delete author.");
+        toast.error("Failed to delete author.");
       }
     }
   };

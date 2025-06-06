@@ -5,6 +5,8 @@ import { useAuth } from "../Contexts/AuthContext";
 import BookForm from "../Components/BookForm/BookForm";
 import { SimpleAuthor, SimpleTag } from "../types";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
+import LoadingIndicator from "../Components/LoadingIndicator";
 
 const EditBookPage: React.FC = () => {
   const { user } = useAuth();
@@ -43,15 +45,15 @@ const EditBookPage: React.FC = () => {
   const handleUpdateBook = async (formData: FormData) => {
     try {
       await updateBook(Number(id), formData);
-      alert("Book updated successfully!");
+      toast.success("Книга оновлена успішно!");
       navigate(location.state?.from || "/");
     } catch (error) {
       console.error("Failed to update book:", error);
-      alert("Failed to update book.");
+      toast.error("Не вдалося оновити книгу.");
     }
   };
 
-  return initialData ? <BookForm initialData={initialData} onSubmit={handleUpdateBook} /> : <p>Loading...</p>;
+  return initialData ? <BookForm initialData={initialData} onSubmit={handleUpdateBook} /> : <LoadingIndicator />;
 };
 
 export default EditBookPage;

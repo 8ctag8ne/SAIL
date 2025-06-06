@@ -89,7 +89,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
             fullWidth
             sx={{ mt: 1 }}
           >
-            Upload Image
+            Завантажити фото
             <input
               type="file"
               hidden
@@ -105,11 +105,11 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
         {/* Права частина: форма */}
         <Box sx={{ flex: 1 }}>
           <Typography variant="h5" gutterBottom>
-            {initialData ? "Edit Author" : "Add Author"}
+            {initialData ? "Редагувати автора" : "Додати автора"}
           </Typography>
           <form onSubmit={handleSubmit}>
             <TextField
-              label="Name"
+              label="Ім'я"
               fullWidth
               margin="normal"
               value={form.name}
@@ -117,7 +117,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
               required
             />
             <TextField
-              label="Info"
+              label="Інформація"
               fullWidth
               margin="normal"
               multiline
@@ -132,7 +132,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
               fullWidth
               sx={{ marginTop: 2 }}
             >
-              {initialData ? "Update Author" : "Add Author"}
+              {initialData ? "Оновити автора" : "Додати автора"}
             </Button>
           </form>
         </Box>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Box, Chip, CircularProgress, Typography } from "@mui/material";
+import { TextField, Box, Chip, CircularProgress, Typography, Button } from "@mui/material";
 import { SimpleTag } from "../../types";
 import { getTags } from "../../Api/TagApi";
 
@@ -12,25 +12,32 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
   const [search, setSearch] = useState("");
   const [tags, setTags] = useState<SimpleTag[]>([]);
   const [loading, setLoading] = useState(false);
+  const [displayCount, setDisplayCount] = useState(5);
 
   useEffect(() => {
     setLoading(true);
-    getTags().then((data) => {
-      setTags(data.map((t: any) => ({ id: t.id, title: t.title })));
-      setLoading(false);
-    });
+    getTags({ PageSize: 1000 })
+      .then((data) => {
+        setTags(data.items.map((t) => ({ id: t.id, title: t.title || "" })));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
-  // Обрані теги завжди на початку
+  // Скидаємо лічильник при зміні пошуку
+  useEffect(() => {
+    setDisplayCount(5);
+  }, [search]);
+
   const selected = tags.filter(tag => selectedTags.some(t => t.id === tag.id));
-  // Далі максимум 5 знайдених тегів, які ще не обрані
-  const filtered = tags
-    .filter(
-      (tag) =>
-        tag.title.toLowerCase().includes(search.toLowerCase()) &&
-        !selectedTags.some((t) => t.id === tag.id)
-    )
-    .slice(0, 5);
+  
+  const fullFiltered = tags.filter(
+    (tag) =>
+      tag.title.toLowerCase().includes(search.toLowerCase()) &&
+      !selectedTags.some((t) => t.id === tag.id)
+  );
+  
+  const displayedFiltered = fullFiltered.slice(0, displayCount);
 
   const handleToggle = (tag: SimpleTag) => {
     if (selectedTags.some((t) => t.id === tag.id)) {
@@ -43,7 +50,7 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
   return (
     <Box sx={{ mt: 2, width: "100%", minWidth: 240, maxWidth: 700 }}>
       <TextField
-        label="Search tags"
+        label="Пошук тегів"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         fullWidth
@@ -59,11 +66,8 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
             gap: 1,
             mt: 1,
             width: 700,
-            // minWidth: 500,
-            // maxWidth: 500,
           }}
         >
-          {/* Обрані теги */}
           {selected.map((tag) => (
             <Chip
               key={tag.id}
@@ -74,8 +78,7 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
               sx={{ cursor: "pointer" }}
             />
           ))}
-          {/* Перші 5 знайдених тегів */}
-          {filtered.map((tag) => (
+          {displayedFiltered.map((tag) => (
             <Chip
               key={tag.id}
               label={tag.title}
@@ -85,9 +88,19 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
               sx={{ cursor: "pointer" }}
             />
           ))}
-          {selected.length === 0 && filtered.length === 0 && (
+          {fullFiltered.length > displayCount && (
+            <Button 
+              variant="text" 
+              size="small"
+              onClick={() => setDisplayCount(prev => prev + 5)}
+              sx={{ mt: 1 }}
+            >
+              Більше
+            </Button>
+          )}
+          {selected.length === 0 && fullFiltered.length === 0 && (
             <Typography variant="body2" color="text.secondary">
-              No tags found
+              Нічого не знайдено.
             </Typography>
           )}
         </Box>

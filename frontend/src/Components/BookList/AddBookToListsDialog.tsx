@@ -42,7 +42,7 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth>
-      <DialogTitle>Add Book to Lists</DialogTitle>
+      <DialogTitle>Додати книгу до списків</DialogTitle>
       <DialogContent>
         <CreateBookListButton onCreated={() => setRefresh(r => r + 1)} />
         <Box sx={{ mt: 2 }}>
@@ -73,13 +73,13 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
                   {list.title}
                   {list.isPrivate && (
                     <Typography component="span" color="text.secondary" sx={{ ml: 1, fontSize: 14 }}>
-                      (Private)
+                      (Приватний)
                     </Typography>
                   )}
                 </Typography>
                 {disabled && (
                   <Typography color="primary" sx={{ ml: 2, fontSize: 14 }}>
-                    Already added
+                    Уже додано до цього списку
                   </Typography>
                 )}
               </Paper>
@@ -88,13 +88,13 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>Скасувати</Button>
         <Button
           onClick={handleAdd}
           disabled={selected.length === 0}
           variant="contained"
         >
-          Add to Lists
+          Додати до списку
         </Button>
       </DialogActions>
     </Dialog>

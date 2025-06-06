@@ -44,20 +44,20 @@ const EditUserPage: React.FC = () => {
     navigate(`/users/${id}`);
   };
 
-  if (!user) return <Typography>Loading...</Typography>;
+  if (!user) return <Typography>Завантаження...</Typography>;
 
   return (
     <Paper sx={{ maxWidth: 500, mx: "auto", mt: 4, p: 3 }}>
-      <Typography variant="h5" gutterBottom>Edit User</Typography>
+      <Typography variant="h5" gutterBottom>Редагувати користувача</Typography>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <TextField label="Username" name="userName" value={form.userName} onChange={handleChange} />
+        <TextField label="Ім'я" name="userName" value={form.userName} onChange={handleChange} />
         <TextField label="Email" name="email" value={form.email} onChange={handleChange} />
-        <TextField label="About" name="about" value={form.about} onChange={handleChange} multiline minRows={2} />
-        <TextField label="Phone Number" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} />
+        <TextField label="Інформація" name="about" value={form.about} onChange={handleChange} multiline minRows={2} />
+        <TextField label="Номер телефону" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} />
         {currentUser?.roles.includes("Admin") && (
           <FormControl>
-            <InputLabel>Role</InputLabel>
-            <Select value={role} label="Role" onChange={e => setRole(e.target.value)}>
+            <InputLabel>Роль</InputLabel>
+            <Select value={role} label="Роль" onChange={e => setRole(e.target.value)}>
               {ROLES.map(r => (
                 <MenuItem key={r} value={r}>{r}</MenuItem>
               ))}
@@ -65,8 +65,8 @@ const EditUserPage: React.FC = () => {
           </FormControl>
         )}
         <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-          <Button variant="contained" onClick={handleSave}>Save</Button>
-          <Button variant="outlined" onClick={() => navigate(-1)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave}>Зберегти</Button>
+          <Button variant="outlined" onClick={() => navigate(-1)}>Скасувати</Button>
         </Box>
       </Box>
     </Paper>

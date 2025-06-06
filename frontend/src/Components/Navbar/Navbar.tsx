@@ -8,7 +8,6 @@ import PeopleIcon from "@mui/icons-material/People";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { useLocation } from "react-router-dom";
 
-
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -32,7 +31,13 @@ const Navbar = () => {
   const isAdmin = user?.roles?.includes("Admin");
 
   return (
-    <AppBar position="static">
+    <AppBar 
+      position="fixed" // Змінюємо з static на fixed
+      sx={{ 
+        zIndex: (theme) => theme.zIndex.drawer + 1, // Забезпечуємо правильний z-index
+        boxShadow: 1 // Додаємо тінь для кращого візуального відокремлення
+      }}
+    >
       <Toolbar>
         <Typography
           variant="h6"
@@ -45,20 +50,20 @@ const Navbar = () => {
         {/* Лівий блок: Authors, Tags */}
         <Box sx={{ display: "flex", gap: 1, mr: 2 }}>
           <Button color="inherit" component={Link} to="/books">
-            Books
+            Книги
           </Button>
           <Button color="inherit" component={Link} to="/authors">
-            Authors
+            Автори
           </Button>
           <Button color="inherit" component={Link} to="/tags">
-            Tags
+            Теги
           </Button>
           <Button color="inherit" component={Link} to="/cheatsheet" startIcon={<AutoAwesomeIcon />}>
-            CheatSheet
+            Чит - лист
           </Button>
           {isAdmin && (
             <Button color="inherit" component={Link} to="/users" startIcon={<PeopleIcon />}>
-              Users
+              Користувачі
             </Button>
           )}
         </Box>
@@ -84,7 +89,7 @@ const Navbar = () => {
                   navigate("/books/add", { state: { from: location.pathname } });
                 }}
               >
-                Book
+                Книга
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -92,7 +97,7 @@ const Navbar = () => {
                   navigate("/tags/add", { state: { from: location.pathname } });
                 }}
               >
-                Tag
+                Тег
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -100,7 +105,7 @@ const Navbar = () => {
                   navigate("/authors/add", { state: { from: location.pathname } });
                 }}
               >
-                Author
+                Автор
               </MenuItem>
             </Menu>
           </>
@@ -117,16 +122,16 @@ const Navbar = () => {
               <AccountCircleIcon />
             </IconButton>
             <Button color="inherit" onClick={handleLogout}>
-              Logout
+              Вийти
             </Button>
           </Box>
         ) : (
           <Box sx={{ display: "flex", gap: 1, ml: 2 }}>
             <Button color="inherit" onClick={() => navigate("/login")}>
-              Login
+              Логін
             </Button>
             <Button color="inherit" onClick={() => navigate("/register")}>
-              Register
+              Реєстрація
             </Button>
           </Box>
         )}

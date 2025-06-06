@@ -8,6 +8,8 @@ import { renderPdfFirstPage, analyzeBookPdf } from "../../Api/FileApi";
 import TagNameMultiInput from "../TagNameMultiInput/TagNameMultiInput";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import { addAuthor } from "../../Api/AuthorApi";
+import { toast } from "react-fox-toast";
 
 type BookFormProps = {
   initialData?: {
@@ -104,37 +106,46 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   };
 
   const handleAnalyzeBook = async () => {
-    if (form.file && form.file.type === "application/pdf") {
-      setAnalyzing(true);
-      try {
-        const result = await analyzeBookPdf(form.file);
-        setForm((prev) => ({
-          ...prev,
-          title: result.title,
-          info: result.description,
-          tags: result.existingTags,
-          // Не підставляємо авторів напряму!
+  if (form.file?.type === "application/pdf") {
+    setAnalyzing(true);
+    try {
+      const result = await analyzeBookPdf(form.file);
+      
+      setForm(prev => ({
+        ...prev,
+        title: prev.title || result.title,
+        info: prev.info || result.description,
+        tags: result.existingTags,// Уникаємо дублікатів
+      }));
+
+      // Додаємо авторів тільки якщо є результати
+      if (result.authors?.length) {
+        const newAuthors = result.authors.map(a => ({
+          id: a.id || 0,
+          name: a.name || ""
         }));
-        // Якщо є автор — підставляємо його у перший елемент пошуку
-        if (Array.isArray(result.authors) && result.authors.length > 0) {
-          setAuthorSearch(result.authors.map(a => a.name || ""));
-          setForm((prev) => ({
-            ...prev,
-            authors: result.authors.map(a =>
-              a.id && a.name ? { id: a.id, name: a.name } : { id: 0, name: a.name || "" }
-            ),
-          }));
-        } else {
-          setAuthorSearch([""]);
-          setForm((prev) => ({ ...prev, authors: [{ id: 0, name: "" }] }));
-        }
-        setSuggestedTagNames(result.suggestedTags ?? []);
-      } catch (err) {
-        // handle error
+        
+        setForm(prev => ({
+          ...prev,
+          authors: [...prev.authors, ...newAuthors]
+        }));
+        
+        setAuthorSearch(prev => [
+          ...prev,
+          ...result.authors.map(a => a.name || "")
+        ]);
       }
+      
+       setSuggestedTagNames(result.suggestedTags ?? []);
+      
+    } catch (error) {
+      console.error("Помилка аналізу:", error);
+      toast.error("Не вдалося проаналізувати файл");
+    } finally {
       setAnalyzing(false);
     }
-  };
+  }
+};
 
   // Додаємо нового автора (пустий селектор)
   const handleAddAuthor = () => {
@@ -169,23 +180,62 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const validAuthors = form.authors.filter(Boolean) as SimpleAuthor[];
-    if (!validAuthors.length) {
-      alert("Please select at least one author!");
+  e.preventDefault();
+
+  // Валідація обов'язкових полів
+  if (!form.title.trim()) {
+    toast.warning("Будь ласка, заповніть назву книги");
+    return;
+  }
+
+  // Перевірка наявності хоча б одного коректного автора
+  const validAuthors = form.authors.filter(a => a.id !== 0 && a.name?.trim());
+  if (validAuthors.length === 0) {
+    toast.warning("Додайте хоча б одного автора");
+    return;
+  }
+
+  const formData = new FormData();
+  
+  try {
+    // Для нових книг: файл обов'язковий
+    if (!initialData && !form.file) {
+      toast.warning("Будь ласка, виберіть файл книги");
       return;
     }
-    const formData = new FormData();
+
+    // Додаємо файл тільки якщо він новий або це нова книга
+    if (form.file) formData.append("file", form.file);
+
+    // Додаємо зображення тільки якщо воно нове
+    if (form.image) formData.append("image", form.image);
+
+    // Основні дані
     formData.append("title", form.title);
     formData.append("info", form.info);
-    validAuthors.forEach((a) => formData.append("AuthorIds", a.id.toString()));
-    if (form.image) formData.append("image", form.image);
-    if (form.file) formData.append("file", form.file);
-    form.tags.forEach((tag) => formData.append("TagIds", tag.id.toString()));
-    suggestedTagNames.forEach((tagName) => formData.append("NewTagTitles", tagName));
+    
+    // Автори
+    validAuthors.forEach(a => 
+      formData.append("AuthorIds", a.id.toString())
+    );
+
+    // Теги
+    form.tags.forEach(tag => 
+      formData.append("TagIds", tag.id.toString())
+    );
+    
+    // Нові теги
+    suggestedTagNames.forEach(tagName => 
+      formData.append("NewTagTitles", tagName)
+    );
 
     await onSubmit(formData);
-  };
+    
+  } catch (error) {
+    console.error("Помилка при збереженні:", error);
+    toast.error("Сталася помилка. Перевірте дані.");
+  }
+};
 
   return (
     <Box
@@ -230,7 +280,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             fullWidth
             sx={{ mt: 1 }}
           >
-            Upload Image
+            Завантажити фото
             <input
               type="file"
               hidden
@@ -250,7 +300,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               textAlign: "center",
             }}
           >
-            {imagePreview && !form.image && initialData?.imageUrl && "Current image"}
+            {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
             {form.image && form.image.name}
           </Typography>
           <Button
@@ -259,7 +309,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             fullWidth
             sx={{ mt: 2 }}
           >
-            Upload File
+            Завантажити файл
             <input
               type="file"
               hidden
@@ -279,7 +329,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               textAlign: "center",
             }}
           >
-            {fileName && `File: ${fileName}`}
+            {fileName && `Файл: ${fileName}`}
           </Typography>
           {form.file && form.file.type === "application/pdf" && (
             <Button
@@ -300,25 +350,25 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               onClick={handleGenerateCover}
               disabled={generatingCover}
             >
-              {generatingCover ? <CircularProgress size={20} /> : "Default cover"}
+              {generatingCover ? <CircularProgress size={20} /> : "Звичайна обкладинка"}
             </Button>
           )}
         </Box>
         {/* Права частина: форма */}
         <Box sx={{ flex: 1 }}>
           <Typography variant="h5" gutterBottom>
-            {initialData ? "Edit Book" : "Add Book"}
+            {initialData ? "Редагувати книгу" : "Створити книгу"}
           </Typography>
           <form onSubmit={handleSubmit}>
             <TextField
-              label="Title"
+              label="Назва"
               fullWidth
               margin="normal"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
             />
             <TextField
-              label="Info"
+              label="Опис"
               fullWidth
               margin="normal"
               multiline
@@ -327,7 +377,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               onChange={(e) => setForm({ ...form, info: e.target.value })}
             />
             <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-              Authors
+              Автори
             </Typography>
             <Stack spacing={1}>
               {form.authors.map((author, idx) => (
@@ -369,7 +419,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             <TagNameMultiInput
               tagNames={suggestedTagNames ?? []}
               onChange={setSuggestedTagNames}
-              label="Suggested tags"
+              label="Пропоновані теги"
             />
             <Button
               type="submit"
@@ -378,7 +428,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               fullWidth
               sx={{ marginTop: 2 }}
             >
-              {initialData ? "Update Book" : "Add Book"}
+              {initialData ? "Оновити книгу" : "Додати книгу"}
             </Button>
           </form>
         </Box>

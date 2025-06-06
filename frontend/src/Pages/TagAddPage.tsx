@@ -5,6 +5,7 @@ import { useAuth } from "../Contexts/AuthContext";
 import TagForm from "../Components/TagForm/TagForm";
 import ForbiddenPage from "./ForbiddenPage";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 const TagAddPage: React.FC = () => {
   const { user } = useAuth();
@@ -24,10 +25,10 @@ const TagAddPage: React.FC = () => {
         image: data.image ?? undefined,
         bookIds: data.bookIds,
       });
-      alert("Tag added successfully!");
+      toast.success("Тег створений успішно!");
       navigate(location.state?.from ||"/tags");
     } catch (error) {
-      alert("Failed to add tag.");
+      toast.error("Не вдалося створити тег.");
     }
   };
 

@@ -25,9 +25,9 @@ const getRoleIcon = (roles: string[]) => {
 };
 
 const getHighestRole = (roles: string[]): string => {
-  if (roles.includes("Admin")) return "Admin";
-  if (roles.includes("Librarian")) return "Librarian";
-  return "User";
+  if (roles.includes("Admin")) return "Адміністратор";
+  if (roles.includes("Librarian")) return "Бібліотекар";
+  return "Користувач";
 };
 
 const UserProfilePage: React.FC = () => {
@@ -67,7 +67,7 @@ const UserProfilePage: React.FC = () => {
   if (!profile) {
     return (
       <PageContainer>
-        <Typography>Loading...</Typography>
+        <Typography>Завантаження...</Typography>
       </PageContainer>
     );
   }
@@ -86,7 +86,7 @@ const UserProfilePage: React.FC = () => {
                 {profile.email}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Role: <b>{getHighestRole(profile.roles)}</b>
+                Роль: <b>{getHighestRole(profile.roles)}</b>
               </Typography>
               {profile.about && (
                 <Typography variant="body2" sx={{ mt: 1 }}>
@@ -95,7 +95,7 @@ const UserProfilePage: React.FC = () => {
               )}
               {profile.phoneNumber && (
                 <Typography variant="body2" sx={{ mt: 1 }}>
-                  Phone: {profile.phoneNumber}
+                  Телефон: {profile.phoneNumber}
                 </Typography>
               )}
             </Box>
@@ -113,14 +113,14 @@ const UserProfilePage: React.FC = () => {
         </CardContent>
       </Card>
       <Tabs value={tab} onChange={(_, v) => setTab(v)} centered sx={{ mb: 2 }}>
-        <Tab label="Liked Books" />
-        <Tab label="Book Lists" />
+        <Tab label="Вподобання" />
+        <Tab label="Списки книг" />
       </Tabs>
       {tab === 0 && (
         <Box>
           {likedBooks.length === 0 ? (
             <Typography color="text.secondary" align="center">
-              No liked books yet.
+              Жодних уподобаних книг.
             </Typography>
           ) : (
             likedBooks.map((book) => <BookCard key={book.id} {...book} tags={book.tags}/>)
@@ -137,7 +137,7 @@ const UserProfilePage: React.FC = () => {
             )}
             {bookLists.length === 0 ? (
             <Typography color="text.secondary" align="center">
-                No book lists yet.
+                Жодних списків книг.
             </Typography>
             ) : (
             bookLists.map((list) => (
@@ -152,14 +152,14 @@ const UserProfilePage: React.FC = () => {
         </Box>
         )}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete User</DialogTitle>
+        <DialogTitle>Видалити користувача</DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to delete this user?</Typography>
+          <Typography>Ви впевнені, що хочете видалити цього користувача?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Скасувати</Button>
           <Button color="error" onClick={handleDelete}>
-            Delete
+            Видалити
           </Button>
         </DialogActions>
       </Dialog>

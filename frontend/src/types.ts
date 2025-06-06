@@ -68,6 +68,18 @@ export type BookUpdate = {
     totalPages: number;
   };
 
+  export type PaginatedTags = {
+    map(arg0: (b: any) => { id: any; title: any; }): import("react").SetStateAction<SimpleTag[]>;
+    items: Tag[];
+    totalPages: number;
+}
+
+export type PaginatedAuthors = {
+    map(arg0: (b: any) => { id: any; title: any; }): import("react").SetStateAction<SimpleAuthor[]>;
+    items: Author[];
+    totalPages: number;
+};
+
   export type Author = {
     id: number;
     name: string | null;

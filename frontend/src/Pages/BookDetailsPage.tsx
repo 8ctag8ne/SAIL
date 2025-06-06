@@ -6,6 +6,7 @@ import CommentSection from "../Components/CommentSection/CommentSection";
 import BASE_URL from "../config"; // Імпорт BASE_URL
 import PageContainer from "../Components/PageContainer/PageContainer";
 import { BookDetailsData, Comment, SimpleTag } from "../types";
+import LoadingIndicator from "../Components/LoadingIndicator";
 
 const BookDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -18,7 +19,7 @@ const BookDetailsPage: React.FC = () => {
     }, [id]);
 
     if (!book) {
-        return <p>Loading...</p>;
+        return <LoadingIndicator />;
     }
 
     return (

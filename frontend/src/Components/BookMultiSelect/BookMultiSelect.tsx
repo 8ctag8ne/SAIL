@@ -41,7 +41,7 @@ const BookMultiSelect: React.FC<BookMultiSelectProps> = ({ selectedBooks, onChan
   return (
     <Box sx={{ mt: 2 }}>
       <TextField
-        label="Search books"
+        label="Пошук книг"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         fullWidth
@@ -53,7 +53,7 @@ const BookMultiSelect: React.FC<BookMultiSelectProps> = ({ selectedBooks, onChan
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
           {filteredBooks.length === 0 && (
             <Typography variant="body2" color="text.secondary">
-              No books found
+              Нічого не знайдено.
             </Typography>
           )}
           {filteredBooks.map((book) => (

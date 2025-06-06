@@ -3,6 +3,7 @@ import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { register, login } from "../Api/Account"; // Імпортуємо login
 import { useAuth } from "../Contexts/AuthContext"; // Використовуємо AuthContext
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-fox-toast";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ id: "", userName: "", email: "", password: "" });
@@ -22,7 +23,7 @@ export default function RegisterPage() {
       // Перенаправлення на головну сторінку
       navigate("/");
     } catch (err) {
-      alert("Registration failed");
+      toast.error("Реєстрація не вдалась. Перевірте дані та спробуйте ще раз.");
     }
   };
 
@@ -45,11 +46,11 @@ export default function RegisterPage() {
         }}
       >
         <Typography variant="h5" gutterBottom>
-          Register
+          Реєстрація
         </Typography>
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Username"
+            label="Ім'я користувача"
             fullWidth
             margin="normal"
             onChange={(e) => setForm({ ...form, userName: e.target.value })}
@@ -62,14 +63,14 @@ export default function RegisterPage() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <TextField
-            label="Password"
+            label="Пароль"
             type="password"
             fullWidth
             margin="normal"
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
           <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: 2 }}>
-            Register
+            Зареєструватися
           </Button>
         </form>
         <Button
@@ -78,7 +79,7 @@ export default function RegisterPage() {
           sx={{ marginTop: 2 }}
           onClick={() => navigate("/login")}
         >
-          Already have an account? Login
+          Уже маєте акаунт? Увійдіть
         </Button>
       </Paper>
     </Box>

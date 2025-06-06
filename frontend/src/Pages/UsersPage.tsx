@@ -14,12 +14,12 @@ const UsersPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <Typography variant="h4" align="center" sx={{ mb: 3 }}>
+      {/* <Typography variant="h4" align="center" sx={{ mb: 3 }}>
         All Users
-      </Typography>
+      </Typography> */}
       {users.length === 0 ? (
         <Typography align="center" color="text.secondary">
-          No users found.
+          Нічого не знайдено.
         </Typography>
       ) : (
         <Box

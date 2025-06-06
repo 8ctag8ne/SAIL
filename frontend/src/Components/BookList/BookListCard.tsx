@@ -143,7 +143,7 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
                   onClick={e => e.stopPropagation()}
                 />
               }
-              label="Private"
+              label="Приватний"
               sx={{ mt: 1 }}
               onClick={e => e.stopPropagation()}
             />
@@ -154,7 +154,7 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
           </Typography>
         )}
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Books: {list.books.map(b => b.title).join(", ")}
+          Книги: {list.books.map(b => b.title).join(", ")}
         </Typography>
       </CardContent>
     </Card>
