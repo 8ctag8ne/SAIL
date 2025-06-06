@@ -19,13 +19,9 @@ namespace MilLib.Repositories.Implementations
 
         public async Task<PaginatedResult<Book>> GetAllAsync(BookQueryObject query)
         {
-            var booksQuery = _context.Books
-                .Include(b => b.Tags)
-                    .ThenInclude(bt => bt.Tag)
-                .Include(b => b.Authors)
-                    .ThenInclude(ab => ab.Author)
-                .AsQueryable();
+            var booksQuery = _context.Books.AsQueryable();
 
+            // Фільтрація
             if (!string.IsNullOrEmpty(query.Title))
             {
                 booksQuery = booksQuery.Where(b => b.Title.Contains(query.Title));
@@ -41,28 +37,31 @@ namespace MilLib.Repositories.Implementations
                 booksQuery = booksQuery.Where(b => b.Authors.Any(ab => ab.AuthorId == query.AuthorId));
             }
 
+            // Сортування
             if (!string.IsNullOrEmpty(query.SortBy) && query.SortBy.ToLower() == "title")
             {
                 booksQuery = query.IsDescenging
                     ? booksQuery.OrderByDescending(b => b.Title)
                     : booksQuery.OrderBy(b => b.Title);
             }
-
-            booksQuery = booksQuery.OrderByDescending(b => b.Id); //сортування у зворотньому порядку (відображення нових книг спочатку)
+            else
+            {
+                booksQuery = booksQuery.OrderByDescending(b => b.Id);
+            }
 
             var totalItems = await booksQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)query.PageSize);
 
             // Коригування номера сторінки
-            var currentPage = query.PageNumber;
-            if (currentPage < 1)
-                currentPage = 1;
-            else if (currentPage > totalPages && totalPages > 0)
-                currentPage = totalPages;
+            var currentPage = Math.Clamp(query.PageNumber, 1, totalPages > 0 ? totalPages : 1);
 
+            // Додаємо Include тільки для сторінки даних
             var items = await booksQuery
                 .Skip(query.PageSize * (currentPage - 1))
                 .Take(query.PageSize)
+                .Include(b => b.Tags).ThenInclude(bt => bt.Tag)
+                .Include(b => b.Authors).ThenInclude(ab => ab.Author)
+                .AsSplitQuery() // Важливо для продуктивності
                 .ToListAsync();
 
             return new PaginatedResult<Book>
@@ -77,8 +76,10 @@ namespace MilLib.Repositories.Implementations
         public async Task<List<int>> GetUserBookListIdsAsync(string userId, int bookId)
         {
             return await _context.BookListBooks
-            .Include(ubl => ubl.BookList)
-                .Where(ubl => ubl.BookList != null && ubl.BookList.UserId == userId && ubl.BookId == bookId && ubl.BookListId != null)
+                .Where(ubl => ubl.BookList != null && 
+                            ubl.BookList.UserId == userId && 
+                            ubl.BookId == bookId && 
+                            ubl.BookListId != null)
                 .Select(ubl => ubl.BookListId.Value)
                 .ToListAsync();
         }
@@ -91,13 +92,34 @@ namespace MilLib.Repositories.Implementations
         public async Task<Book?> GetByIdWithDetailsAsync(int id)
         {
             return await _context.Books
-                .Include(b => b.Tags)
-                    .ThenInclude(t => t.Tag)
-                .Include(b => b.Comments)
-                    .ThenInclude(c => c.User)
-                .Include(b => b.Authors)
-                    .ThenInclude(ab => ab.Author)
-                .FirstOrDefaultAsync(b => b.Id == id);
+                .Where(b => b.Id == id)
+                .Select(b => new Book 
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    ImageUrl = b.ImageUrl,
+                    Info = b.Info,
+                    FileUrl = b.FileUrl,
+
+                    Tags = b.Tags.Select(t => new BookTag
+                    {
+                        Tag = new Tag { Id = t.Tag.Id, Title = t.Tag.Title }
+                    }).ToList(),
+                    
+                    Comments = b.Comments.Select(c => new Comment
+                    {
+                        Id = c.Id,
+                        Content = c.Content,
+                        User = new User { Id = c.User.Id, UserName = c.User.UserName }
+                    }).ToList(),
+                    
+                    Authors = b.Authors.Select(a => new AuthorBook
+                    {
+                        Author = new Author { Id = a.Author.Id, Name = a.Author.Name }
+                    }).ToList()
+                })
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
         }
 
         public async Task<bool> TitleExistsAsync(string title)
@@ -130,28 +152,42 @@ namespace MilLib.Repositories.Implementations
 
         public async Task UpdateAsync(Book book, List<int>? tagIds = null, List<int>? authorIds = null)
         {
-            if (tagIds != null)
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                var existingBookTags = await _context.BookTags.Where(bt => bt.BookId == book.Id).ToListAsync();
-                _context.BookTags.RemoveRange(existingBookTags);
+                _context.Entry(book).Property(x => x.Title).IsModified = !string.IsNullOrEmpty(book.Title);
+                _context.Entry(book).Property(x => x.Info).IsModified = book.Info != null;
+                _context.Entry(book).Property(x => x.ImageUrl).IsModified = book.ImageUrl != null;
+                _context.Entry(book).Property(x => x.FileUrl).IsModified = book.FileUrl != null;
 
-                var tags = await _context.Tags.Where(t => tagIds.Contains(t.Id)).ToListAsync();
-                book.Tags = tags.Select(t => new BookTag { Book = book, Tag = t }).ToList();
-            }
-
-            if (authorIds != null)
-            {
-                var existingAuthorBooks = await _context.AuthorBooks.Where(ab => ab.BookId == book.Id).ToListAsync();
-                _context.AuthorBooks.RemoveRange(existingAuthorBooks);
-
-                foreach (var authorId in authorIds)
+                if (tagIds != null)
                 {
-                    book.Authors.Add(new AuthorBook { AuthorId = authorId, BookId = book.Id });
-                }
-            }
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"DELETE FROM BookTags WHERE BookId = {book.Id}");
 
-            _context.Books.Update(book);
-            await _context.SaveChangesAsync();
+                    var bookTags = tagIds.Select(tagId => new BookTag { BookId = book.Id, TagId = tagId }).ToList();
+                    await _context.BookTags.AddRangeAsync(bookTags);
+                }
+
+                if (authorIds != null)
+                {
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"DELETE FROM AuthorBooks WHERE BookId = {book.Id}");
+
+                    var authorBooks = authorIds.Select(authorId => 
+                        new AuthorBook { BookId = book.Id, AuthorId = authorId }).ToList();
+                    await _context.AuthorBooks.AddRangeAsync(authorBooks);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task DeleteAsync(Book book)
@@ -167,23 +203,35 @@ namespace MilLib.Repositories.Implementations
 
         public async Task<List<Book>> GetByIdsWithDetailsAsync(List<int> Ids)
         {
-            return await _context.Books.Where(b => Ids.Contains(b.Id))
-                .Include(b => b.Tags)
-                    .ThenInclude(t => t.Tag)
-                // .Include(b => b.Comments)
-                // .ThenInclude(c => c.User)
-                .Include(b => b.Authors)
-                    .ThenInclude(ab => ab.Author)
+            return await _context.Books
+                .Where(b => Ids.Contains(b.Id))
+                .Select(b => new Book
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    ImageUrl = b.ImageUrl,
+                    Info = b.Info,
+                    FileUrl = b.FileUrl,
+                    Tags = b.Tags.Select(t => new BookTag
+                    {
+                        Tag = new Tag { Id = t.Tag.Id, Title = t.Tag.Title }
+                    }).ToList(),
+                    Authors = b.Authors.Select(a => new AuthorBook
+                    {
+                        Author = new Author { Id = a.Author.Id, Name = a.Author.Name }
+                    }).ToList()
+                })
+                .AsNoTracking()
                 .ToListAsync();
         }
         public async Task<List<Book>> SearchByKeywords(List<string> keywords, int limit = 20)
         {
             var books = await _context.Books
+                .Where(b => keywords.Any(k => b.Title.Contains(k) || b.Info.Contains(k)))
                 .Include(b => b.Tags)
                     .ThenInclude(bt => bt.Tag)
                 .Include(b => b.Authors)
                     .ThenInclude(ab => ab.Author)
-                .Where(b => keywords.Any(k => b.Title.Contains(k) || b.Info.Contains(k)))
                 .Take(limit)
                 .ToListAsync();
 

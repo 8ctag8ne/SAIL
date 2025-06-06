@@ -77,6 +77,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost("ocr")]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> ExtractText([FromForm] OcrRequestDto dto)
         {
             try
@@ -116,7 +117,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost("analyze-book")]
-        // [Authorize(Roles = "Admin,Librarian")]
+        [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> AnalyzeBookAsync([FromForm] OcrRequestDto dto)
         {
             try

@@ -65,6 +65,7 @@ namespace MilLib.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
+            Console.WriteLine("Start:" + DateTime.Now);
             var book = await _bookRepository.GetByIdWithDetailsAsync(id);
             if (book == null) return NotFound();
             if(User.Identity?.IsAuthenticated == true)
@@ -77,6 +78,7 @@ namespace MilLib.Controllers
                 var like = await _likeRepository.GetAsync(id, user.Id);
                 return Ok(book.toBookDto(like is not null));
             }
+            Console.WriteLine("End:" + DateTime.Now);
             return Ok(book.toBookDto());
         }
 
@@ -165,7 +167,7 @@ namespace MilLib.Controllers
             }
 
             // Додаємо нові теги, якщо вони є
-            var allTagIds = new List<int>(bookDto.TagIds ?? new List<int>());
+                var allTagIds = new List<int>(bookDto.TagIds ?? new List<int>());
             if (bookDto.NewTagTitles != null && bookDto.NewTagTitles.Any())
             {
                 foreach (var tagTitle in bookDto.NewTagTitles.Where(t => !string.IsNullOrWhiteSpace(t)))
