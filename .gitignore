@@ -1,0 +1,90 @@
+## === ASP.NET Core Web API ===
+
+# User-specific files
+*.suo
+*.user
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# ASP.NET Core specific
+wwwroot/
+appsettings.*.json  # Наприклад, appsettings.Development.json — якщо чутливий
+*.db                # SQLite локальні бази
+*.db-shm
+*.db-wal
+
+# Logs and screenshots
+logs/
+*.log
+*.csv
+*.json  # якщо ти зберігаєш якісь тимчасові API response
+Screenshots/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+.history/
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Dotnet CLI
+*.deps.json
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
+
+# User secrets
+secrets.json
+*.user
+
+# Entity Framework
+Migrations/
+
+# Publish output
+publish/
+*.Publish.xml
+*.pubxml
+*.azurePubxml
+
+# Others
+sql/
+*.Cache
+ClientBin/
+*.dbmdl
+Generated_Code/
+*.bak
+*.tmp
+*.swp
+*.swo
+*.orig
+
+# Windows & Mac system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+librarycoursework-572e4b175bb3.json
