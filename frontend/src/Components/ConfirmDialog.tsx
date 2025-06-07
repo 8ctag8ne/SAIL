@@ -8,7 +8,7 @@ interface ConfirmDialogProps {
 }
 
 const ConfirmDialog = ({ open, title, onConfirm, onCancel }: ConfirmDialogProps) => (
-    <Dialog open={open} onClose={onCancel}>
+    <Dialog open={open} onClose={onCancel} onClick={(e) => e.stopPropagation()}>
         <DialogTitle>{title}</DialogTitle>
         <DialogActions>
             <Button onClick={onCancel} color="secondary">Скасувати</Button>
