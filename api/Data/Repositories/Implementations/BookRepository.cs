@@ -100,6 +100,7 @@ namespace MilLib.Repositories.Implementations
                     ImageUrl = b.ImageUrl,
                     Info = b.Info,
                     FileUrl = b.FileUrl,
+                    LikesCount = b.LikesCount,
 
                     Tags = b.Tags.Select(t => new BookTag
                     {
@@ -160,6 +161,7 @@ namespace MilLib.Repositories.Implementations
                 _context.Entry(book).Property(x => x.Info).IsModified = book.Info != null;
                 _context.Entry(book).Property(x => x.ImageUrl).IsModified = book.ImageUrl != null;
                 _context.Entry(book).Property(x => x.FileUrl).IsModified = book.FileUrl != null;
+                _context.Entry(book).Property(x => x.LikesCount).IsModified = book.LikesCount >= 0;
 
                 if (tagIds != null)
                 {
@@ -212,6 +214,7 @@ namespace MilLib.Repositories.Implementations
                     ImageUrl = b.ImageUrl,
                     Info = b.Info,
                     FileUrl = b.FileUrl,
+                    LikesCount = b.LikesCount,
                     Tags = b.Tags.Select(t => new BookTag
                     {
                         Tag = new Tag { Id = t.Tag.Id, Title = t.Tag.Title }
