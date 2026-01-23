@@ -1,10 +1,13 @@
+//api/Data/Repositories/Implementations/LikeRepository.cs
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using api.Data.Repositories.Interfaces;
 using api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace api.Data.Repositories.Implementations
 {
@@ -19,6 +22,14 @@ namespace api.Data.Repositories.Implementations
         {
             _context.Likes.Add(like);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<HashSet<int>> GetLikedBooksIds(string userId, List<int> bookIds)
+        {
+            var result = await _context.Likes
+                .Where(like => like.UserId == userId && bookIds.Contains(like.BookId))
+                .Select(like => like.BookId).ToListAsync();
+            return [.. result];
         }
 
         public async Task<Like?> GetAsync(int BookId, string UserId)

@@ -1,3 +1,4 @@
+//api/Data/Repositories/Implementations/BookRepository.cs
 using api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -92,35 +93,15 @@ namespace MilLib.Repositories.Implementations
         public async Task<Book?> GetByIdWithDetailsAsync(int id)
         {
             return await _context.Books
-                .Where(b => b.Id == id)
-                .Select(b => new Book 
-                {
-                    Id = b.Id,
-                    Title = b.Title,
-                    ImageUrl = b.ImageUrl,
-                    Info = b.Info,
-                    FileUrl = b.FileUrl,
-                    LikesCount = b.LikesCount,
-
-                    Tags = b.Tags.Select(t => new BookTag
-                    {
-                        Tag = new Tag { Id = t.Tag.Id, Title = t.Tag.Title }
-                    }).ToList(),
-                    
-                    Comments = b.Comments.Select(c => new Comment
-                    {
-                        Id = c.Id,
-                        Content = c.Content,
-                        User = new User { Id = c.User.Id, UserName = c.User.UserName }
-                    }).ToList(),
-                    
-                    Authors = b.Authors.Select(a => new AuthorBook
-                    {
-                        Author = new Author { Id = a.Author.Id, Name = a.Author.Name }
-                    }).ToList()
-                })
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
+                // .AsNoTracking()
+                .AsSplitQuery()
+                .Include(b => b.Tags)
+                    .ThenInclude(bt => bt.Tag)
+                .Include(b => b.Comments)
+                    .ThenInclude(c => c.User)
+                .Include(b => b.Authors)
+                    .ThenInclude(ab => ab.Author)
+                .FirstOrDefaultAsync(b => b.Id == id);
         }
 
         public async Task<bool> TitleExistsAsync(string title)

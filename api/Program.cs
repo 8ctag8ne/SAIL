@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using api.Data.Repositories.Implementations;
 using api.Data.Repositories.Interfaces;
+using api.Helpers;
 using api.Models.Entities;
 using api.Services.Implementations;
 using api.Services.Interfaces;
@@ -19,10 +20,14 @@ using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.AddControllers(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    });
+        options.Filters.Add<ExecutionTimeFilter>();
+    })
+    .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {

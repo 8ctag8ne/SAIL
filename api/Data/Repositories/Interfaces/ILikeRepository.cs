@@ -14,5 +14,6 @@ namespace api.Data.Repositories.Interfaces
         Task<Like?> GetAsync(int BookId, string UserId);
         public int GetLikesCount(int BookId);
         Task<List<Like>> GetUserLikesAsync(User user);
+        Task<HashSet<int>> GetLikedBooksIds(string userId, List<int> bookIds);
     }
 }

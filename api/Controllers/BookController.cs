@@ -1,3 +1,4 @@
+//api/Controllers/BookController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using MilLib.Helpers;
@@ -52,10 +53,10 @@ namespace MilLib.Controllers
                 var user = await _userManager.FindByNameAsync(username);
                 if (user != null)
                 {
+                    var likedBookIds = await _likeRepository.GetLikedBooksIds(user.Id, [.. dtoResult.Items.Select(i => i.Id)]);
                     foreach(var item in dtoResult.Items)
                     {
-                        var like = await _likeRepository.GetAsync(item.Id, user.Id);
-                        item.IsLiked = like != null;
+                        item.IsLiked = likedBookIds.Contains(item.Id);
                     }
                 }
             }
