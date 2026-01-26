@@ -175,6 +175,7 @@ namespace MilLib.Services.Implementations
                 Comments = book.Comments.Select(c => new CommentDto
                 {
                     Id = c.Id,
+                    UserId = c.User.Id,
                     Content = c.Content,
                     CreatedAt = c.CreatedAt,
                     ReplyToId = c.ReplyToId,

@@ -10,6 +10,7 @@ namespace MilLib.Models.DTOs.Book
     {
         public int Id {get; set;}
         public required string Title {get; set;}
+        public string? Info {get; set;}
         public string? ImageUrl {get; set;}
     }
 }

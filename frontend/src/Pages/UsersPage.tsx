@@ -4,13 +4,27 @@ import { User } from "../types";
 import PageContainer from "../Components/PageContainer/PageContainer";
 import UserCard from "../Components/UserCard/UserCard";
 import { Typography, Box } from "@mui/material";
+import { useAuth } from "../Contexts/AuthContext";
 
 const UsersPage: React.FC = () => {
+  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
+    if (!user || !user.roles.includes("Admin")) return;
+
     getAllUsers().then((data) => setUsers(data as User[]));
-  }, []);
+  }, [user]);
+
+  if (!user || !user.roles.includes("Admin")) {
+    return (
+      <PageContainer>
+        <Typography align="center" color="text.secondary">
+          Доступ заборонено
+        </Typography>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>

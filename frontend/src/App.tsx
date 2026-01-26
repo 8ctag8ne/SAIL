@@ -54,10 +54,12 @@ function App() {
                     <Route path="/tags/add" element={<TagAddPage />} />
                     <Route path="/tags/edit/:id" element={<TagEditPage />} />
                     <Route path="/tags/:id" element={<TagDetailsPage />} />
-                    <Route path="/users/:id" element={<UserProfilePage />} />
+                    <Route path="/users">
+                        <Route index element={<UsersPage />} />
+                        <Route path=":id" element={<UserProfilePage />} />
+                        <Route path="edit/:id" element={<EditUserPage />} />
+                    </Route>
                     <Route path="/booklists/:id" element={<BookListPage />} />
-                    <Route path="/users/edit/:id" element={<EditUserPage />} />
-                    <Route path="/users" element={<UsersPage />} />
                     <Route path="/cheatsheet" element={<CheatSheetPage />} />
                 </Routes>
                 </Box>

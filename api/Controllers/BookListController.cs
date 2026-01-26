@@ -4,10 +4,7 @@ using api.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using MilLib.Mappers;
 using MilLib.Models.DTOs.BookList;
-using MilLib.Models.Entities;
-using MilLib.Repositories.Interfaces;
 using MilLib.Services.Interfaces;
 
 namespace MilLib.Controllers
@@ -16,14 +13,12 @@ namespace MilLib.Controllers
     [ApiController]
     public class BookListController : ControllerBase
     {
-        private readonly IBookListRepository _bookListRepository;
-        private readonly IBookRepository _bookRepository;
+        private readonly IBookListService _bookListService;
         private readonly UserManager<User> _userManager;
 
-        public BookListController(IBookListRepository bookListRepository, IBookRepository bookRepository, UserManager<User> userManager)
+        public BookListController(IBookListService bookListService, UserManager<User> userManager)
         {
-            _bookListRepository = bookListRepository;
-            _bookRepository = bookRepository;
+            _bookListService = bookListService;
             _userManager = userManager;
         }
 
@@ -31,187 +26,191 @@ namespace MilLib.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
-            var bookLists = await _bookListRepository.GetAllWithBooksAsync();
-            var res = bookLists.Select(b => b.toBookListDto());
-            return Ok(res);
+            try
+            {
+                var bookLists = await _bookListService.GetAllBookListsAsync();
+                return Ok(bookLists);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving book lists", error = ex.Message });
+            }
         }
 
         [HttpGet("get-booklists/{userId}")]
         public async Task<IActionResult> GetBookListsForUser([FromRoute] string userId)
         {
-            var bookLists = await _bookListRepository.GetAllWithBooksAsync();
-            var res = bookLists.Where(bl => bl.UserId == userId).Select(b => b.toBookListDto());
-            var username = User.GetUsername();
-            if(username == null)
+            try
             {
-                res = res.Where(bl => (bool)!bl.IsPrivate);
-            }
-            else
-            {
-                var currentUser = await _userManager.FindByNameAsync(User.GetUsername());
-                var currentUserId = currentUser?.Id;
-                if(!User.IsInRole("Admin") && currentUserId != userId)
+                string? currentUserId = null;
+                bool isAdmin = false;
+
+                if (User.Identity?.IsAuthenticated == true)
                 {
-                    res = res.Where(bl => (bool)!bl.IsPrivate);
+                    var username = User.GetUsername();
+                    var currentUser = await _userManager.FindByNameAsync(username);
+                    currentUserId = currentUser?.Id;
+                    isAdmin = User.IsInRole("Admin");
                 }
+
+                var bookLists = await _bookListService.GetBookListsForUserAsync(userId, currentUserId, isAdmin);
+                return Ok(bookLists);
             }
-            return Ok(res);
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving book lists", error = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var bookList = await _bookListRepository.GetByIdWithBooksAsync(id);
-
-            if (bookList == null)
+            try
             {
-                return NotFound();
-            }
+                var bookList = await _bookListService.GetBookListByIdAsync(id);
+                if (bookList == null)
+                    return NotFound(new { message = "Book list not found" });
 
-            string? username = null;
-            if(bookList?.UserId != null)
-            {
-                var user = await _userManager.FindByIdAsync(bookList.UserId);
-                username = user?.UserName;
+                return Ok(bookList);
             }
-            return Ok(bookList.toBookListDto());
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving the book list", error = ex.Message });
+            }
         }
 
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create([FromBody] BookListCreateDto bookListDto)
         {
-            var bookList = bookListDto.toBookListFromCreateDto();
-
-            var username = User.GetUsername();
-            var user = await _userManager.FindByNameAsync(username);
-            if (user == null)
+            try
             {
-                return Unauthorized();
+                var username = User.GetUsername();
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                var bookList = await _bookListService.CreateBookListAsync(bookListDto, user.Id);
+                return CreatedAtAction(nameof(GetById), new { id = bookList.Id }, bookList);
             }
-
-            bookList.UserId = user.Id;
-            var books = await _bookRepository.GetByIdsAsync(bookListDto.BookIds);
-
-            bookList.Books = books.Select(b => new Models.Entities.BookListBook
+            catch (InvalidOperationException ex)
             {
-                BookList = bookList,
-                Book = b
-            }).ToList();
-
-            await _bookListRepository.AddAsync(bookList);
-            await _bookListRepository.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = bookList.Id }, bookList.toBookListDto());
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while creating the book list", error = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] BookListUpdateDto bookListDto)
         {
-            var bookList = await _bookListRepository.GetByIdWithBooksAsync(id);
-            if (bookList == null)
+            try
             {
-                return NotFound();
+                var username = User.GetUsername();
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                var bookList = await _bookListService.UpdateBookListAsync(id, bookListDto, user.Id);
+                return Ok(bookList);
             }
-
-            bookList.Title = bookListDto.Title;
-            bookList.Description = bookListDto.Description;
-            bookList.IsPrivate = bookListDto.IsPrivate;
-
-            await _bookListRepository.ClearBooksAsync(bookList.Id);
-
-            var books = await _bookRepository.GetByIdsAsync(bookListDto.BookIds);
-            bookList.Books = books.Select(b => new Models.Entities.BookListBook
+            catch (UnauthorizedAccessException ex)
             {
-                BookListId = bookList.Id,
-                Book = b
-            }).ToList();
-
-            _bookListRepository.Update(bookList);
-            await _bookListRepository.SaveChangesAsync();
-
-            return Ok(bookList.toBookListDto());
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (ex.Message.Contains("not found"))
+                    return NotFound(new { message = ex.Message });
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while updating the book list", error = ex.Message });
+            }
         }
 
         [HttpPost("add-book")]
         [Authorize]
         public async Task<IActionResult> AddBookToLists([FromBody] AddBookToListsDto dto)
         {
-            var book = await _bookRepository.GetByIdAsync(dto.BookId);
-            if (book == null)
+            try
             {
-                return NotFound($"Book with id {dto.BookId} not found.");
+                var username = User.GetUsername();
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                await _bookListService.AddBookToListsAsync(dto.BookId, dto.BookListIds, user.Id);
+                return Ok(new { message = "Book added to lists successfully" });
             }
-            var username = User.GetUsername();
-            var user = await _userManager.FindByNameAsync(username);
-            if (user == null)
+            catch (InvalidOperationException ex)
             {
-                return Unauthorized();
+                return BadRequest(new { message = ex.Message });
             }
-
-            foreach (var listId in dto.BookListIds)
+            catch (Exception ex)
             {
-                var bookList = await _bookListRepository.GetByIdWithBooksAsync(listId);
-                if (bookList == null)
-                    continue;
-
-                if (!bookList.Books.Any(b => b.BookId == dto.BookId) && user.Id ==bookList.UserId)
-                {
-                    bookList.Books.Add(new BookListBook
-                    {
-                        BookId = dto.BookId,
-                        BookListId = listId
-                    });
-                }
+                return StatusCode(500, new { message = "An error occurred while adding book to lists", error = ex.Message });
             }
-
-            await _bookListRepository.SaveChangesAsync();
-            return Ok();
         }
 
         [HttpDelete("remove-book")]
         [Authorize]
         public async Task<IActionResult> RemoveBookFromList([FromQuery] int bookId, [FromQuery] int listId)
         {
-            var bookList = await _bookListRepository.GetByIdWithBooksAsync(listId);
-            if (bookList == null)
+            try
             {
-                return NotFound();
-            }
+                var username = User.GetUsername();
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
 
-            var username = User.GetUsername();
-            var user = await _userManager.FindByNameAsync(username);
-            if (user == null)
+                await _bookListService.RemoveBookFromListAsync(bookId, listId, user.Id);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized();
+                return Forbid();
             }
-
-            var entry = bookList.Books.FirstOrDefault(b => b.BookId == bookId);
-            if (entry != null && user.Id == bookList.UserId)
+            catch (InvalidOperationException ex)
             {
-                bookList.Books.Remove(entry);
-                await _bookListRepository.SaveChangesAsync();
+                return NotFound(new { message = ex.Message });
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while removing book from list", error = ex.Message });
+            }
         }
-
 
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var bookList = await _bookListRepository.GetByIdAsync(id);
-            if (bookList == null)
+            try
             {
-                return NotFound();
+                var username = User.GetUsername();
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                await _bookListService.DeleteBookListAsync(id, user.Id);
+                return NoContent();
             }
-
-            _bookListRepository.Remove(bookList);
-            await _bookListRepository.SaveChangesAsync();
-
-            return NoContent();
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the book list", error = ex.Message });
+            }
         }
     }
 }

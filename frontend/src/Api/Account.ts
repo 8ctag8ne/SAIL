@@ -33,8 +33,9 @@ export const getProfile = async () => {
 // Отримати користувача за id
 export const getUserById = async (id: string) => {
   const token = localStorage.getItem("token");
+  console.trace(`🔥 getUserById called.\n Id: ${id}\n`);
   const res = await axios.get(`${API}/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token ?? ""}` },
   });
   return res.data;
 };
@@ -64,6 +65,7 @@ export const deleteUser = async (id: string) => {
 
 // Отримати всіх користувачів (тільки для Admin)
 export const getAllUsers = async () => {
+  console.trace("🔥 getAllUsers called");
   const token = localStorage.getItem("token");
   const res = await axios.get(`${API}/users`, {
     headers: { Authorization: `Bearer ${token}` },
