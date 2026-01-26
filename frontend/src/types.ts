@@ -107,7 +107,8 @@ export type Tag = {
     title: string | null;
     info?: string | null;
     imageUrl?: string | null;
-    books: Book[]; // Book вже є у вашому types.ts
+    booksCount?: number; 
+    books?: Book[]; // Book вже є у вашому types.ts
 };
 
 export type TagCreate = {

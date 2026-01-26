@@ -1,19 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+//api/Controllers/TagController.cs
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using MilLib.Mappers;
-using MilLib.Models.DTOs.Author;
 using MilLib.Models.DTOs.Tag;
-using MilLib.Models.Entities;
 using MilLib.Services.Interfaces;
-using MilLib.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using MilLib.Helpers;
-using api.Models.Entities;
 
 namespace MilLib.Controllers
 {
@@ -21,110 +11,101 @@ namespace MilLib.Controllers
     [ApiController]
     public class TagController : ControllerBase
     {
-        private readonly ITagRepository _tagRepository;
-        private readonly IBookRepository _bookRepository;
-        private readonly IFileService _fileService;
-        
-        public TagController(ITagRepository tagRepository, IBookRepository bookRepository, IFileService fileService)
+        private readonly ITagService _tagService;
+
+        public TagController(ITagService tagService)
         {
-            _tagRepository = tagRepository;
-            _bookRepository = bookRepository;
-            _fileService = fileService;
+            _tagService = tagService;
         }
-        
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] TagQueryObject query)
         {
-            var result = await _tagRepository.GetAllAsync(query);
-            
-            var dtoResult = new PaginatedResult<TagDto>
+            try
             {
-                Items = result.Items.Select(t => t.toTagDto()).ToList(),
-                TotalItems = result.TotalItems,
-                TotalPages = result.TotalPages,
-                CurrentPage = result.CurrentPage
-            };
-            
-            return Ok(dtoResult);
+                var result = await _tagService.GetAllTagsAsync(query);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving tags", error = ex.Message });
+            }
         }
-        
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var tag = await _tagRepository.GetByIdWithBooksAsync(id);
-            if (tag == null)
+            try
             {
-                return NotFound();
+                var tag = await _tagService.GetTagByIdAsync(id);
+                if (tag == null)
+                    return NotFound(new { message = "Tag not found" });
+
+                return Ok(tag);
             }
-            return Ok(tag.toTagDto());
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving the tag", error = ex.Message });
+            }
         }
-        
+
         [HttpPost]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Create([FromForm] TagCreateDto tagDto)
         {
-            var tag = tagDto.toTagFromCreateDto();
-            tag.ImageUrl = await _fileService.UploadAsync(tagDto.Image, "Tags/Images");
-           
-            var books = await _bookRepository.GetByIdsAsync(tagDto.BookIds);
-            tag.Books = books.Select(t => new BookTag {Tag = tag, Book = t }).ToList();
-            
-            await _tagRepository.AddAsync(tag);
-            await _tagRepository.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetById), new {id = tag.Id}, tag.toTagDto());
+            try
+            {
+                var tag = await _tagService.CreateTagAsync(tagDto);
+                return CreatedAtAction(nameof(GetById), new { id = tag.Id }, tag);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while creating the tag", error = ex.Message });
+            }
         }
-        
-        [HttpPut]
-        [Route("{id}")]
+
+        [HttpPut("{id}")]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromForm] TagUpdateDto tagDto)
         {
-            var tag = await _tagRepository.GetByIdAsync(id);
-            if (tag == null)
+            try
             {
-                return NotFound();
+                var tag = await _tagService.UpdateTagAsync(id, tagDto);
+                return Ok(tag);
             }
-            
-            tag.Title = tagDto.Title;
-            tag.Info = tagDto.Info;
-            
-            if(tagDto.Image != null && tagDto.Image.Length > 0)
+            catch (InvalidOperationException ex)
             {
-                if(tag.ImageUrl != null)
-                {
-                    await _fileService.DeleteAsync(tag.ImageUrl);
-                }
-                tag.ImageUrl = await _fileService.UploadAsync(tagDto.Image, "Tags/Images");
+                if (ex.Message.Contains("not found"))
+                    return NotFound(new { message = ex.Message });
+                return BadRequest(new { message = ex.Message });
             }
-            
-            var existingBookTags = await _tagRepository.GetBookTagsByTagIdAsync(tag.Id);
-            await _tagRepository.RemoveBookTagsRangeAsync(existingBookTags);
-            
-            var books = await _bookRepository.GetByIdsAsync(tagDto.BookIds);
-            tag.Books = books.Select(t => new BookTag {Tag = tag, Book = t }).ToList();
-            
-            await _tagRepository.UpdateAsync(tag);
-            await _tagRepository.SaveChangesAsync();
-            
-            return Ok(tag.toTagDto());
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while updating the tag", error = ex.Message });
+            }
         }
-        
-        [HttpDelete]
-        [Route("{id}")]
+
+        [HttpDelete("{id}")]
         [Authorize(Roles = "Admin,Librarian")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var tag = await _tagRepository.GetByIdAsync(id);
-            if (tag == null)
+            try
             {
-                return NotFound();
+                await _tagService.DeleteTagAsync(id);
+                return NoContent();
             }
-            
-            await _tagRepository.DeleteAsync(tag);
-            await _tagRepository.SaveChangesAsync();
-            
-            return NoContent();
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the tag", error = ex.Message });
+            }
         }
     }
 }

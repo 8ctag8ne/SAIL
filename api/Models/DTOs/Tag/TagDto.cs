@@ -13,6 +13,7 @@ namespace MilLib.Models.DTOs.Tag
         public string? Title {get; set;}
         public string? Info {get; set;}
         public string? ImageUrl {get; set;}
-        public List<BookSimpleDto> Books {get; set;} = new List<BookSimpleDto>();
+        public int? BooksCount {get; set;}
+        public List<BookSimpleDto>? Books {get; set;} = new List<BookSimpleDto>();
     }
 }

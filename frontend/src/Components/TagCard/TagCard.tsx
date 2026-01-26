@@ -86,7 +86,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
           </Typography>
         )}
         <Typography variant="caption" color="text.secondary">
-          Книги: {tag.books.length}
+          Книги: {tag.booksCount}
         </Typography>
         {canEditOrDelete && (
           <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
