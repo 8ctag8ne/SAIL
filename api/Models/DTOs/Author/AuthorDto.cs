@@ -12,6 +12,7 @@ namespace MilLib.Models.DTOs.Author
         public string? Name {get; set;}
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}
-        public List<BookSimpleDto> Books {get; set;} = new List<BookSimpleDto>();
+        public List<BookSimpleDto>? Books {get; set;} = new List<BookSimpleDto>();
+        public int? BooksCount {get; set;}
     }
 }

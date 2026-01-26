@@ -1,15 +1,8 @@
 //api/Controllers/AuthorController.cs
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using api.Models.Entities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using MilLib.Helpers;
-using MilLib.Mappers;
 using MilLib.Models.DTOs.Author;
-using MilLib.Models.Entities;
-using MilLib.Repositories.Interfaces;
 using MilLib.Services.Interfaces;
 
 namespace MilLib.Controllers
@@ -18,95 +11,103 @@ namespace MilLib.Controllers
     [ApiController]
     public class AuthorController : ControllerBase
     {
-        private readonly IAuthorRepository _authorRepository;
-        private readonly IFileService _fileService;
+        private readonly IAuthorService _authorService;
 
-        public AuthorController(IAuthorRepository authorRepository, IFileService fileService)
+        public AuthorController(IAuthorService authorService)
         {
-            _authorRepository = authorRepository;
-            _fileService = fileService;
+            _authorService = authorService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] AuthorQueryObject query)
         {
-            var result = await _authorRepository.GetAllAsync(query);
-            
-            var dtoResult = new PaginatedResult<AuthorDto>
+            try
             {
-                Items = result.Items.Select(a => a.toAuthorDto()).ToList(),
-                TotalItems = result.TotalItems,
-                TotalPages = result.TotalPages,
-                CurrentPage = result.CurrentPage
-            };
-            
-            return Ok(dtoResult);
+                var result = await _authorService.GetAllAuthorsAsync(query);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving authors", error = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var author = await _authorRepository.GetByIdWithBooksAsync(id);
-            if (author == null)
-                return NotFound();
+            try
+            {
+                var author = await _authorService.GetAuthorByIdAsync(id);
+                if (author == null)
+                    return NotFound(new { message = "Author not found" });
 
-            return Ok(author.toAuthorDto());
+                return Ok(author);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving the author", error = ex.Message });
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromForm] AuthorCreateDto authorDto)
         {
-            var author = authorDto.toAuthorFromCreateDto();
-            author.ImageUrl = await _fileService.UploadAsync(authorDto.Image, "Authors/Images");
-
-            await _authorRepository.AddAsync(author);
-            await _authorRepository.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = author.Id }, author.toAuthorDto());
+            try
+            {
+                var author = await _authorService.CreateAuthorAsync(authorDto);
+                return CreatedAtAction(nameof(GetById), new { id = author.Id }, author);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while creating the author", error = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromForm] AuthorUpdateDto authorDto)
         {
-            var author = await _authorRepository.GetByIdAsync(id);
-            if (author == null)
-                return NotFound();
-
-            if (authorDto.Name != null)
-                author.Name = authorDto.Name;
-            if (authorDto.Info != null)
-                author.Info = authorDto.Info;
-
-            if (authorDto.Image != null && authorDto.Image.Length > 0)
+            try
             {
-                if (!string.IsNullOrEmpty(author.ImageUrl))
-                    await _fileService.DeleteAsync(author.ImageUrl);
-
-                author.ImageUrl = await _fileService.UploadAsync(authorDto.Image, "Authors/Images");
+                var author = await _authorService.UpdateAuthorAsync(id, authorDto);
+                return Ok(author);
             }
-
-            _authorRepository.Update(author);
-            await _authorRepository.SaveChangesAsync();
-
-            return Ok(author.toAuthorDto());
+            catch (InvalidOperationException ex)
+            {
+                if (ex.Message.Contains("not found"))
+                    return NotFound(new { message = ex.Message });
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while updating the author", error = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var author = await _authorRepository.GetByIdAsync(id);
-            if (author == null)
-                return NotFound();
-
-            _authorRepository.Remove(author);
-            await _authorRepository.SaveChangesAsync();
-
-            return NoContent();
+            try
+            {
+                await _authorService.DeleteAuthorAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (ex.Message.Contains("not found"))
+                    return NotFound(new { message = ex.Message });
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the author", error = ex.Message });
+            }
         }
-
-        private Task<bool> Exists(int id) => _authorRepository.ExistsAsync(id);
     }
 }

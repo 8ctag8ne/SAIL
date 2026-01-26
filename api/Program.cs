@@ -111,6 +111,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IFileService, LocalFileService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IAuthorService, AuthorService>();
 
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
