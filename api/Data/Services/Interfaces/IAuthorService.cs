@@ -12,5 +12,6 @@ namespace MilLib.Services.Interfaces
         Task<AuthorDto> CreateAuthorAsync(AuthorCreateDto authorDto);
         Task<AuthorDto> UpdateAuthorAsync(int id, AuthorUpdateDto authorDto);
         Task DeleteAuthorAsync(int id);
+        Task<IEnumerable<AuthorSimpleDto>> GetAllSimpleAsync();
     }
 }

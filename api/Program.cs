@@ -1,6 +1,4 @@
 using System.Text.Json.Serialization;
-using api.Data.Repositories.Implementations;
-using api.Data.Repositories.Interfaces;
 using api.Helpers;
 using api.Models.Entities;
 using api.Services.Implementations;
@@ -13,9 +11,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using MilLib.Repositories;
-using MilLib.Repositories.Implementations;
-using MilLib.Repositories.Interfaces;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
 
@@ -115,13 +110,7 @@ builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IBookListService, BookListService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 
-builder.Services.AddScoped<IBookRepository, BookRepository>();
-builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
-builder.Services.AddScoped<IBookListRepository, BookListRepository>();
-builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<ILikeRepository, LikeRepository>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
 builder.Services.AddScoped<IPdfTextExtractorService, PdfService>();
 builder.Services.AddScoped<IOcrService, OcrService>();

@@ -6,7 +6,6 @@ using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Models.DTOs.Pdf;
-using MilLib.Repositories.Interfaces;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
 using SixLabors.ImageSharp.Formats.Png;
@@ -22,18 +21,18 @@ namespace MilLib.Controllers
         private readonly IPdfTextExtractorService _pdfTextExtractor;
         private readonly IBookInfoAnalyzerService _bookInfoAnalyzer;
 
-        private readonly IAuthorRepository _authorRepository;
-        private readonly ITagRepository _tagRepository;
+        private readonly IAuthorService _authorService;
+        private readonly ITagService _tagService;
         private readonly ICheatSheetService _cheatSheetService;
 
-        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorRepository authorRepository, ITagRepository tagRepository, ICheatSheetService cheatSheetService)
+        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorService authorService, ITagService tagService, ICheatSheetService cheatSheetService)
         {
             _ocrService = ocrService;
             _pdfRenderService = pdfRenderService;
             _pdfTextExtractor = pdfTextExtractor;
             _bookInfoAnalyzer = bookInfoAnalyzer;
-            _authorRepository = authorRepository;
-            _tagRepository = tagRepository;
+            _authorService = authorService;
+            _tagService = tagService;
             _cheatSheetService = cheatSheetService;
         }
 
@@ -144,8 +143,8 @@ namespace MilLib.Controllers
                     return BadRequest("Не вдалося витягнути достатньо тексту для аналізу.");
 
 
-                var tags = await _tagRepository.GetAllSimpleAsync();
-                var authors = await _authorRepository.GetAllSimpleAsync();
+                var tags = await _tagService.GetAllSimpleAsync();
+                var authors = await _authorService.GetAllSimpleAsync();
 
                 var result = await _bookInfoAnalyzer.AnalyzeBookInfoAsync(text, tags, authors);
                 if (result.StartsWith("```json"))

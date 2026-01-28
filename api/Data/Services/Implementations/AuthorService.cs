@@ -221,5 +221,16 @@ namespace MilLib.Services.Implementations
             _context.Authors.Remove(new Author { Id = author.Id });
             await _context.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<AuthorSimpleDto>> GetAllSimpleAsync()
+        {
+            var simpleTags = _context.Authors.Select(t => new AuthorSimpleDto
+            {
+                Id = t.Id,
+                Name = t.Name,
+            });
+
+            return await simpleTags.ToListAsync();
+        }
     }
 }

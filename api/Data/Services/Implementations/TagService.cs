@@ -276,5 +276,15 @@ namespace MilLib.Services.Implementations
             _context.Tags.Remove(new Tag { Id = tag.Id });
             await _context.SaveChangesAsync();
         }
+        public async Task<IEnumerable<TagSimpleDto>> GetAllSimpleAsync()
+        {
+            var simpleTags = _context.Tags.Select(t => new TagSimpleDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+            });
+
+            return await simpleTags.ToListAsync();
+        }
     }
 }

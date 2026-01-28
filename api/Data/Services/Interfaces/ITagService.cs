@@ -12,5 +12,6 @@ namespace MilLib.Services.Interfaces
         Task<TagDto> CreateTagAsync(TagCreateDto tagDto);
         Task<TagDto> UpdateTagAsync(int id, TagUpdateDto tagDto);
         Task DeleteTagAsync(int id);
+        Task<IEnumerable<TagSimpleDto>> GetAllSimpleAsync();
     }
 }

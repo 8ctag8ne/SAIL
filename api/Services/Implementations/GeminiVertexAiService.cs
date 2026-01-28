@@ -8,10 +8,12 @@ using System.Text.Encodings.Web;
 using api.Models.DTOs.Tag;
 using api.Models.DTOs.Book;
 using api.Models.DTOs;
-using MilLib.Repositories.Interfaces;
 using MilLib.Mappers;
 using api.Helpers;
 using System.Text.Json.Serialization;
+using MilLib.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using MilLib.Models.DTOs.Book;
 
 namespace MilLib.Services.Implementations
 {
@@ -22,21 +24,25 @@ namespace MilLib.Services.Implementations
         private readonly string _location;
         private readonly string _model;
         private readonly string _publisher;
-        private readonly IBookRepository _bookRepository;
-        private readonly ITagRepository _tagRepository;
+        private readonly ApplicationDbContext _context;
 
-        public GeminiVertexAiService(PredictionServiceClient client, IConfiguration config, IBookRepository bookRepository, ITagRepository tagRepository)
+        public GeminiVertexAiService(
+            PredictionServiceClient client, 
+            IConfiguration config, 
+            ApplicationDbContext context)
         {
             _client = client;
+            _context = context;
             _projectId = config["Gemini:ProjectId"]!;
             _location = config["Gemini:Location"] ?? "us-central1";
             _model = config["Gemini:Model"] ?? "gemini-2.5-pro-preview-0514";
             _publisher = config["Gemini:Publisher"] ?? "google";
-            _bookRepository = bookRepository;
-            _tagRepository = tagRepository;
         }
 
-        public async Task<string> AnalyzeBookInfoAsync(string extractedText, IEnumerable<TagSimpleDto> currentTags, IEnumerable<AuthorSimpleDto> currentAuthors)
+        public async Task<string> AnalyzeBookInfoAsync(
+            string extractedText, 
+            IEnumerable<TagSimpleDto> currentTags, 
+            IEnumerable<AuthorSimpleDto> currentAuthors)
         {
             var serializationOptions = new JsonSerializerOptions
             {
@@ -132,7 +138,6 @@ BOOK TEXT TO ANALYZE:
         {
             // Перший етап: Отримання ключових слів та початкових результатів
             var initialData = await GetInitialRecommendations(userRequest);
-            // return initialData;
 
             // Другий етап: Генерація фінального чит-листа
             return await RefineCheatSheet(initialData, userRequest);
@@ -168,8 +173,11 @@ BOOK TEXT TO ANALYZE:
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
 
-            var allTags = await _tagRepository.GetAllSimpleAsync();
-            var tagTitles = allTags.Select(t => t.Title).ToList();
+            // ОПТИМІЗАЦІЯ: завантажуємо тільки titles тегів
+            var tagTitles = await _context.Tags
+                .AsNoTracking()
+                .Select(t => t.Title)
+                .ToListAsync();
 
             string prompt = $@"
 USER QUERY: {userRequest}
@@ -212,25 +220,28 @@ GOOD EXAMPLE:
             response = response.StripJson();
             var analysisResult = JsonSerializer.Deserialize<QueryAnalysisResult>(response, serializationOptions)!;
 
-            var books = await _bookRepository.SearchByKeywords(analysisResult.Keywords);
+            // ОПТИМІЗАЦІЯ: пошук по ключових словах напряму в DbContext
+            var books = await SearchBooksByKeywords(analysisResult.Keywords, limit: 20);
 
-            // var allTags = await _tagRepository.GetAllWithBooksAsync(); // новий метод
-            var selectedTags = allTags
-                .Where(tag => analysisResult.Categories.Contains(tag.Title))
+            // ОПТИМІЗАЦІЯ: завантажуємо тільки відповідні теги
+            var selectedTags = await _context.Tags
+                .AsNoTracking()
+                .Where(tag => analysisResult.Categories.Contains(tag.Title!))
                 .Select(t => new TagDto
                 {
                     Id = t.Id,
                     Title = t.Title,
                 })
-                .ToList();
+                .ToListAsync();
 
             return new CheatSheet
             {
-                Books = books.Select(b => b.toBookDto()).Take(20).ToList(),
+                Books = books,
                 Tags = selectedTags,
                 Tips = new List<string>()
             };
         }
+
         private async Task<CheatSheet> RefineCheatSheet(CheatSheet initialData, string userRequest)
         {
             var serializationOptions = new JsonSerializerOptions
@@ -327,7 +338,7 @@ HARD REQUIREMENTS:
             var selectedBooks = initialData.Books
                 .Where(b => refinementResult.Books
                     .Any(rb => b.Title.Contains(rb, StringComparison.OrdinalIgnoreCase)))
-                .Take(5)  // Збільшити ліміт для резерву
+                .Take(5)
                 .ToList();
 
             var selectedTags = initialData.Tags
@@ -358,22 +369,77 @@ HARD REQUIREMENTS:
                 Tags = selectedTags
             };
         }
+
+        // НОВИЙ МЕТОД: пошук книг по ключових словах
+        private async Task<List<BookDto>> SearchBooksByKeywords(List<string> keywords, int limit = 20)
+        {
+            if (!keywords.Any())
+                return new List<BookDto>();
+
+            // ОПТИМІЗАЦІЯ: використовуємо проекцію + фільтрацію в БД
+            var books = await _context.Books
+                .AsNoTracking()
+                .Where(b => keywords.Any(k => 
+                    b.Title.Contains(k) || 
+                    b.Info!.Contains(k)))
+                .Select(b => new
+                {
+                    b.Id,
+                    b.Title,
+                    b.ImageUrl,
+                    b.Info,
+                    b.LikesCount,
+                    Tags = b.Tags.Select(bt => new
+                    {
+                        bt.Tag!.Id,
+                        bt.Tag.Title
+                    }).ToList(),
+                    Authors = b.Authors.Select(ab => new
+                    {
+                        ab.Author!.Id,
+                        ab.Author.Name
+                    }).ToList()
+                })
+                .Take(limit)
+                .ToListAsync();
+
+            return books.Select(b => new BookDto
+            {
+                Id = b.Id,
+                Title = b.Title,
+                ImageUrl = b.ImageUrl,
+                Info = b.Info,
+                LikesCount = b.LikesCount,
+                Tags = b.Tags.Select(t => new TagSimpleDto
+                {
+                    Id = t.Id,
+                    Title = t.Title
+                }).ToList(),
+                Authors = b.Authors.Select(a => new AuthorSimpleDto
+                {
+                    Id = a.Id,
+                    Name = a.Name
+                }).ToList()
+            }).ToList();
+        }
     }
 
-
-        class QueryAnalysisResult
-        {
-            public List<string> Keywords { get; set; } = new List<string>();
-            public List<string> Categories { get; set; } = new List<string>();
-        }
-
-        class CheatSheetRefinement
-        {
-            [JsonPropertyName("tips")]
-            public List<string> Tips { get; set; } = new List<string>();
-            [JsonPropertyName("books")]
-            public List<string> Books { get; set; } = new List<string>();
-            [JsonPropertyName("tags")]
-            public List<string> Tags { get; set; } = new List<string>();
-        }
+    // Допоміжні класи
+    class QueryAnalysisResult
+    {
+        public List<string> Keywords { get; set; } = new List<string>();
+        public List<string> Categories { get; set; } = new List<string>();
     }
+
+    class CheatSheetRefinement
+    {
+        [JsonPropertyName("tips")]
+        public List<string> Tips { get; set; } = new List<string>();
+        
+        [JsonPropertyName("books")]
+        public List<string> Books { get; set; } = new List<string>();
+        
+        [JsonPropertyName("tags")]
+        public List<string> Tags { get; set; } = new List<string>();
+    }
+}
