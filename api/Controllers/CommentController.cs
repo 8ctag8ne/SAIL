@@ -1,20 +1,11 @@
 //api/Controllers/CommentController.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using api.Extensions;
 using api.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using MilLib.Mappers;
-using MilLib.Models.DTOs.Book;
 using MilLib.Models.DTOs.Comment;
-using MilLib.Models.Entities;
-using MilLib.Repositories.Interfaces;
+using MilLib.Services.Interfaces;
 
 namespace MilLib.Controllers
 {
@@ -22,110 +13,142 @@ namespace MilLib.Controllers
     [ApiController]
     public class CommentController : ControllerBase
     {
-        private readonly ICommentRepository _commentRepository;
-        private readonly IBookRepository _bookRepository;
-
+        private readonly ICommentService _commentService;
         private readonly UserManager<User> _userManager;
 
-        public CommentController(ICommentRepository commentRepository, IBookRepository bookRepository, UserManager<User> userManager)
+        public CommentController(ICommentService commentService, UserManager<User> userManager)
         {
-            _commentRepository = commentRepository;
-            _bookRepository = bookRepository;
+            _commentService = commentService;
             _userManager = userManager;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] CommentQueryObject query)
         {
-            var comments = await _commentRepository.GetAllWithRepliesAsync();
-            var res = comments.Select(a => a.toCommentDto());
-            return Ok(res);
+            try
+            {
+                var result = await _commentService.GetAllCommentsAsync(query);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving comments", error = ex.Message });
+            }
+        }
+
+        [HttpGet("book/{bookId}")]
+        public async Task<IActionResult> GetCommentsForBook([FromRoute] int bookId)
+        {
+            try
+            {
+                var comments = await _commentService.GetCommentsForBookAsync(bookId);
+                return Ok(comments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving comments", error = ex.Message });
+            }
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
-            var comment = await _commentRepository.GetByIdWithRepliesAsync(id);
-            if (comment == null)
+            try
             {
-                return NotFound();
+                var comment = await _commentService.GetCommentByIdAsync(id);
+                if (comment == null)
+                    return NotFound(new { message = "Comment not found" });
+
+                return Ok(comment);
             }
-            return Ok(comment.toCommentDto());
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving the comment", error = ex.Message });
+            }
         }
 
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create([FromBody] CommentCreateDto commentDto)
         {
-            var book = await _bookRepository.GetByIdAsync(commentDto.BookId);
-            if (book == null)
+            try
             {
-                return BadRequest($"Book with id {commentDto.BookId} doesn't exists");
+                var username = User.GetUsername();
+                var currentUser = await _userManager.FindByNameAsync(username);
+                if (currentUser == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                var comment = await _commentService.CreateCommentAsync(commentDto, currentUser.Id);
+                return CreatedAtAction(nameof(GetById), new { id = comment.Id }, comment);
             }
-            
-            if(commentDto.ReplyToId != null)
+            catch (InvalidOperationException ex)
             {
-                var parent = await _commentRepository.GetByIdAsync(commentDto.ReplyToId.Value);
-                if (parent == null)
-                {
-                    return BadRequest($"Comment with id {commentDto.ReplyToId} to reply to doesn't exists");
-                }
+                return BadRequest(new { message = ex.Message });
             }
-            
-            var comment = commentDto.toCommentFromCreateDto();
-            var currentUser = await _userManager.FindByNameAsync(User.GetUsername());
-            comment.UserId = currentUser.Id;
-            await _commentRepository.AddAsync(comment);
-            await _commentRepository.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetById), new {id = comment.Id}, comment.toCommentDto());
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while creating the comment", error = ex.Message });
+            }
         }
 
-        [HttpPut]
-        [Route("{id:int}")]
+        [HttpPut("{id:int}")]
         [Authorize]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] CommentUpdateDto commentDto)
         {
-            var comment = await _commentRepository.GetByIdAsync(id);
-            if (comment == null)
+            try
             {
-                return NotFound();
+                var username = User.GetUsername();
+                var currentUser = await _userManager.FindByNameAsync(username);
+                if (currentUser == null)
+                    return Unauthorized(new { message = "User not found" });
+
+                var isAdmin = User.IsInRole("Admin");
+                var comment = await _commentService.UpdateCommentAsync(id, commentDto, currentUser.Id, isAdmin);
+                return Ok(comment);
             }
-            
-            if(!commentDto.Content.IsNullOrEmpty())
+            catch (UnauthorizedAccessException ex)
             {
-                comment.Content = commentDto.Content;
+                return Forbid();
             }
-
-            await _commentRepository.UpdateAsync(comment);
-            await _commentRepository.SaveChangesAsync();
-
-            return Ok(comment.toCommentDto());
+            catch (InvalidOperationException ex)
+            {
+                if (ex.Message.Contains("not found"))
+                    return NotFound(new { message = ex.Message });
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while updating the comment", error = ex.Message });
+            }
         }
 
-        [HttpDelete]
-        [Route("{id:int}")]
+        [HttpDelete("{id:int}")]
         [Authorize]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            var comment = await _commentRepository.GetByIdAsync(id);
-            if (comment == null)
+            try
             {
-                return NotFound();
-            }
+                var username = User.GetUsername();
+                var currentUser = await _userManager.FindByNameAsync(username);
+                if (currentUser == null)
+                    return Unauthorized(new { message = "User not found" });
 
-            var replies = await _commentRepository.GetRepliesForCommentAsync(id);
-            
-            foreach (var reply in replies)
+                var isAdmin = User.IsInRole("Admin");
+                await _commentService.DeleteCommentAsync(id, currentUser.Id, isAdmin);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException ex)
             {
-                reply.ReplyToId = null;
+                return Forbid();
             }
-            await _commentRepository.UpdateRangeAsync(replies);
-
-            await _commentRepository.DeleteAsync(comment);
-            await _commentRepository.SaveChangesAsync();
-
-            return NoContent();
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the comment", error = ex.Message });
+            }
         }
     }
 }
