@@ -278,7 +278,7 @@ namespace MilLib.Services.Implementations
         }
         public async Task<IEnumerable<TagSimpleDto>> GetAllSimpleAsync()
         {
-            var simpleTags = _context.Tags.Select(t => new TagSimpleDto
+            var simpleTags = _context.Tags.AsNoTracking().Select(t => new TagSimpleDto
             {
                 Id = t.Id,
                 Title = t.Title,

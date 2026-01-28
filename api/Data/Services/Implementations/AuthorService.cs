@@ -224,7 +224,7 @@ namespace MilLib.Services.Implementations
 
         public async Task<IEnumerable<AuthorSimpleDto>> GetAllSimpleAsync()
         {
-            var simpleTags = _context.Authors.Select(t => new AuthorSimpleDto
+            var simpleTags = _context.Authors.AsNoTracking().Select(t => new AuthorSimpleDto
             {
                 Id = t.Id,
                 Name = t.Name,
