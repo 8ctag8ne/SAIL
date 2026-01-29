@@ -13,8 +13,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
+using dotenv.net;
 
 var builder = WebApplication.CreateBuilder(args);
+DotEnv.Load();
+builder.Configuration.AddEnvironmentVariables();
+
 builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ExecutionTimeFilter>();
@@ -26,7 +30,9 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+        //options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION_LOCAL"));
+        options.UseNpgsql(builder.Configuration["DB_CONNECTION_SUPABASE"])
+            .UseSnakeCaseNamingConvention();
     });
 
 
@@ -50,12 +56,12 @@ builder.Services.AddAuthentication(options => {
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"],
+        ValidIssuer = Environment.GetEnvironmentVariable("JWT__Issuer"),
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["JWT:Audience"],
+        ValidAudience = Environment.GetEnvironmentVariable("JWT__Audience"),
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
-            System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"])
+            System.Text.Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT__SigningKey"))
         )
     };
 });
@@ -117,9 +123,8 @@ builder.Services.AddScoped<IOcrService, OcrService>();
 // Реєстрація PredictionServiceClient через JSON-ключ
 builder.Services.AddScoped<PredictionServiceClient>(provider =>
 {
-    var config = provider.GetRequiredService<IConfiguration>();
-    var location = config["Gemini:Location"] ?? "us-central1";
-    var jsonPath = config["Gemini:JsonKeyPath"]!;
+    var location = Environment.GetEnvironmentVariable("Gemini__Location") ?? "us-central1";
+    var jsonPath = Environment.GetEnvironmentVariable("Gemini__JsonKeyPath")!;
 
     var credential = GoogleCredential
         .FromFile(jsonPath)
