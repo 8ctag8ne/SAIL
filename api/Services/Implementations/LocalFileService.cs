@@ -91,7 +91,7 @@ namespace MilLib.Services.Implementations
             return $"{request.Scheme}://{request.Host}{request.PathBase}/{relativePath.TrimStart('/')}";
         }
 
-        public async Task<(byte[] FileContent, string ContentType, string DownloadFileName)> GetBookFileAsync(string relativePath, string title, string authorFullName)
+        public async Task<FileResponse> GetFileAsync(string relativePath, string downloadName)
         {
             if (string.IsNullOrEmpty(relativePath))
                 throw new ArgumentException("File path is null or empty");
@@ -100,19 +100,18 @@ namespace MilLib.Services.Implementations
             if (!File.Exists(fullPath))
                 throw new FileServiceException($"File not found: {relativePath}");
 
-            var fileContent = await File.ReadAllBytesAsync(fullPath);
+            var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+
             var provider = new FileExtensionContentTypeProvider();
             if (!provider.TryGetContentType(fullPath, out var contentType))
             {
-                contentType = "application/octet-stream"; // дефолтний MIME, якщо не вдалося визначити
+                contentType = "application/octet-stream";
             }
-            var safeTitle = string.Join("_", title.Split(Path.GetInvalidFileNameChars()));
-            var safeAuthor = string.Join("_", authorFullName.Split(Path.GetInvalidFileNameChars()));
-            var fileName = $"{safeTitle} ({safeAuthor}){Path.GetExtension(fullPath)}";
 
-            return (fileContent, contentType, fileName);
+            var finalName = downloadName + Path.GetExtension(fullPath);
+
+            return new FileResponse(stream, contentType, finalName);
         }
-
     }
 
 // Custom exception for file service errors

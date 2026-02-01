@@ -30,9 +30,9 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        //options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION_LOCAL"));
-        options.UseNpgsql(builder.Configuration["DB_CONNECTION_SUPABASE"])
-            .UseSnakeCaseNamingConvention();
+        options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION_LOCAL"));
+        // options.UseNpgsql(builder.Configuration["DB_CONNECTION_SUPABASE"])
+        //     .UseSnakeCaseNamingConvention();
     });
 
 
