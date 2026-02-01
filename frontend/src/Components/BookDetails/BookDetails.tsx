@@ -47,7 +47,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   isLiked,
   authors = [],
 }) => {
-  const fullImageUrl = imageUrl ? `${BASE_URL}${imageUrl}` : undefined;
+  const fullImageUrl = imageUrl ?? undefined;
   const { id } = useParams(); // Отримуємо ID з URL
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -144,7 +144,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               variant="contained"
               color="primary"
               startIcon={<BookIcon />}
-              href={`${BASE_URL}${fileUrl}`}
+              href={fileUrl}
               target="_blank"
               sx={{ width: "100%" }}
             >

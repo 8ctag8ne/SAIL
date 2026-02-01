@@ -23,7 +23,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
   });
 
   const [imagePreview, setImagePreview] = useState<string | undefined>(
-    initialData?.imageUrl ? `${BASE_URL}${initialData.imageUrl}` : undefined
+    initialData?.imageUrl ?? undefined
   );
 
   useEffect(() => {
@@ -35,7 +35,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
         books: initialData.books || [],
       });
       if (initialData.imageUrl) {
-        setImagePreview(`${BASE_URL}${initialData.imageUrl}`);
+        setImagePreview(initialData.imageUrl);
       }
     }
   }, [initialData]);

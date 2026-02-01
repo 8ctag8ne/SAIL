@@ -19,7 +19,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
   });
 
   const [imagePreview, setImagePreview] = useState<string | undefined>(
-    initialData?.image ? `${BASE_URL}${initialData.image}` : undefined
+    initialData?.image ? initialData.image : undefined
   );
 
   useEffect(() => {
@@ -30,7 +30,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
         image: null,
       });
       if (initialData.image) {
-        setImagePreview(`${BASE_URL}${initialData.image}`);
+        setImagePreview(initialData.image);
       }
     }
   }, [initialData]);

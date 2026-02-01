@@ -147,7 +147,7 @@ namespace MilLib.Services.Implementations
                     c.BookId,
                     c.ReplyToId,
                     c.UserId,
-                    UserName = c.User.UserName,
+                    c.User!.UserName,
                     Replies = c.Replies.Select(r => new
                     {
                         r.Id,
@@ -156,7 +156,7 @@ namespace MilLib.Services.Implementations
                         r.BookId,
                         r.ReplyToId,
                         r.UserId,
-                        UserName = r.User.UserName
+                        r.User!.UserName
                     }).ToList()
                 })
                 .AsNoTracking()

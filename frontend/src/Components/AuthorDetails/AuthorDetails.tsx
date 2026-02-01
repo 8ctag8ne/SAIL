@@ -30,7 +30,7 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
         <CardMedia
           component="img"
           sx={{ width: 200, height: 200, objectFit: "cover", marginRight: 2, borderRadius: 1,}}
-          image={`${BASE_URL}${author.imageUrl}`}
+          image={author.imageUrl}
           alt={author.name || "Author"}
         />
       ) : (

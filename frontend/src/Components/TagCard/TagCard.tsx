@@ -57,7 +57,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
         <CardMedia
           component="img"
           sx={{ width: 120, height: 120, objectFit: "cover", marginRight: 2 }}
-          image={`${BASE_URL}${tag.imageUrl}`}
+          image={tag.imageUrl}
           alt={tag.title || "Tag"}
         />
       ) : (

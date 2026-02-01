@@ -70,7 +70,7 @@ namespace MilLib.Services.Implementations
                 Id = t.Id,
                 Title = t.Title,
                 Info = t.Info,
-                ImageUrl = t.ImageUrl,
+                ImageUrl = _fileService.GetFullUrl(t.ImageUrl),
                 // Books = new List<BookSimpleDto>(), // Порожній список для оптимізації
                 BooksCount = t.BooksCount
             }).ToList();
@@ -113,12 +113,12 @@ namespace MilLib.Services.Implementations
                 Id = tag.Id,
                 Title = tag.Title,
                 Info = tag.Info,
-                ImageUrl = tag.ImageUrl,
+                ImageUrl = _fileService.GetFullUrl(tag.ImageUrl),
                 Books = tag.Books.Select(b => new BookSimpleDto
                 {
                     Id = b.Id,
                     Title = b.Title,
-                    ImageUrl = b.ImageUrl,
+                    ImageUrl = _fileService.GetFullUrl(b.ImageUrl),
                 }).ToList(),
                 BooksCount = tag.Books.Count
             };

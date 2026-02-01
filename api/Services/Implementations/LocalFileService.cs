@@ -70,11 +70,12 @@ namespace MilLib.Services.Implementations
             }
         }
 
-        public string GetFullUrl(string relativePath)
+        public string GetFullUrl(string? relativePath)
         {
             if (string.IsNullOrEmpty(relativePath))
             {
-                throw new ArgumentException("Path is empty or null", nameof(relativePath));
+                return string.Empty;
+                // throw new ArgumentException("Path is empty or null", nameof(relativePath));
             }
 
             var request = _httpContextAccessor.HttpContext?.Request;

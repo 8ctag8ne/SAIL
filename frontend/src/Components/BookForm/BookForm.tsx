@@ -37,7 +37,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   const [suggestedTagNames, setSuggestedTagNames] = useState<string[]>([]);
 
   const [imagePreview, setImagePreview] = useState<string | undefined>(
-    initialData?.imageUrl ? `${BASE_URL}${initialData.imageUrl}` : undefined
+    initialData?.imageUrl ?? undefined
   );
   const [fileName, setFileName] = useState<string>(
     initialData?.fileUrl ? initialData.fileUrl.split("/").pop() || "" : ""
@@ -55,7 +55,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
       }));
       setAuthorSearch(initialData.authors?.map(a => a.name) || [""]);
       if (initialData.imageUrl) {
-        setImagePreview(`${BASE_URL}${initialData.imageUrl}`);
+        setImagePreview(initialData.imageUrl);
       }
       if (initialData.fileUrl) {
         setFileName(initialData.fileUrl.split("/").pop() || "");

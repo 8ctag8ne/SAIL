@@ -92,8 +92,8 @@ namespace MilLib.Services.Implementations
             {
                 Id = b.Id,
                 Title = b.Title,
-                ImageUrl = b.ImageUrl,
-                FileUrl = b.FileUrl,
+                ImageUrl = _fileService.GetFullUrl(b.ImageUrl),
+                FileUrl = _fileService.GetFullUrl(b.FileUrl),
                 Info = b.Info,
                 LikesCount = b.LikesCount,
                 Tags = b.Tags.Select(t => new TagSimpleDto { Id = t.Id, Title = t.Title }).ToList(),
@@ -165,9 +165,9 @@ namespace MilLib.Services.Implementations
             {
                 Id = book.Id,
                 Title = book.Title,
-                ImageUrl = book.ImageUrl,
+                ImageUrl = _fileService.GetFullUrl(book.ImageUrl),
                 Info = book.Info,
-                FileUrl = book.FileUrl,
+                FileUrl = _fileService.GetFullUrl(book.FileUrl),
                 LikesCount = book.LikesCount,
                 IsLiked = isLiked,
                 Tags = book.Tags.Select(t => new TagSimpleDto { Id = t.Id, Title = t.Title }).ToList(),

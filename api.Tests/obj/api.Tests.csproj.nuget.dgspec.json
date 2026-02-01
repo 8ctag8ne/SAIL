@@ -149,6 +149,10 @@
               "target": "Package",
               "version": "[2.6.0, )"
             },
+            "EFCore.NamingConventions": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
             "Google.Apis.Auth": {
               "target": "Package",
               "version": "[1.69.0, )"
@@ -193,6 +197,10 @@
               "target": "Package",
               "version": "[2.5.6, )"
             },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
             "SixLabors.ImageSharp": {
               "target": "Package",
               "version": "[3.1.8, )"
@@ -208,6 +216,10 @@
             "Tesseract": {
               "target": "Package",
               "version": "[5.2.0, )"
+            },
+            "dotenv.net": {
+              "target": "Package",
+              "version": "[4.0.0, )"
             }
           },
           "imports": [

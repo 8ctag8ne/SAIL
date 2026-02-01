@@ -57,7 +57,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
         <CardMedia
           component="img"
           sx={{ width: 150, height: 150, objectFit: "cover", marginRight: 2, borderRadius: 1,}}
-          image={`${BASE_URL}${author.imageUrl}`}
+          image={author.imageUrl}
           alt={author.name || "Author"}
         />
       ) : (

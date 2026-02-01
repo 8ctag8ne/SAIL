@@ -42,7 +42,7 @@ const BookCard: React.FC<BookCardProps> = ({
   const [likeCount, setLikeCount] = useState(likesCount);
 
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
-  const fullImageUrl = imageUrl ? `${BASE_URL}${imageUrl}` : null;
+  const fullImageUrl = imageUrl ? imageUrl : null;
 
   const handleNavigate = () => navigate(`/books/${id}`);
   const [confirmOpen, setConfirmOpen] = useState(false);

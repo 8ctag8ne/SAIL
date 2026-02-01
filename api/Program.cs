@@ -30,9 +30,9 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
-        options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION_LOCAL"));
-        // options.UseNpgsql(builder.Configuration["DB_CONNECTION_SUPABASE"])
-        //     .UseSnakeCaseNamingConvention();
+        // options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION_LOCAL")); //dev(local)
+        options.UseNpgsql(builder.Configuration["DB_CONNECTION_SUPABASE"])  //prod (cloud)
+            .UseSnakeCaseNamingConvention();
     });
 
 
@@ -109,7 +109,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddScoped<IFileService, LocalFileService>();
+// builder.Services.AddScoped<IFileService, LocalFileService>(); //dev (local)
+builder.Services.AddScoped<IFileService, CloudFileService>(); //prod (cloud)
+
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IAuthorService, AuthorService>();
