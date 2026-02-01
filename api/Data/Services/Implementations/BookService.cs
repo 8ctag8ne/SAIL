@@ -473,7 +473,7 @@ namespace MilLib.Services.Implementations
                 .ToListAsync();
         }
 
-        public async Task<(byte[] fileContent, string contentType, string fileName)> GetBookFileAsync(int id)
+        public async Task<FileResponse> GetBookFileAsync(int id)
         {
             // ОПТИМІЗАЦІЯ: завантажуємо тільки необхідні поля
             var book = await _context.Books
@@ -492,7 +492,9 @@ namespace MilLib.Services.Implementations
                 throw new InvalidOperationException("Book or file not found");
 
             var authorNames = string.Join(", ", book.Authors);
-            return await _fileService.GetBookFileAsync(book.FileUrl, book.Title, authorNames);
+            var safeFileName = $"{book.Title} ({authorNames})";
+
+            return await _fileService.GetFileAsync(book.FileUrl, safeFileName);
         }
 
         // ПРИВАТНИЙ МЕТОД: оптимізована обробка тегів

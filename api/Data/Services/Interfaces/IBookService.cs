@@ -15,7 +15,7 @@ namespace MilLib.Services.Interfaces
         Task<BookLikeResultDto> ToggleLikeAsync(int bookId, string userId);
         Task<List<BookDto>> GetLikedBooksAsync(string userId, string? currentUserId = null);
         Task<List<int>> GetUserBookListIdsAsync(string userId, int bookId);
-        Task<(byte[] fileContent, string contentType, string fileName)> GetBookFileAsync(int id);
+        Task<FileResponse> GetBookFileAsync(int id);
     }
 
     public class BookLikeResultDto

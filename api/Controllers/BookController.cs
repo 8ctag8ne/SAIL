@@ -204,8 +204,8 @@ namespace MilLib.Controllers
         {
             try
             {
-                var (fileContent, contentType, fileName) = await _bookService.GetBookFileAsync(id);
-                return File(fileContent, contentType, fileName);
+                var fileResponse = await _bookService.GetBookFileAsync(id);
+                return File(fileResponse.Content, fileResponse.ContentType, fileResponse.FileName);
             }
             catch (InvalidOperationException ex)
             {
