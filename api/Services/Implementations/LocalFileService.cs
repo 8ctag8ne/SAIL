@@ -15,15 +15,10 @@ namespace MilLib.Services.Implementations
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<string?> UploadAsync(IFormFile? file, string destination)
+        public async Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, string destination)
         {
             try
             {
-                if (file == null || file.Length == 0)
-                {
-                    return null;
-                }
-
                 // Create destination directory if it doesn't exist
                 var uploadsFolder = Path.Combine(_environment.WebRootPath, destination);
                 if (!Directory.Exists(uploadsFolder))
@@ -32,14 +27,14 @@ namespace MilLib.Services.Implementations
                 }
 
                 // Generate unique filename
-                string FileNameWithoutSpaces = string.Join("", file.FileName.Split(" ", StringSplitOptions.RemoveEmptyEntries));
+                string FileNameWithoutSpaces = string.Join("", fileName.Split(" ", StringSplitOptions.RemoveEmptyEntries));
                 var uniqueFileName = $"{Guid.NewGuid()}_{FileNameWithoutSpaces}";
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
                 // Save file
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                using (var outputStream = new FileStream(filePath, FileMode.Create))
                 {
-                    await file.CopyToAsync(fileStream);
+                    await fileStream.CopyToAsync(outputStream);
                 }
 
                 // Return relative path
