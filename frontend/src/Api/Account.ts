@@ -1,14 +1,13 @@
 import axios from "axios";
 import { AuthResponse } from "../types";
-
-const API = "http://localhost:5102/api/account";
+import BASE_URL from "../config";
 
 export const login = async (data: {
   id: string;
   userName: string;
   password: string;
 }): Promise<AuthResponse> => {
-  const res = await axios.post<AuthResponse>(`${API}/login`, data);
+  const res = await axios.post<AuthResponse>(`${BASE_URL}/api/account/login`, data);
   return res.data;
 };
 
@@ -17,14 +16,14 @@ export const register = async (data: {
   email: string;
   password: string;
 }): Promise<AuthResponse> => {
-  const res = await axios.post<AuthResponse>(`${API}/register`, data);
+  const res = await axios.post<AuthResponse>(`${BASE_URL}/api/account/register`, data);
   return res.data;
 };
 
 // Отримати профіль поточного користувача
 export const getProfile = async () => {
   const token = localStorage.getItem("token");
-  const res = await axios.get(`${API}/profile`, {
+  const res = await axios.get(`${BASE_URL}/api/account/profile`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
@@ -34,7 +33,7 @@ export const getProfile = async () => {
 export const getUserById = async (id: string) => {
   const token = localStorage.getItem("token");
   console.trace(`🔥 getUserById called.\n Id: ${id}\n`);
-  const res = await axios.get(`${API}/${id}`, {
+  const res = await axios.get(`${BASE_URL}/api/account/${id}`, {
     headers: { Authorization: `Bearer ${token ?? ""}` },
   });
   return res.data;
@@ -48,7 +47,7 @@ export const editUser = async (id: string, data: {
   phoneNumber?: string;
 }) => {
   const token = localStorage.getItem("token");
-  const res = await axios.put(`${API}/edit/${id}`, data, {
+  const res = await axios.put(`${BASE_URL}/api/account/edit/${id}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
@@ -57,7 +56,7 @@ export const editUser = async (id: string, data: {
 // Видалити користувача (тільки власний або якщо Admin)
 export const deleteUser = async (id: string) => {
   const token = localStorage.getItem("token");
-  const res = await axios.delete(`${API}/delete/${id}`, {
+  const res = await axios.delete(`${BASE_URL}/api/account/delete/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
@@ -67,7 +66,7 @@ export const deleteUser = async (id: string) => {
 export const getAllUsers = async () => {
   console.trace("🔥 getAllUsers called");
   const token = localStorage.getItem("token");
-  const res = await axios.get(`${API}/users`, {
+  const res = await axios.get(`${BASE_URL}/api/account/users`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
@@ -76,7 +75,7 @@ export const getAllUsers = async () => {
 // Змінити роль користувача (тільки для Admin)
 export const setUserRole = async (userId: string, newRole: string) => {
   const token = localStorage.getItem("token");
-  const res = await axios.post(`${API}/set-role`, { userId, newRole }, {
+  const res = await axios.post(`${BASE_URL}/api/account/set-role`, { userId, newRole }, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
