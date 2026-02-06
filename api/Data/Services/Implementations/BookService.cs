@@ -436,7 +436,7 @@ namespace MilLib.Services.Implementations
             {
                 Id = lb.Book.Id,
                 Title = lb.Book.Title,
-                ImageUrl = lb.Book.ImageUrl,
+                ImageUrl = _fileService.GetFullUrl(lb.Book.ImageUrl),
                 Info = lb.Book.Info,
                 LikesCount = lb.Book.LikesCount,
                 Tags = lb.Book.Tags.Select(t => new TagSimpleDto { Id = t.Id, Title = t.Title }).ToList(),
