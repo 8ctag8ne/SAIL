@@ -31,7 +31,7 @@ builder.Services.AddControllers(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         // options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION_LOCAL")); //dev(local)
-        options.UseNpgsql(builder.Configuration["DB_CONNECTION_SUPABASE"])  //prod (cloud)
+        options.UseNpgsql(builder.Configuration["SUPABASE_SESSION_POOLER"])  //prod (cloud)
             .UseSnakeCaseNamingConvention();
     });
 
@@ -162,11 +162,18 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 
-using (var scope = app.Services.CreateScope())
+try
 {
-    var services = scope.ServiceProvider;
-    var tokenService = services.GetRequiredService<ITokenService>();
-    await RoleHelper.SeedRolesAndAdmin(services, tokenService);
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var tokenService = services.GetRequiredService<ITokenService>();
+        await RoleHelper.SeedRolesAndAdmin(services, tokenService);
+    }
+}
+catch(Exception ex)
+{
+    Console.WriteLine($"Issues with JWT or role seeding: {ex.Message}");
 }
 
 app.MapControllers();
