@@ -59,8 +59,8 @@ artifacts/
 secrets.json
 *.user
 
-# Entity Framework
-Migrations/
+# # Entity Framework
+# Migrations/
 
 # Publish output
 publish/
