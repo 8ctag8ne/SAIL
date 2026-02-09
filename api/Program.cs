@@ -20,20 +20,26 @@ DotEnv.Load();
 builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ExecutionTimeFilter>();
+})
+.AddJsonOptions(options =>
     {
-        options.Filters.Add<ExecutionTimeFilter>();
-    })
-    .AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        });
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    if(builder.Environment.IsProduction())
     {
-        // options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION_LOCAL")); //dev(local)
         options.UseNpgsql(builder.Configuration["SUPABASE_SESSION_POOLER"])  //prod (cloud)
             .UseSnakeCaseNamingConvention();
-    });
+    } else
+    {
+        options.UseNpgsql(builder.Configuration["DB_CONNECTION_LOCAL"])  //dev (local)
+            .UseSnakeCaseNamingConvention(); 
+    }
+});
 
 
 builder.Services.AddIdentity<User, IdentityRole>(options => {
@@ -112,8 +118,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-// builder.Services.AddScoped<IFileService, LocalFileService>(); //dev (local)
-builder.Services.AddScoped<IFileService, CloudFileService>(); //prod (cloud)
+if(builder.Environment.IsProduction())
+{
+    builder.Services.AddScoped<IFileService, CloudFileService>(); //prod (cloud)
+} 
+else
+{    
+    builder.Services.AddScoped<IFileService, LocalFileService>(); //dev (local)
+}
 
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ITagService, TagService>();
