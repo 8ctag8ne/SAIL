@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: sail-db
+    environment:
+      POSTGRES_DB: sail_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sail_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: sail-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_CONNECTION_LOCAL=Host=db;Database=sail_db;Username=postgres;Password=password
+      - JWT__Issuer=http://localhost:8080/
+      - JWT__Audience=http://localhost:8080/
+      - JWT__SigningKey=YOUR_SECRET_JWT_SIGNING_KEY_HERE
+      - Gemini__ProjectId=YOUR_PROJECT_ID
+      - Gemini__Location=us-central1
+      - Gemini__Model=gemini-2.5-pro-preview-05-06
+      - Gemini__Publisher=google
+      - Gemini__JsonKeyPath=YOUR_GEMINI_KEY_FILE.json
+      - AllowedOrigins=http://localhost:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: node:22-alpine
+    container_name: sail-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      - WDS_SOCKET_PORT=0
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - api
