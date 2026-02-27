@@ -1,5 +1,8 @@
 ## === ASP.NET Core Web API ===
 
+# Env
+.env
+
 # User-specific files
 *.suo
 *.user
