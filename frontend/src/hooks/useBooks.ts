@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getBooks, getBookById, toggleLike } from '../Api/BookApi';
+import { getBooks, getBookById, toggleLike } from '../api/BookApi';
 
 export const useBooks = (query: Record<string, any> = {}) => {
     return useQuery({

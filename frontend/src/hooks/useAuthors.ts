@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAuthors, getAuthorById, addAuthor, updateAuthor, deleteAuthor } from '../Api/AuthorApi';
+import { getAuthors, getAuthorById, addAuthor, updateAuthor, deleteAuthor } from '../api/AuthorApi';
 import { AuthorCreate, AuthorUpdate } from '../types';
 
 export const useAuthors = (query: Record<string, any> = {}) => {

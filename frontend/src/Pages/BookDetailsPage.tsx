@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useBook } from "../hooks/useBooks";
-import BookDetails from "../Components/BookDetails/BookDetails";
-import CommentSection from "../Components/CommentSection/CommentSection";
+import BookDetails from "../components/books/BookDetails/BookDetails";
+import CommentSection from "../components/comments/CommentSection/CommentSection";
 import BASE_URL from "../config"; // Імпорт BASE_URL
-import PageContainer from "../Components/PageContainer/PageContainer";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
 import { BookDetailsData, Comment, SimpleTag } from "../types";
-import LoadingIndicator from "../Components/LoadingIndicator";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
 
 const BookDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();

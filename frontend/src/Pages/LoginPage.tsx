@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TextField, Button, Box, Typography, Paper } from "@mui/material";
-import { login } from "../Api/Account";
-import { useAuth } from "../Contexts/AuthContext";
+import { login } from "../api/Account";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-fox-toast";
 

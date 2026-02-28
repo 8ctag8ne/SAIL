@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getBookListById, removeBookFromList, updateBookList, deleteBookList } from "../Api/BookListApi";
+import { getBookListById, removeBookFromList, updateBookList, deleteBookList } from "../api/BookListApi";
 import { BookList } from "../types";
-import BookCard from "../Components/BookCard/BookCard";
+import BookCard from "../components/books/BookCard/BookCard";
 import { Box, Typography, Card, CardContent, IconButton, TextField, Switch, FormControlLabel } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
@@ -10,7 +10,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAuth } from "../Contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 
 const BookListPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

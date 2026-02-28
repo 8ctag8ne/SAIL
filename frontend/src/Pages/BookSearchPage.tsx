@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import SearchBar from "../Components/SearchBar/SearchBar";
-import BooksPageComponent from "../Components/BooksPageComponent/BooksPageComponent";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import AdvancedSearch from "../Components/AdvancedSearch/AdvancedSearch";
+import SearchBar from "../components/search/SearchBar/SearchBar";
+import BooksPageComponent from "../components/books/BooksPageComponent/BooksPageComponent";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import AdvancedSearch from "../components/search/AdvancedSearch/AdvancedSearch";
 import { Box, IconButton } from "@mui/material";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";

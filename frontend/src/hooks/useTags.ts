@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTags, getTagById, addTag, updateTag, deleteTag } from '../Api/TagApi';
+import { getTags, getTagById, addTag, updateTag, deleteTag } from '../api/TagApi';
 import { TagCreate, TagUpdate } from '../types';
 
 export const useTags = (query: Record<string, any> = {}) => {

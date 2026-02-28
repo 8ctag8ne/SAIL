@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getUserById, deleteUser, editUser, setUserRole } from "../Api/Account";
+import { getUserById, deleteUser, editUser, setUserRole } from "../api/Account";
 import { useLikedBooks } from "../hooks/useLikedBooks";
-import { getBookListsForUser } from "../Api/BookListApi";
+import { getBookListsForUser } from "../api/BookListApi";
 import { User, Book, BookList } from "../types";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import BookCard from "../Components/BookCard/BookCard";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import BookCard from "../components/books/BookCard/BookCard";
 import { Box, Typography, Card, CardContent, IconButton, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import { useAuth } from "../Contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 import LockIcon from "@mui/icons-material/Lock";
-import CreateBookListButton from "../Components/BookList/CreateBookListButton";
+import CreateBookListButton from "../components/books/BookList/CreateBookListButton";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import PersonIcon from "@mui/icons-material/Person";
-import BookListCard from "../Components/BookList/BookListCard";
-import EntityModal from "../Components/EntityModal/EntityModal";
-import UserForm from "../Components/UserForm/UserForm";
+import BookListCard from "../components/books/BookList/BookListCard";
+import EntityModal from "../components/ui/EntityModal/EntityModal";
+import UserForm from "../components/user/UserForm/UserForm";
 import { toast } from "react-fox-toast";
 
 const getRoleIcon = (roles: string[]) => {

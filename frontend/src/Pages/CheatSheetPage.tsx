@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Box, CircularProgress } from "@mui/material";
-import SearchBar from "../Components/SearchBar/SearchBar";
-import CheatSheetView from "../Components/CheatSheetView/CheatSheetView";
-import { getCheatSheet } from "../Api/FileApi";
+import SearchBar from "../components/search/SearchBar/SearchBar";
+import CheatSheetView from "../components/ui/CheatSheetView/CheatSheetView";
+import { getCheatSheet } from "../api/FileApi";
 import { CheatSheet } from "../types";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import mockCheatSheet from "../mock/cheatSheet.json";
-import { generatePDF } from "../Components/GeneratePdf";
+import { generatePDF } from "../utils/GeneratePdf";
 
 
 

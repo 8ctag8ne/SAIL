@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getLikedBooksForUser } from '../Api/BookApi';
+import { getLikedBooksForUser } from '../api/BookApi';
 
 export const useLikedBooks = (userId?: string) => {
     return useQuery({

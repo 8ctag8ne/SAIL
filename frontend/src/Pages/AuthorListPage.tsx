@@ -1,8 +1,8 @@
 import React from "react";
 import { Typography, Box } from "@mui/material";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import AuthorsPageComponent from "../Components/AuthorsPageComponent/AuthorsPageComponent";
-import SearchBar from "../Components/SearchBar/SearchBar";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import AuthorsPageComponent from "../components/authors/AuthorsPageComponent/AuthorsPageComponent";
+import SearchBar from "../components/search/SearchBar/SearchBar";
 import { useSearchParams } from "react-router-dom";
 
 const AuthorListPage: React.FC = () => {

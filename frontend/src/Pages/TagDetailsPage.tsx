@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getTagById, deleteTag } from "../Api/TagApi";
+import { getTagById, deleteTag } from "../api/TagApi";
 import { Tag } from "../types";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import BooksPageComponent from "../Components/BooksPageComponent/BooksPageComponent";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import BooksPageComponent from "../components/books/BooksPageComponent/BooksPageComponent";
 import { Card, CardContent, CardMedia, Typography, Box, Button, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAuth } from "../Contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 import BASE_URL from "../config";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
-import EntityModal from "../Components/EntityModal/EntityModal";
-import TagForm from "../Components/TagForm/TagForm";
-import { updateTag } from "../Api/TagApi";
+import EntityModal from "../components/ui/EntityModal/EntityModal";
+import TagForm from "../components/tags/TagForm/TagForm";
+import { updateTag } from "../api/TagApi";
 import { useQueryClient } from "@tanstack/react-query";
 
 
