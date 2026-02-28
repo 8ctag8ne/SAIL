@@ -1,5 +1,5 @@
-import instance from "./axios";
 import { Comment, CommentCreate, CommentUpdate } from "../types";
+import instance from "./axios";
 
 // Отримати всі коментарі (з реплаями)
 export const getComments = async (): Promise<Comment[]> => {

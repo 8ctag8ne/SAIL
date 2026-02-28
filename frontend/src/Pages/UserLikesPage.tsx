@@ -6,7 +6,7 @@ import { getBookListsForUser } from "../api/BookListApi";
 import { User, Book, BookList } from "../types";
 import PageContainer from "../components/layout/PageContainer/PageContainer";
 import BookCard from "../components/books/BookCard/BookCard";
-import { Box, Typography, Card, CardContent, IconButton, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import { Box, Typography, Card, CardContent, IconButton, Tabs, Tab, Button } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -20,6 +20,7 @@ import BookListCard from "../components/books/BookList/BookListCard";
 import EntityModal from "../components/ui/EntityModal/EntityModal";
 import UserForm from "../components/user/UserForm/UserForm";
 import { toast } from "react-fox-toast";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 
 const getRoleIcon = (roles: string[]) => {
   if (roles.includes("Admin")) return <AdminPanelSettingsIcon color="error" sx={{ fontSize: 40 }} />;
@@ -157,18 +158,12 @@ const UserLikesPage: React.FC = () => {
         )}
       </Box>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Видалити користувача</DialogTitle>
-        <DialogContent>
-          <Typography>Ви впевнені, що хочете видалити цього користувача?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Скасувати</Button>
-          <Button color="error" onClick={handleDelete}>
-            Видалити
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Ви впевнені, що хочете видалити цього користувача?"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <UserForm

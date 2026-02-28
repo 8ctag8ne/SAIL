@@ -10,6 +10,7 @@ import { Author, AuthorCardProps } from "../../../types";
 import PersonIcon from "@mui/icons-material/Person";
 import { toast } from "react-fox-toast";
 import EntityModal from "../../ui/EntityModal/EntityModal";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import AuthorForm from "../AuthorForm/AuthorForm";
 import { useState } from "react";
 import { updateAuthor } from "../../../api/AuthorApi";
@@ -19,6 +20,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const handleEditClick = (e: React.MouseEvent) => {
@@ -39,15 +41,19 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
 
   const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this author?")) {
-      try {
-        await deleteAuthor(author.id);
-        toast.success("Author deleted successfully!");
-        navigate("/authors");
-      } catch (error) {
-        console.error("Failed to delete author:", error);
-        toast.error("Failed to delete author.");
-      }
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteAuthor(author.id);
+      toast.success("Author deleted successfully!");
+      navigate("/authors");
+    } catch (error) {
+      console.error("Failed to delete author:", error);
+      toast.error("Failed to delete author.");
+    } finally {
+      setIsDeleteConfirmOpen(false);
     }
   };
 
@@ -117,6 +123,13 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
           onSubmit={handleEditSubmit}
         />
       </EntityModal>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Ви впевнені, що хочете видалити цього автора?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
     </Card>
   );
 };

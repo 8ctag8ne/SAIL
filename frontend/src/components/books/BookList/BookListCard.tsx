@@ -9,6 +9,7 @@ import { BookList } from "../../../types";
 import { useAuth } from "../../../contexts/AuthContext";
 import { updateBookList, deleteBookList } from "../../../api/BookListApi";
 import { useNavigate } from "react-router-dom";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 
 type BookListCardProps = {
   list: BookList;
@@ -26,6 +27,7 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
   const [description, setDescription] = useState(list.description || "");
   const [isPrivate, setIsPrivate] = useState(list.isPrivate ?? false);
   const [saving, setSaving] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -40,9 +42,18 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
     onUpdated?.(updated);
   };
 
-  const handleDelete = async () => {
-    await deleteBookList(list.id);
-    onDeleted?.(list.id);
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteBookList(list.id);
+      onDeleted?.(list.id);
+    } finally {
+      setIsDeleteConfirmOpen(false);
+    }
   };
 
   return (
@@ -82,10 +93,7 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
                   <IconButton
                     size="small"
                     color="error"
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleDelete();
-                    }}
+                    onClick={handleDeleteClick}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -157,6 +165,13 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
           Книги: {list.books.map(b => b.title).join(", ")}
         </Typography>
       </CardContent>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Ви впевнені, що хочете видалити цей список?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
     </Card>
   );
 };

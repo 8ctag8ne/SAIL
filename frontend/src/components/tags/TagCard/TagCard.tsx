@@ -10,6 +10,7 @@ import { deleteTag, updateTag } from "../../../api/TagApi";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
 import EntityModal from "../../ui/EntityModal/EntityModal";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import TagForm from "../TagForm/TagForm";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const handleEditClick = (e: React.MouseEvent) => {
@@ -42,15 +44,19 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
 
   const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Ви впевнені, що хочете видалити цей тег?")) {
-      try {
-        await deleteTag(tag.id);
-        toast.success("Тег видалений успішно!");
-        navigate("/tags");
-      } catch (error) {
-        console.error("Failed to delete tag:", error);
-        toast.error("не вдалося видалити тег.");
-      }
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteTag(tag.id);
+      toast.success("Тег видалений успішно!");
+      navigate("/tags");
+    } catch (error) {
+      console.error("Failed to delete tag:", error);
+      toast.error("не вдалося видалити тег.");
+    } finally {
+      setIsDeleteConfirmOpen(false);
     }
   };
 
@@ -128,6 +134,13 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
           onSubmit={handleEditSubmit}
         />
       </EntityModal>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Ви впевнені, що хочете видалити цей тег?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
     </Card>
   );
 };

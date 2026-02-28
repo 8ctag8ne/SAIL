@@ -12,6 +12,7 @@ import BASE_URL from "../config";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
 import EntityModal from "../components/ui/EntityModal/EntityModal";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import TagForm from "../components/tags/TagForm/TagForm";
 import { updateTag } from "../api/TagApi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,6 +25,7 @@ const TagDetailsPage: React.FC = () => {
   const [tag, setTag] = useState<Tag | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -62,17 +64,21 @@ const TagDetailsPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Ви впевнені, що хочете видалити цей тег?")) {
-      try {
-        if (id) {
-          await deleteTag(Number(id));
-          toast.success("тег видалений успішно!");
-          navigate("/tags");
-        }
-      } catch (error) {
-        console.error("Failed to delete tag:", error);
-        toast.error("не вдалося видалити тег.");
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (id) {
+        await deleteTag(Number(id));
+        toast.success("тег видалений успішно!");
+        navigate("/tags");
       }
+    } catch (error) {
+      console.error("Failed to delete tag:", error);
+      toast.error("не вдалося видалити тег.");
+    } finally {
+      setIsDeleteConfirmOpen(false);
     }
   };
 
@@ -141,6 +147,12 @@ const TagDetailsPage: React.FC = () => {
             onSubmit={handleEditSubmit}
           />
         </EntityModal>
+        <ConfirmDialog
+          open={isDeleteConfirmOpen}
+          title="Ви впевнені, що хочете видалити цей тег?"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setIsDeleteConfirmOpen(false)}
+        />
       </Card>
       <Typography variant="h5" gutterBottom>
         Книги з тегом "{tag.title}":

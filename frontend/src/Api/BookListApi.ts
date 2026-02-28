@@ -1,6 +1,6 @@
-import instance from "./axios";
 import { BookList, SimpleBook } from "../types";
 import { BookListCreate, BookListUpdate } from "../types/api";
+import instance from "./axios";
 
 // Отримати всі списки книг (тільки для Admin)
 export const getBookLists = async (): Promise<BookList[]> => {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, Card, CardContent, Button, TextField, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Typography, Card, CardContent, Button, TextField, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddCommentIcon from "@mui/icons-material/AddComment";
@@ -7,6 +7,7 @@ import { Comment } from "../../../types";
 import { useAuth } from "../../../contexts/AuthContext";
 import { addComment, updateComment, deleteComment } from "../../../api/CommentApi";
 import { useNavigate } from "react-router-dom";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 
 type CommentSectionProps = {
     comments: Comment[];
@@ -190,25 +191,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                     Коментарі відсутні.
                 </Typography>
             )}
-            {/* Delete confirmation dialog */}
-            <Dialog
+            <ConfirmDialog
                 open={!!deleteDialogId}
-                onClose={() => setDeleteDialogId(null)}
-            >
-                <DialogTitle>Видалення коментаря</DialogTitle>
-                <DialogContent>
-                    <Typography>Ви впевнені, що хочете видалити цей коментар?</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteDialogId(null)}>Скасувати</Button>
-                    <Button
-                        color="error"
-                        onClick={() => deleteDialogId && handleDeleteComment(deleteDialogId)}
-                    >
-                        Видалити
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                title="Ви впевнені, що хочете видалити цей коментар?"
+                onConfirm={() => deleteDialogId && handleDeleteComment(deleteDialogId)}
+                onCancel={() => setDeleteDialogId(null)}
+            />
         </Box>
     );
 };

@@ -1,5 +1,5 @@
-import instance from "./axios";
 import { Book, BookDetailsData, PaginatedBooks } from "../types";
+import instance from "./axios";
 
 // Пошук та пагінація книг
 export const getBooks = async (query: Record<string, any> = {}): Promise<PaginatedBooks> => {

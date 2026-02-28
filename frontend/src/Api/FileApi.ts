@@ -1,5 +1,5 @@
-import instance from "./axios";
 import { BookAnalysisResult, CheatSheet } from "../types";
+import instance from "./axios";
 
 // Рендер першої сторінки PDF (залишаємо як було)
 export const renderPdfFirstPage = async (file: File): Promise<Blob> => {
@@ -36,7 +36,7 @@ export const getCheatSheet = async (userRequest: string): Promise<CheatSheet> =>
   const res = await instance.post<CheatSheet>("/Pdf/search-by-request", userRequest, {
     headers: { "Content-Type": "application/json" },
   });
-  if(res.status !== 200) {
+  if (res.status !== 200) {
     console.log("Error:", res.status, res.statusText);
   }
   console.log(res.data);

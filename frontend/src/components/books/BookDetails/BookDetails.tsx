@@ -20,6 +20,7 @@ import { useToggleLike } from "../../../hooks/useBooks";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import EntityModal from "../../ui/EntityModal/EntityModal";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import BookForm from "../BookForm/BookForm";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -65,6 +66,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const [addToListsOpen, setAddToListsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
@@ -118,15 +120,19 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   };
 
   const handleDeleteClick = async () => {
-    if (window.confirm("Are you sure you want to delete this book?")) {
-      try {
-        await deleteBook(Number(id));
-        toast.success("Book deleted successfully!");
-        navigate("/");
-      } catch (error) {
-        console.error("Failed to delete book:", error);
-        toast.error("Failed to delete book.");
-      }
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteBook(Number(id));
+      toast.success("Book deleted successfully!");
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to delete book:", error);
+      toast.error("Failed to delete book.");
+    } finally {
+      setIsDeleteConfirmOpen(false);
     }
   };
 
@@ -304,6 +310,13 @@ const BookDetails: React.FC<BookDetailsProps> = ({
           onSubmit={handleEditSubmit}
         />
       </EntityModal>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Ви впевнені, що хочете видалити цю книгу?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
     </Card>
   );
 };
