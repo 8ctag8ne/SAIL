@@ -63,7 +63,7 @@ const BookCard: React.FC<BookCardProps> = ({
     }
   };
 
-  
+
 
   const handleTagClick = (e: React.MouseEvent, tagId: number) => {
     e.stopPropagation();
@@ -76,22 +76,22 @@ const BookCard: React.FC<BookCardProps> = ({
   };
 
   const handleDeleteClick = (e: React.MouseEvent) => {
-  e.stopPropagation();
-  setConfirmOpen(true);
-};
+    e.stopPropagation();
+    setConfirmOpen(true);
+  };
 
-const handleConfirmDelete = async () => {
-  try {
-    await deleteBook(Number(id));
-    toast.success("Книга успішно видалена!");
-    navigate("/");
-  } catch (error) {
-    console.error("Failed to delete book:", error);
-    toast.error("Не вдалося видалити книгу.");
-  } finally {
-    setConfirmOpen(false);
-  }
-};
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteBook(Number(id));
+      toast.success("Книга успішно видалена!");
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to delete book:", error);
+      toast.error("Не вдалося видалити книгу.");
+    } finally {
+      setConfirmOpen(false);
+    }
+  };
 
   const handleAuthorClick = (e: React.MouseEvent, authorId: number) => {
     e.stopPropagation();
@@ -131,12 +131,12 @@ const handleConfirmDelete = async () => {
       )}
 
       <CardContent sx={{
-    flex: 1,
-    position: "relative",
-    paddingBottom: "56px",
-    minHeight: 200, // ← або інше значення
-    overflow: "hidden"
-  }}>
+        flex: 1,
+        position: "relative",
+        paddingBottom: "56px",
+        minHeight: 200, // ← або інше значення
+        overflow: "hidden"
+      }}>
         <Typography variant="h5" fontWeight="bold" gutterBottom
           sx={{
             maxWidth: { xs: "70%", sm: "80%", md: "85%" },

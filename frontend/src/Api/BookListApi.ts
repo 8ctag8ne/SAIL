@@ -1,20 +1,6 @@
 import instance from "./axios";
 import { BookList, SimpleBook } from "../types";
-
-// DTOs для створення та оновлення списку книг
-export type BookListCreate = {
-  title: string;
-  description?: string;
-  isPrivate?: boolean;
-  bookIds: number[];
-};
-
-export type BookListUpdate = {
-  title: string;
-  description?: string;
-  isPrivate?: boolean;
-  bookIds: number[];
-};
+import { BookListCreate, BookListUpdate } from "../types/api";
 
 // Отримати всі списки книг (тільки для Admin)
 export const getBookLists = async (): Promise<BookList[]> => {

@@ -6,13 +6,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Contexts/AuthContext";
 import { deleteAuthor } from "../../Api/AuthorApi";
 import BASE_URL from "../../config";
-import { Author } from "../../types";
+import { Author, AuthorCardProps } from "../../types";
 import PersonIcon from "@mui/icons-material/Person";
 import { toast } from "react-fox-toast";
-
-type AuthorCardProps = {
-  author: Author;
-};
 
 const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const navigate = useNavigate();

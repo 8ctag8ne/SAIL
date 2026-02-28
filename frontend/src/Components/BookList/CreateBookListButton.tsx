@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, FormControlLabel, Checkbox } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import { addBookList, BookListCreate } from "../../Api/BookListApi";
+import { addBookList } from "../../Api/BookListApi";
+import { BookListCreate } from "../../types";
 
 type Props = {
   onCreated?: () => void;
