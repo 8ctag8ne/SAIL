@@ -21,6 +21,7 @@ import EntityModal from "../components/ui/EntityModal/EntityModal";
 import UserForm from "../components/user/UserForm/UserForm";
 import { toast } from "react-fox-toast";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
 
 const getRoleIcon = (roles: string[]) => {
   if (roles.includes("Admin")) return <AdminPanelSettingsIcon color="error" sx={{ fontSize: 40 }} />;
@@ -99,7 +100,7 @@ const UserLikesPage: React.FC = () => {
   if (!profile) {
     return (
       <PageContainer>
-        <Typography>Завантаження...</Typography>
+        <LoadingIndicator />
       </PageContainer>
     );
   }

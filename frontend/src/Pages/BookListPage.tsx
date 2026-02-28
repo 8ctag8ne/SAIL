@@ -12,6 +12,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAuth } from "../contexts/AuthContext";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
 
 const BookListPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -88,7 +89,7 @@ const BookListPage: React.FC = () => {
     }
   };
 
-  if (!bookList) return <Typography>Завантаження...</Typography>;
+  if (!bookList) return <LoadingIndicator />;
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>

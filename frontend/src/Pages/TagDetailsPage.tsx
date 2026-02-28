@@ -13,6 +13,7 @@ import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
 import EntityModal from "../components/ui/EntityModal/EntityModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
 import TagForm from "../components/tags/TagForm/TagForm";
 import { updateTag } from "../api/TagApi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -83,7 +84,7 @@ const TagDetailsPage: React.FC = () => {
   };
 
   if (loading) {
-    return <Typography>Завантаження...</Typography>;
+    return <LoadingIndicator />;
   }
 
   if (!tag) {

@@ -65,7 +65,7 @@ const BookSearchPage: React.FC = () => {
             onClick={() => navigate("/cheatsheet")}
             color="secondary"
             size="large"
-            // sx={{ ml: 1 }}
+          // sx={{ ml: 1 }}
           >
             <AutoAwesomeIcon />
           </IconButton>
