@@ -6,9 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { Tag } from "../../types";
 import BASE_URL from "../../config";
 import { useAuth } from "../../Contexts/AuthContext";
-import { deleteTag } from "../../Api/TagApi";
+import { deleteTag, updateTag } from "../../Api/TagApi";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
+import EntityModal from "../EntityModal/EntityModal";
+import TagForm from "../TagForm/TagForm";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 type TagCardProps = {
   tag: Tag;
@@ -17,10 +21,23 @@ type TagCardProps = {
 const TagCard: React.FC<TagCardProps> = ({ tag }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/tags/edit/${tag.id}`);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (data: { title: string; info?: string; image?: File | null; bookIds: number[] }) => {
+    try {
+      await updateTag(tag.id, { title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds });
+      toast.success("Тег оновлено успішно!");
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося оновити тег.");
+    }
   };
 
   const handleDeleteClick = async (e: React.MouseEvent) => {
@@ -99,6 +116,18 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
           </Box>
         )}
       </CardContent>
+
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <TagForm
+          initialData={{
+            title: tag.title ?? "",
+            info: tag.info ?? undefined,
+            imageUrl: tag.imageUrl ?? undefined,
+            books: tag.books,
+          }}
+          onSubmit={handleEditSubmit}
+        />
+      </EntityModal>
     </Card>
   );
 };

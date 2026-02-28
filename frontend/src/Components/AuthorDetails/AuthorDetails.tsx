@@ -7,6 +7,12 @@ import { useAuth } from "../../Contexts/AuthContext";
 import BASE_URL from "../../config";
 import { Author } from "../../types";
 import PersonIcon from "@mui/icons-material/Person";
+import EntityModal from "../EntityModal/EntityModal";
+import AuthorForm from "../AuthorForm/AuthorForm";
+import { useState } from "react";
+import { updateAuthor } from "../../Api/AuthorApi";
+import { toast } from "react-fox-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 type AuthorDetailsProps = {
@@ -17,19 +23,37 @@ type AuthorDetailsProps = {
 const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
 
   const handleEditClick = () => {
-    navigate(`/authors/edit/${author.id}`);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
+    try {
+      await updateAuthor(author.id, { name: data.name, info: data.info, image: data.image ?? undefined });
+      toast.success("Автора оновлено успішно!");
+      queryClient.invalidateQueries({ queryKey: ["authors"] });
+      // If there was a specific route like ["author", author.id], invalidate that too, 
+      // though typically AuthorDetails refetches entirely or we invalidate the specific query name.
+      // But author details page gets it directly right now, need to check that.
+      setIsEditModalOpen(false);
+      // We will refresh the page or reload the author, actually AuthorDetailsPage needs to be invalidated if we are using React Query there. Wait, AuthorDetailsPage uses `getAuthorById` manually. Let's do window.location.reload() for now or let the parent component handle it. Let's just reload.
+      window.location.reload();
+    } catch (error) {
+      toast.error("Не вдалося оновити автора.");
+    }
   };
 
   return (
     <Card sx={{ display: "flex", flexDirection: "row", margin: "20px auto", padding: 2 }}>
-    {author.imageUrl ? (
+      {author.imageUrl ? (
         <CardMedia
           component="img"
-          sx={{ width: 200, height: 200, objectFit: "cover", marginRight: 2, borderRadius: 1,}}
+          sx={{ width: 200, height: 200, objectFit: "cover", marginRight: 2, borderRadius: 1, }}
           image={author.imageUrl}
           alt={author.name || "Author"}
         />
@@ -69,6 +93,13 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
           </Box>
         )}
       </CardContent>
+
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <AuthorForm
+          initialData={{ name: author.name ?? "", info: author.info ?? undefined, image: author.imageUrl ?? undefined }}
+          onSubmit={handleEditSubmit}
+        />
+      </EntityModal>
     </Card>
   );
 };

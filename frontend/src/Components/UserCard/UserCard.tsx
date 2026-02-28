@@ -7,6 +7,12 @@ import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
 import { User } from "../../types";
 import { useAuth } from "../../Contexts/AuthContext";
+import EntityModal from "../EntityModal/EntityModal";
+import UserForm from "../UserForm/UserForm";
+import { useState } from "react";
+import { toast } from "react-fox-toast";
+import { editUser, setUserRole } from "../../Api/Account";
+import { useQueryClient } from "@tanstack/react-query";
 
 const getRoleIcon = (roles: string[]) => {
   if (roles.includes("Admin")) return <AdminPanelSettingsIcon color="error" sx={{ fontSize: 32 }} />;
@@ -30,6 +36,28 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.roles.includes("Admin");
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleEditSubmit = async (data: { userName: string; email: string; about: string; phoneNumber: string; role: string }) => {
+    try {
+      await editUser(user.id, {
+        userName: data.userName,
+        email: data.email,
+        about: data.about,
+        phoneNumber: data.phoneNumber
+      });
+      if (isAdmin && data.role !== (user.roles[0] || "User")) {
+        await setUserRole(user.id, data.role);
+      }
+      toast.success("Дані користувача оновлено успішно!");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося оновити дані.");
+    }
+  };
+
   return (
     <Card sx={{ my: 2, cursor: "pointer", maxWidth: 400, mx: "auto", position: "relative" }} onClick={() => navigate(`/users/${user.id}`)}>
       <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -47,13 +75,26 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
             sx={{ ml: "auto" }}
             onClick={e => {
               e.stopPropagation();
-              navigate(`/users/edit/${user.id}`);
+              setIsEditModalOpen(true);
             }}
           >
             <EditIcon />
           </IconButton>
         )}
       </CardContent>
+
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <UserForm
+          initialData={{
+            userName: user.userName || "",
+            email: user.email || "",
+            about: user.about || "",
+            phoneNumber: user.phoneNumber || "",
+            role: user.roles.includes("Admin") ? "Admin" : user.roles.includes("Librarian") ? "Librarian" : "User"
+          }}
+          onSubmit={handleEditSubmit}
+        />
+      </EntityModal>
     </Card>
   );
 };

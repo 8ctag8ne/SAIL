@@ -9,14 +9,32 @@ import BASE_URL from "../../config";
 import { Author, AuthorCardProps } from "../../types";
 import PersonIcon from "@mui/icons-material/Person";
 import { toast } from "react-fox-toast";
+import EntityModal from "../EntityModal/EntityModal";
+import AuthorForm from "../AuthorForm/AuthorForm";
+import { useState } from "react";
+import { updateAuthor } from "../../Api/AuthorApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/authors/edit/${author.id}`);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
+    try {
+      await updateAuthor(author.id, { name: data.name, info: data.info, image: data.image ?? undefined });
+      toast.success("Автора оновлено успішно!");
+      queryClient.invalidateQueries({ queryKey: ["authors"] });
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося оновити автора.");
+    }
   };
 
   const handleDeleteClick = async (e: React.MouseEvent) => {
@@ -52,7 +70,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
       {author.imageUrl ? (
         <CardMedia
           component="img"
-          sx={{ width: 150, height: 150, objectFit: "cover", marginRight: 2, borderRadius: 1,}}
+          sx={{ width: 150, height: 150, objectFit: "cover", marginRight: 2, borderRadius: 1, }}
           image={author.imageUrl}
           alt={author.name || "Author"}
         />
@@ -92,6 +110,13 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
           </Box>
         )}
       </CardContent>
+
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <AuthorForm
+          initialData={{ name: author.name ?? "", info: author.info ?? undefined, image: author.imageUrl ?? undefined }}
+          onSubmit={handleEditSubmit}
+        />
+      </EntityModal>
     </Card>
   );
 };

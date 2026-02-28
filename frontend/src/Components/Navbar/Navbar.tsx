@@ -2,6 +2,15 @@ import React, { useState } from "react";
 import { AppBar, Toolbar, Typography, Button, Box, Menu, MenuItem, IconButton } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Contexts/AuthContext";
+import EntityModal from "../EntityModal/EntityModal";
+import BookForm from "../BookForm/BookForm";
+import AuthorForm from "../AuthorForm/AuthorForm";
+import TagForm from "../TagForm/TagForm";
+import { addBook } from "../../Api/BookApi";
+import { addAuthor } from "../../Api/AuthorApi";
+import { addTag } from "../../Api/TagApi";
+import { toast } from "react-fox-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import AddIcon from "@mui/icons-material/Add";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import PeopleIcon from "@mui/icons-material/People";
@@ -13,6 +22,11 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const location = useLocation();
+  const queryClient = useQueryClient();
+
+  const [isAddBookOpen, setIsAddBookOpen] = useState(false);
+  const [isAddAuthorOpen, setIsAddAuthorOpen] = useState(false);
+  const [isAddTagOpen, setIsAddTagOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -30,10 +44,43 @@ const Navbar = () => {
   const isAdminOrLibrarian = user?.roles?.includes("Admin") || user?.roles?.includes("Librarian");
   const isAdmin = user?.roles?.includes("Admin");
 
+  const handleAddBookSubmit = async (formData: FormData) => {
+    try {
+      await addBook(formData);
+      toast.success("Книга створена успішно!");
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      setIsAddBookOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося створити книгу.");
+    }
+  };
+
+  const handleAddAuthorSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
+    try {
+      await addAuthor({ name: data.name, info: data.info, image: data.image ?? undefined });
+      toast.success("Автора успішно додано!");
+      queryClient.invalidateQueries({ queryKey: ["authors"] });
+      setIsAddAuthorOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося додати автора.");
+    }
+  };
+
+  const handleAddTagSubmit = async (data: { title: string; info?: string; image?: File | null; bookIds: number[] }) => {
+    try {
+      await addTag({ title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds });
+      toast.success("Тег успішно додано!");
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
+      setIsAddTagOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося додати тег.");
+    }
+  };
+
   return (
-    <AppBar 
+    <AppBar
       position="fixed" // Змінюємо з static на fixed
-      sx={{ 
+      sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1, // Забезпечуємо правильний z-index
         boxShadow: 1 // Додаємо тінь для кращого візуального відокремлення
       }}
@@ -86,7 +133,7 @@ const Navbar = () => {
               <MenuItem
                 onClick={() => {
                   handleAddMenuClose();
-                  navigate("/books/add", { state: { from: location.pathname } });
+                  setIsAddBookOpen(true);
                 }}
               >
                 Книга
@@ -94,7 +141,7 @@ const Navbar = () => {
               <MenuItem
                 onClick={() => {
                   handleAddMenuClose();
-                  navigate("/tags/add", { state: { from: location.pathname } });
+                  setIsAddTagOpen(true);
                 }}
               >
                 Тег
@@ -102,12 +149,24 @@ const Navbar = () => {
               <MenuItem
                 onClick={() => {
                   handleAddMenuClose();
-                  navigate("/authors/add", { state: { from: location.pathname } });
+                  setIsAddAuthorOpen(true);
                 }}
               >
                 Автор
               </MenuItem>
             </Menu>
+
+            <EntityModal open={isAddBookOpen} onClose={() => setIsAddBookOpen(false)}>
+              <BookForm onSubmit={handleAddBookSubmit} />
+            </EntityModal>
+
+            <EntityModal open={isAddAuthorOpen} onClose={() => setIsAddAuthorOpen(false)}>
+              <AuthorForm onSubmit={handleAddAuthorSubmit} />
+            </EntityModal>
+
+            <EntityModal open={isAddTagOpen} onClose={() => setIsAddTagOpen(false)}>
+              <TagForm onSubmit={handleAddTagSubmit} />
+            </EntityModal>
           </>
         )}
         {/* Правий блок: Profile/Login/Register/Logout */}

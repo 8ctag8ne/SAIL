@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getUserById, deleteUser } from "../Api/Account";
+import { getUserById, deleteUser, editUser, setUserRole } from "../Api/Account";
 import { useLikedBooks } from "../hooks/useLikedBooks";
 import { getBookListsForUser } from "../Api/BookListApi";
 import { User, Book, BookList } from "../types";
@@ -17,6 +17,9 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import PersonIcon from "@mui/icons-material/Person";
 import BookListCard from "../Components/BookList/BookListCard";
+import EntityModal from "../Components/EntityModal/EntityModal";
+import UserForm from "../Components/UserForm/UserForm";
+import { toast } from "react-fox-toast";
 
 const getRoleIcon = (roles: string[]) => {
   if (roles.includes("Admin")) return <AdminPanelSettingsIcon color="error" sx={{ fontSize: 40 }} />;
@@ -40,6 +43,7 @@ const UserProfilePage: React.FC = () => {
   const [bookLists, setBookLists] = useState<BookList[]>([]);
   const [tab, setTab] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const isOwnProfile = user && profile && user.id === profile.id;
   const isAdmin = user && user.roles.includes("Admin");
@@ -60,6 +64,34 @@ const UserProfilePage: React.FC = () => {
       window.location.href = "/";
     } else {
       navigate("/users");
+    }
+  };
+
+  const handleEditSubmit = async (data: { userName: string; email: string; about: string; phoneNumber: string; role: string }) => {
+    if (!profile) return;
+    try {
+      await editUser(profile.id, {
+        userName: data.userName,
+        email: data.email,
+        about: data.about,
+        phoneNumber: data.phoneNumber
+      });
+      if (isAdmin && data.role !== (profile.roles[0] || "User")) {
+        await setUserRole(profile.id, data.role);
+      }
+      toast.success("Дані користувача оновлено успішно!");
+
+      // Reload profile data locally 
+      const updatedUser = await getUserById(profile.id);
+      setProfile(updatedUser as User);
+      setIsEditModalOpen(false);
+
+      if (isOwnProfile) {
+        // You might need to refresh global user context here depending on your AuthContext implementation
+        // For now window reload as fallback or relying on another fetch if Context requires
+      }
+    } catch (error) {
+      toast.error("Не вдалося оновити дані.");
     }
   };
 
@@ -100,7 +132,7 @@ const UserProfilePage: React.FC = () => {
             </Box>
             {(isOwnProfile || isAdmin) && (
               <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
-                <IconButton color="primary" onClick={() => navigate(`/users/edit/${profile.id}`)}>
+                <IconButton color="primary" onClick={() => setIsEditModalOpen(true)}>
                   <EditIcon />
                 </IconButton>
                 <IconButton color="error" onClick={() => setDeleteDialogOpen(true)}>
@@ -162,6 +194,19 @@ const UserProfilePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <UserForm
+          initialData={{
+            userName: profile.userName || "",
+            email: profile.email || "",
+            about: profile.about || "",
+            phoneNumber: profile.phoneNumber || "",
+            role: profile.roles.includes("Admin") ? "Admin" : profile.roles.includes("Librarian") ? "Librarian" : "User"
+          }}
+          onSubmit={handleEditSubmit}
+        />
+      </EntityModal>
     </PageContainer>
   );
 };

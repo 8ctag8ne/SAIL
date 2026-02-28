@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, CircularProgress } from "@mui/material";
 import BASE_URL from "../../config";
 
 type AuthorFormProps = {
@@ -21,6 +21,8 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
   const [imagePreview, setImagePreview] = useState<string | undefined>(
     initialData?.image ? initialData.image : undefined
   );
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -45,7 +47,12 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(form);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(form);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -54,23 +61,21 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
-        minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
-        py: 4,
       }}
     >
       <Paper
         elevation={3}
         sx={{
           display: "flex",
-          flexDirection: "row",
+          flexDirection: { xs: "column", md: "row" },
           gap: 4,
           padding: 4,
-          minWidth: 600,
+          width: "100%",
+          maxWidth: 700,
         }}
       >
         {/* Ліва частина: фото */}
-        <Box sx={{ width: 220, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+        <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           <CardMedia
             component="img"
             sx={{
@@ -130,9 +135,10 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
               variant="contained"
               color="primary"
               fullWidth
-              sx={{ marginTop: 2 }}
+              disabled={isSubmitting}
+              sx={{ marginTop: 2, height: 48 }}
             >
-              {initialData ? "Оновити автора" : "Додати автора"}
+              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (initialData ? "Оновити автора" : "Додати автора")}
             </Button>
           </form>
         </Box>

@@ -15,10 +15,12 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import BASE_URL from "../../config";
 import { SimpleAuthor, SimpleTag } from "../../types";
-import { deleteBook, downloadBookFile } from "../../Api/BookApi";
+import { deleteBook, downloadBookFile, updateBook } from "../../Api/BookApi";
 import { useToggleLike } from "../../hooks/useBooks";
 import { useAuth } from "../../Contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
+import EntityModal from "../EntityModal/EntityModal";
+import BookForm from "../BookForm/BookForm";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
@@ -26,6 +28,7 @@ import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-fox-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 type BookDetailsProps = {
   title: string;
@@ -61,6 +64,9 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const [likeCount, setLikeCount] = useState(likesCount || 0);
   const [addToListsOpen, setAddToListsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+
   React.useEffect(() => {
     if (infoRef.current) {
       setShowReadMore(infoRef.current.scrollHeight > MAX_INFO_HEIGHT);
@@ -96,7 +102,19 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   };
 
   const handleEditClick = () => {
-    navigate(`/books/edit/${id}`, { state: { from: location.pathname } });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (formData: FormData) => {
+    try {
+      await updateBook(Number(id), formData);
+      toast.success("Книга оновлена успішно!");
+      queryClient.invalidateQueries({ queryKey: ["book", Number(id)] });
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося оновити книгу.");
+    }
   };
 
   const handleDeleteClick = async () => {
@@ -279,6 +297,13 @@ const BookDetails: React.FC<BookDetailsProps> = ({
           </Box>
         )}
       </CardContent>
+
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <BookForm
+          initialData={{ title, info: info ?? "", imageUrl, fileUrl, tags, authors }}
+          onSubmit={handleEditSubmit}
+        />
+      </EntityModal>
     </Card>
   );
 };

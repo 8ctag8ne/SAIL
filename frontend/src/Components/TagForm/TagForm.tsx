@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, CircularProgress } from "@mui/material";
 import { SimpleBook } from "../../types";
 import BookSearchMultiSelect from "../BookSearchMultiSelect/BookSearchMultiSelect";
 import BASE_URL from "../../config";
@@ -26,6 +26,8 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
     initialData?.imageUrl ?? undefined
   );
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     if (initialData) {
       setForm({
@@ -50,19 +52,40 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit({
-      title: form.title,
-      info: form.info,
-      image: form.image,
-      bookIds: form.books.map((b) => b.id),
-    });
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        title: form.title,
+        info: form.info,
+        image: form.image,
+        bookIds: form.books.map((b) => b.id),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start", minHeight: "100vh", backgroundColor: "#f5f5f5", py: 4 }}>
-      <Paper elevation={3} sx={{ display: "flex", flexDirection: "row", gap: 4, padding: 4, minWidth: 600 }}>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          gap: 4,
+          padding: 4,
+          width: "100%",
+          maxWidth: 800,
+        }}
+      >
         {/* Ліва частина: фото */}
-        <Box sx={{ width: 220, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+        <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           <CardMedia
             component="img"
             sx={{
@@ -126,9 +149,10 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
               variant="contained"
               color="primary"
               fullWidth
-              sx={{ marginTop: 2 }}
+              disabled={isSubmitting}
+              sx={{ marginTop: 2, height: 48 }}
             >
-              {initialData ? "Оновити тег" : "Додати тег"}
+              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (initialData ? "Оновити тег" : "Додати тег")}
             </Button>
           </form>
         </Box>

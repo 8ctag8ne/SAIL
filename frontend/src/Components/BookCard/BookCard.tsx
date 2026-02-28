@@ -11,6 +11,10 @@ import { useAuth } from "../../Contexts/AuthContext";
 import { SimpleAuthor, SimpleTag } from "../../types";
 import { toast } from "react-fox-toast";
 import ConfirmDialog from "../ConfirmDialog";
+import EntityModal from "../EntityModal/EntityModal";
+import BookForm from "../BookForm/BookForm";
+import { updateBook } from "../../Api/BookApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 type BookCardProps = {
   id: number;
@@ -41,6 +45,8 @@ const BookCard: React.FC<BookCardProps> = ({
 
   const handleNavigate = () => navigate(`/books/${id}`);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { mutateAsync: toggleLikeMutation } = useToggleLike();
 
@@ -71,7 +77,19 @@ const BookCard: React.FC<BookCardProps> = ({
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/books/edit/${id}`, { state: { from: location.pathname } });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (formData: FormData) => {
+    try {
+      await updateBook(id, formData);
+      toast.success("Книгу оновлено успішно!");
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+      // If book details are fetched individually, they should invalidate as well via query key
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error("Не вдалося оновити книгу.");
+    }
   };
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -216,6 +234,19 @@ const BookCard: React.FC<BookCardProps> = ({
           </Box>
         )}
       </CardContent>
+
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <BookForm
+          initialData={{
+            title: title,
+            info: info ?? "",
+            imageUrl: fullImageUrl ?? undefined,
+            tags: tags,
+            authors: authors,
+          }}
+          onSubmit={handleEditSubmit}
+        />
+      </EntityModal>
     </Card>
   );
 };

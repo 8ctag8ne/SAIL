@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Checkbox, Typography, Box, Paper } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Checkbox, Typography, Box, Paper, CircularProgress } from "@mui/material";
 import { getBookListsForUser, addBookToLists } from "../../Api/BookListApi";
 import { BookList } from "../../types";
 import { getBookListIdsForBook } from "../../Api/BookApi";
@@ -19,6 +19,7 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
   const [selected, setSelected] = useState<number[]>([]);
   const [alreadyInLists, setAlreadyInLists] = useState<number[]>([]);
   const [refresh, setRefresh] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user?.id && open) {
@@ -35,13 +36,18 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
   };
 
   const handleAdd = async () => {
-    await addBookToLists(bookId, selected);
-    onBookAdded?.();
-    onClose();
+    setIsSubmitting(true);
+    try {
+      await addBookToLists(bookId, selected);
+      onBookAdded?.();
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth>
+    <Dialog open={open} onClose={() => !isSubmitting && onClose()} fullWidth>
       <DialogTitle>Додати книгу до списків</DialogTitle>
       <DialogContent>
         <CreateBookListButton onCreated={() => setRefresh(r => r + 1)} />
@@ -88,13 +94,13 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Скасувати</Button>
+        <Button onClick={onClose} disabled={isSubmitting}>Скасувати</Button>
         <Button
           onClick={handleAdd}
-          disabled={selected.length === 0}
+          disabled={selected.length === 0 || isSubmitting}
           variant="contained"
         >
-          Додати до списку
+          {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Додати до списку"}
         </Button>
       </DialogActions>
     </Dialog>

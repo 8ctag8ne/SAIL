@@ -43,6 +43,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
     initialData?.fileUrl ? initialData.fileUrl.split("/").pop() || "" : ""
   );
   const [generatingCover, setGeneratingCover] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -106,46 +107,46 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   };
 
   const handleAnalyzeBook = async () => {
-  if (form.file?.type === "application/pdf") {
-    setAnalyzing(true);
-    try {
-      const result = await analyzeBookPdf(form.file);
-      
-      setForm(prev => ({
-        ...prev,
-        title: prev.title || result.title,
-        info: prev.info || result.description,
-        tags: result.existingTags,// Уникаємо дублікатів
-      }));
+    if (form.file?.type === "application/pdf") {
+      setAnalyzing(true);
+      try {
+        const result = await analyzeBookPdf(form.file);
 
-      // Додаємо авторів тільки якщо є результати
-      if (result.authors?.length) {
-        const newAuthors = result.authors.map(a => ({
-          id: a.id || 0,
-          name: a.name || ""
-        }));
-        
         setForm(prev => ({
           ...prev,
-          authors: [...prev.authors, ...newAuthors]
+          title: prev.title || result.title,
+          info: prev.info || result.description,
+          tags: result.existingTags,// Уникаємо дублікатів
         }));
-        
-        setAuthorSearch(prev => [
-          ...prev,
-          ...result.authors.map(a => a.name || "")
-        ]);
+
+        // Додаємо авторів тільки якщо є результати
+        if (result.authors?.length) {
+          const newAuthors = result.authors.map(a => ({
+            id: a.id || 0,
+            name: a.name || ""
+          }));
+
+          setForm(prev => ({
+            ...prev,
+            authors: [...prev.authors, ...newAuthors]
+          }));
+
+          setAuthorSearch(prev => [
+            ...prev,
+            ...result.authors.map(a => a.name || "")
+          ]);
+        }
+
+        setSuggestedTagNames(result.suggestedTags ?? []);
+
+      } catch (error) {
+        console.error("Помилка аналізу:", error);
+        toast.error("Не вдалося проаналізувати файл");
+      } finally {
+        setAnalyzing(false);
       }
-      
-       setSuggestedTagNames(result.suggestedTags ?? []);
-      
-    } catch (error) {
-      console.error("Помилка аналізу:", error);
-      toast.error("Не вдалося проаналізувати файл");
-    } finally {
-      setAnalyzing(false);
     }
-  }
-};
+  };
 
   // Додаємо нового автора (пустий селектор)
   const handleAddAuthor = () => {
@@ -180,62 +181,66 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // Валідація обов'язкових полів
-  if (!form.title.trim()) {
-    toast.warning("Будь ласка, заповніть назву книги");
-    return;
-  }
-
-  // Перевірка наявності хоча б одного коректного автора
-  const validAuthors = form.authors.filter(a => a.id !== 0 && a.name?.trim());
-  if (validAuthors.length === 0) {
-    toast.warning("Додайте хоча б одного автора");
-    return;
-  }
-
-  const formData = new FormData();
-  
-  try {
-    // Для нових книг: файл обов'язковий
-    if (!initialData && !form.file) {
-      toast.warning("Будь ласка, виберіть файл книги");
+    // Валідація обов'язкових полів
+    if (!form.title.trim()) {
+      toast.warning("Будь ласка, заповніть назву книги");
       return;
     }
 
-    // Додаємо файл тільки якщо він новий або це нова книга
-    if (form.file) formData.append("file", form.file);
+    // Перевірка наявності хоча б одного коректного автора
+    const validAuthors = form.authors.filter(a => a.id !== 0 && a.name?.trim());
+    if (validAuthors.length === 0) {
+      toast.warning("Додайте хоча б одного автора");
+      return;
+    }
 
-    // Додаємо зображення тільки якщо воно нове
-    if (form.image) formData.append("image", form.image);
+    const formData = new FormData();
+    setIsSubmitting(true);
 
-    // Основні дані
-    formData.append("title", form.title);
-    formData.append("info", form.info);
-    
-    // Автори
-    validAuthors.forEach(a => 
-      formData.append("AuthorIds", a.id.toString())
-    );
+    try {
+      // Для нових книг: файл обов'язковий
+      if (!initialData && !form.file) {
+        toast.warning("Будь ласка, виберіть файл книги");
+        setIsSubmitting(false);
+        return;
+      }
 
-    // Теги
-    form.tags.forEach(tag => 
-      formData.append("TagIds", tag.id.toString())
-    );
-    
-    // Нові теги
-    suggestedTagNames.forEach(tagName => 
-      formData.append("NewTagTitles", tagName)
-    );
+      // Додаємо файл тільки якщо він новий або це нова книга
+      if (form.file) formData.append("file", form.file);
 
-    await onSubmit(formData);
-    
-  } catch (error) {
-    console.error("Помилка при збереженні:", error);
-    toast.error("Сталася помилка. Перевірте дані.");
-  }
-};
+      // Додаємо зображення тільки якщо воно нове
+      if (form.image) formData.append("image", form.image);
+
+      // Основні дані
+      formData.append("title", form.title);
+      formData.append("info", form.info);
+
+      // Автори
+      validAuthors.forEach(a =>
+        formData.append("AuthorIds", a.id.toString())
+      );
+
+      // Теги
+      form.tags.forEach(tag =>
+        formData.append("TagIds", tag.id.toString())
+      );
+
+      // Нові теги
+      suggestedTagNames.forEach(tagName =>
+        formData.append("NewTagTitles", tagName)
+      );
+
+      await onSubmit(formData);
+
+    } catch (error) {
+      console.error("Помилка при збереженні:", error);
+      toast.error("Сталася помилка. Перевірте дані.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Box
@@ -244,24 +249,21 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
-        minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
-        py: 4,
       }}
     >
       <Paper
         elevation={3}
         sx={{
           display: "flex",
-          flexDirection: "row",
+          flexDirection: { xs: "column", md: "row" },
           gap: 4,
           padding: 4,
-          maxWidth: 1200,
-          minWidth: 0,
+          width: "100%",
+          maxWidth: 900,
         }}
       >
         {/* Ліва частина: фото та файл */}
-        <Box sx={{ width: 220, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+        <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           <CardMedia
             component="img"
             sx={{
@@ -426,9 +428,10 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               variant="contained"
               color="primary"
               fullWidth
-              sx={{ marginTop: 2 }}
+              disabled={isSubmitting}
+              sx={{ marginTop: 2, height: 48 }}
             >
-              {initialData ? "Оновити книгу" : "Додати книгу"}
+              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (initialData ? "Оновити книгу" : "Додати книгу")}
             </Button>
           </form>
         </Box>
