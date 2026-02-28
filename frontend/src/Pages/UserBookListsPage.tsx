@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { getUserById, deleteUser, editUser, setUserRole } from "../api/Account";
 import { useLikedBooks } from "../hooks/useLikedBooks";
 import { getBookListsForUser } from "../api/BookListApi";
@@ -33,7 +33,7 @@ const getHighestRole = (roles: string[]): string => {
   return "Користувач";
 };
 
-const UserProfilePage: React.FC = () => {
+const UserBookListsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const UserProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<User | null>(null);
   const { data: likedBooks = [] } = useLikedBooks(id);
   const [bookLists, setBookLists] = useState<BookList[]>([]);
-  const [tab, setTab] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -143,45 +143,33 @@ const UserProfilePage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} centered sx={{ mb: 2 }}>
+      <Tabs value={1} onChange={(_, v) => setSearchParams({ tab: v === 1 ? "lists" : "likes" })} centered sx={{ mb: 2 }}>
         <Tab label="Вподобання" />
         <Tab label="Списки книг" />
       </Tabs>
-      {tab === 0 && (
-        <Box>
-          {likedBooks.length === 0 ? (
-            <Typography color="text.secondary" align="center">
-              Жодних уподобаних книг.
-            </Typography>
-          ) : (
-            likedBooks.map((book) => <BookCard key={book.id} {...book} tags={book.tags} />)
-          )}
-        </Box>
-      )}
-      {tab === 1 && (
-        <Box>
-          {/* Додаємо кнопку створення списку */}
-          {isOwnProfile && (
-            <Box sx={{ mb: 2 }}>
-              <CreateBookListButton onCreated={() => getBookListsForUser(id!).then(setBookLists)} />
-            </Box>
-          )}
-          {bookLists.length === 0 ? (
-            <Typography color="text.secondary" align="center">
-              Жодних списків книг.
-            </Typography>
-          ) : (
-            bookLists.map((list) => (
-              <BookListCard
-                key={list.id}
-                list={list}
-                onDeleted={id => setBookLists(prev => prev.filter(l => l.id !== id))}
-                onUpdated={updated => setBookLists(prev => prev.map(l => l.id === updated.id ? updated : l))}
-              />
-            ))
-          )}
-        </Box>
-      )}
+
+      <Box>
+        {/* Додаємо кнопку створення списку */}
+        {isOwnProfile && (
+          <Box sx={{ mb: 2 }}>
+            <CreateBookListButton onCreated={() => getBookListsForUser(id!).then(setBookLists)} />
+          </Box>
+        )}
+        {bookLists.length === 0 ? (
+          <Typography color="text.secondary" align="center">
+            Жодних списків книг.
+          </Typography>
+        ) : (
+          bookLists.map((list) => (
+            <BookListCard
+              key={list.id}
+              list={list}
+              onDeleted={id => setBookLists(prev => prev.filter(l => l.id !== id))}
+              onUpdated={updated => setBookLists(prev => prev.map(l => l.id === updated.id ? updated : l))}
+            />
+          ))
+        )}
+      </Box>
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Видалити користувача</DialogTitle>
         <DialogContent>
@@ -211,4 +199,4 @@ const UserProfilePage: React.FC = () => {
   );
 };
 
-export default UserProfilePage;
+export default UserBookListsPage;

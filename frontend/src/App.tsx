@@ -9,7 +9,9 @@ import AuthorDetailsPage from "./pages/AuthorDetailsPage";
 import AuthorListPage from "./pages/AuthorListPage";
 import TagListPage from "./pages/TagListPage";
 import TagDetailsPage from "./pages/TagDetailsPage";
-import UserProfilePage from "./pages/UserProfilePage";
+import UserLikesPage from "./pages/UserLikesPage";
+import UserBookListsPage from "./pages/UserBookListsPage";
+import { useSearchParams } from "react-router-dom";
 import BookListPage from "./pages/BookListPage";
 import UsersPage from "./pages/UsersPage";
 import CheatSheetPage from "./pages/CheatSheetPage";
@@ -26,6 +28,14 @@ const queryClient = new QueryClient({
         },
     },
 });
+
+
+const UserProfileRoute = () => {
+    const [searchParams] = useSearchParams();
+    const tab = searchParams.get("tab");
+    if (tab === "lists") return <UserBookListsPage />;
+    return <UserLikesPage />;
+};
 
 function App() {
     return (
@@ -54,7 +64,7 @@ function App() {
                             <Route path="/tags" element={<TagListPage />} />
                             <Route path="/tags/:id" element={<TagDetailsPage />} />
                             <Route path="/users" element={<UsersPage />} />
-                            <Route path="/users/:id" element={<UserProfilePage />} />
+                            <Route path="/users/:id" element={<UserProfileRoute />} />
                             <Route path="/booklists/:id" element={<BookListPage />} />
                             <Route path="/cheatsheet" element={<CheatSheetPage />} />
                         </Routes>

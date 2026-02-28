@@ -11,9 +11,12 @@ namespace MilLib.Services.Implementations
     {
         private readonly ApplicationDbContext _context;
 
-        public BookListService(ApplicationDbContext context)
+        private readonly IFileService _fileService;
+
+        public BookListService(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         public async Task<List<BookListDto>> GetAllBookListsAsync()
@@ -50,7 +53,7 @@ namespace MilLib.Services.Implementations
                 {
                     Id = b.Id,
                     Title = b.Title,
-                    ImageUrl = b.ImageUrl
+                    ImageUrl = _fileService.GetFullUrl(b.ImageUrl)
                 }).ToList()
             }).ToList();
         }
@@ -98,7 +101,7 @@ namespace MilLib.Services.Implementations
                 {
                     Id = b.Id,
                     Title = b.Title,
-                    ImageUrl = b.ImageUrl
+                    ImageUrl = _fileService.GetFullUrl(b.ImageUrl)
                 }).ToList()
             }).ToList();
         }
@@ -140,7 +143,7 @@ namespace MilLib.Services.Implementations
                 {
                     Id = b.Id,
                     Title = b.Title,
-                    ImageUrl = b.ImageUrl,
+                    ImageUrl = _fileService.GetFullUrl(b.ImageUrl),
                     Info = b.Info
                 }).ToList()
             };
