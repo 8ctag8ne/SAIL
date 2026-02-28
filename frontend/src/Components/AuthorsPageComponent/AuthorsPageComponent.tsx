@@ -1,54 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { Box, Typography, Pagination } from "@mui/material";
+import { Box, Typography, Pagination, CircularProgress } from "@mui/material";
 import AuthorCard from "../AuthorCard/AuthorCard";
-import { getAuthors } from "../../Api/AuthorApi";
-import { Author } from "../../types";
-import LoadingIndicator from "../LoadingIndicator";
+import { useAuthors } from "../../hooks/useAuthors";
 
 const AuthorsPageComponent: React.FC = () => {
-    const [authors, setAuthors] = useState<Author[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [totalPages, setTotalPages] = useState(1);
-
     const [searchParams, setSearchParams] = useSearchParams();
     const pageNumber = parseInt(searchParams.get("page") || "1", 10);
 
-    const fetchAuthors = async () => {
-        setLoading(true);
-        try {
-            const data = await getAuthors({ 
-                PageNumber: pageNumber,
-                PageSize: 10,
-                Title: searchParams.get("title") || ""
-            });
-            setAuthors(data.items);
-            setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error("Error fetching authors:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchAuthors();
-    }, [searchParams]);
+    const { data, isLoading, isError } = useAuthors({
+        PageNumber: pageNumber,
+        PageSize: 10,
+        Title: searchParams.get("title") || ""
+    });
 
     return (
         <Box sx={{ padding: 2 }}>
-            {loading ? (
-                <LoadingIndicator />
-            ) : authors.length === 0 ? (
+            {isLoading ? (
+                <CircularProgress />
+            ) : isError || !data || data.items.length === 0 ? (
                 <Typography>Не знайдено жодного автора.</Typography>
             ) : (
                 <>
-                    {authors.map((author) => (
+                    {data.items.map((author) => (
                         <AuthorCard key={author.id} author={author} />
                     ))}
                     <Box sx={{ display: "flex", justifyContent: "center", marginTop: 2 }}>
                         <Pagination
-                            count={totalPages}
+                            count={data.totalPages}
                             page={pageNumber}
                             onChange={(e, value) => {
                                 setSearchParams(prev => {

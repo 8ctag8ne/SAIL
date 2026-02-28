@@ -15,7 +15,8 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import BASE_URL from "../../config";
 import { SimpleAuthor, SimpleTag } from "../../types";
-import { deleteBook, downloadBookFile, toggleLike } from "../../Api/BookApi";
+import { deleteBook, downloadBookFile } from "../../Api/BookApi";
+import { useToggleLike } from "../../hooks/useBooks";
 import { useAuth } from "../../Contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -74,6 +75,8 @@ const BookDetails: React.FC<BookDetailsProps> = ({
     navigate(`/authors/${authorId}`);
   };
 
+  const { mutateAsync: toggleLikeMutation } = useToggleLike();
+
   const handleLikeClick = async () => {
     if (!user) {
       navigate("/login");
@@ -84,7 +87,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
     setLikeCount((prev) => (liked ? prev - 1 : prev + 1));
 
     try {
-      await toggleLike(Number(id));
+      await toggleLikeMutation(Number(id));
     } catch (err) {
       console.error("Failed to toggle like:", err);
       setLiked((prev) => !prev);
@@ -116,28 +119,28 @@ const BookDetails: React.FC<BookDetailsProps> = ({
     <Card sx={{ display: "flex", flexDirection: "row", margin: "20px auto", padding: 2 }}>
       <Box sx={{ flex: "0 0 255px", marginRight: 2 }}>
         {fullImageUrl ? (
-        <CardMedia
-          component="img"
-          sx={{ width: "100%", height: "340px", objectFit: "cover", marginRight: 2, borderRadius: 1, }}
-          image={fullImageUrl}
-          alt={title}
-        />
-      ) : (
-        <Box
-          sx={{
-            width: "100%",
-            height: "340px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 2,
-            background: "#eee",
-            borderRadius: 1,
-          }}
-        >
-          <MenuBookIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />
-        </Box>
-      )}
+          <CardMedia
+            component="img"
+            sx={{ width: "100%", height: "340px", objectFit: "cover", marginRight: 2, borderRadius: 1, }}
+            image={fullImageUrl}
+            alt={title}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: "100%",
+              height: "340px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 2,
+              background: "#eee",
+              borderRadius: 1,
+            }}
+          >
+            <MenuBookIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />
+          </Box>
+        )}
         {fileUrl && (
           <Box sx={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 1 }}>
             <Button
@@ -171,16 +174,16 @@ const BookDetails: React.FC<BookDetailsProps> = ({
       </Box>
       <CardContent sx={{ flex: 1, position: "relative" }}>
         <Typography
-        variant="h4"
-        fontWeight="bold"
-        gutterBottom
-        sx={{
-          wordBreak: "break-word", // Додає перенос слів, якщо дуже довга назва
-          pr: canEditOrDelete ? 10 : 0,
-        }}
-      >
-        {title}
-      </Typography>
+          variant="h4"
+          fontWeight="bold"
+          gutterBottom
+          sx={{
+            wordBreak: "break-word", // Додає перенос слів, якщо дуже довга назва
+            pr: canEditOrDelete ? 10 : 0,
+          }}
+        >
+          {title}
+        </Typography>
         {authors.length > 0 && (
           <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>
             Авторство:{" "}

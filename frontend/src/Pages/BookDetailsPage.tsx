@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getBookById } from "../Api/BookApi";
+import { useBook } from "../hooks/useBooks";
 import BookDetails from "../Components/BookDetails/BookDetails";
 import CommentSection from "../Components/CommentSection/CommentSection";
 import BASE_URL from "../config"; // Імпорт BASE_URL
@@ -10,16 +10,18 @@ import LoadingIndicator from "../Components/LoadingIndicator";
 
 const BookDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const [book, setBook] = useState<BookDetailsData | null>(null);
+    const { data: book, isLoading, isError } = useBook(Number(id));
 
-    useEffect(() => {
-        if (id) {
-            getBookById(Number(id)).then(setBook);
-        }
-    }, [id]);
-
-    if (!book) {
+    if (isLoading) {
         return <LoadingIndicator />;
+    }
+
+    if (isError || !book) {
+        return (
+            <PageContainer>
+                <div>Error loading book.</div>
+            </PageContainer>
+        );
     }
 
     return (

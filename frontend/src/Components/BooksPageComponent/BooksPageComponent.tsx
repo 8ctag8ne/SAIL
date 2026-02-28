@@ -1,54 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { Box, Typography, Pagination } from "@mui/material";
+import { Box, Typography, Pagination, CircularProgress } from "@mui/material";
 import BookCard from "../BookCard/BookCard";
-import { getBooks } from "../../Api/BookApi";
-import { Book } from "../../types";
-import LoadingIndicator from "../LoadingIndicator";
+import { useBooks } from "../../hooks/useBooks";
 
 type BooksPageComponentProps = {
-  queryParams?: Record<string, any>; // Додаткові параметри для запиту
+  queryParams?: Record<string, any>;
 };
 
 const BooksPageComponent: React.FC<BooksPageComponentProps> = ({ queryParams = {} }) => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
-
   const [searchParams, setSearchParams] = useSearchParams();
   const pageNumber = parseInt(searchParams.get("page") || "1", 10);
 
-  const fetchBooks = async () => {
-    setLoading(true);
-    try {
-      const data = await getBooks({ ...queryParams, PageNumber: pageNumber, PageSize: 10 });
-      setBooks(data.items);
-      setTotalPages(data.totalPages);
-    } catch (error) {
-      console.error("Error fetching books:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBooks();
-  }, [queryParams, pageNumber]);
+  const { data, isLoading, isError } = useBooks({ ...queryParams, PageNumber: pageNumber, PageSize: 10 });
 
   return (
     <Box sx={{ padding: 2 }}>
-      {loading ? (
-        <LoadingIndicator />
-      ) : books.length === 0 ? (
+      {isLoading ? (
+        <CircularProgress />
+      ) : isError || !data || data.items.length === 0 ? (
         <Typography>Нічого не знайдено.</Typography>
       ) : (
         <>
-          {books.map((book) => (
+          {data.items.map((book) => (
             <BookCard key={book.id} {...book} />
           ))}
           <Box sx={{ display: "flex", justifyContent: "center", marginTop: 2 }}>
             <Pagination
-              count={totalPages}
+              count={data.totalPages}
               page={pageNumber}
               onChange={(e, value) => {
                 setSearchParams(prev => {

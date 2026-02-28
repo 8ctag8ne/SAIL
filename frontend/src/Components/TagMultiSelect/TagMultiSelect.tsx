@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { TextField, Box, Chip, CircularProgress, Typography, Button } from "@mui/material";
 import { SimpleTag } from "../../types";
-import { getTags } from "../../Api/TagApi";
+import { useTags } from "../../hooks/useTags";
 
 type TagMultiSelectProps = {
   selectedTags: SimpleTag[];
@@ -10,33 +10,24 @@ type TagMultiSelectProps = {
 
 const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onChange }) => {
   const [search, setSearch] = useState("");
-  const [tags, setTags] = useState<SimpleTag[]>([]);
-  const [loading, setLoading] = useState(false);
   const [displayCount, setDisplayCount] = useState(5);
 
-  useEffect(() => {
-    setLoading(true);
-    getTags({ PageSize: 1000 })
-      .then((data) => {
-        setTags(data.items.map((t) => ({ id: t.id, title: t.title || "" })));
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const { data, isLoading } = useTags({ PageSize: 1000 });
+  const allTags = data?.items.map((t) => ({ id: t.id, title: t.title || "" })) || [];
 
   // Скидаємо лічильник при зміні пошуку
   useEffect(() => {
     setDisplayCount(5);
   }, [search]);
 
-  const selected = tags.filter(tag => selectedTags.some(t => t.id === tag.id));
-  
-  const fullFiltered = tags.filter(
+  const selected = allTags.filter(tag => selectedTags.some(t => t.id === tag.id));
+
+  const fullFiltered = allTags.filter(
     (tag) =>
       tag.title.toLowerCase().includes(search.toLowerCase()) &&
       !selectedTags.some((t) => t.id === tag.id)
   );
-  
+
   const displayedFiltered = fullFiltered.slice(0, displayCount);
 
   const handleToggle = (tag: SimpleTag) => {
@@ -56,7 +47,7 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
         fullWidth
         size="small"
       />
-      {loading ? (
+      {isLoading ? (
         <CircularProgress size={24} sx={{ mt: 2 }} />
       ) : (
         <Box
@@ -89,8 +80,8 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
             />
           ))}
           {fullFiltered.length > displayCount && (
-            <Button 
-              variant="text" 
+            <Button
+              variant="text"
               size="small"
               onClick={() => setDisplayCount(prev => prev + 5)}
               sx={{ mt: 1 }}

@@ -21,50 +21,61 @@ import EditUserPage from "./Pages/EditUserPage";
 import UsersPage from "./Pages/UsersPage";
 import CheatSheetPage from "./Pages/CheatSheetPage";
 import { Box } from "@mui/material";
-import {ToastContainer, toast} from "react-fox-toast";
+import { ToastContainer } from "react-fox-toast";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 5 * 60 * 1000, // 5 minutes
+            refetchOnWindowFocus: false,
+            retry: 1,
+        },
+    },
+});
 
 function App() {
     return (
-        <AuthProvider>
-            <ToastContainer position="top-center"/>
-            <BrowserRouter>
-                <Navbar />
-                <Box 
-                    component="main"
-                    sx={{
-                        pt: '80px', // Відступ висоти навбару
-                        minHeight: '100vh',
-                        px: 3, // Бокові відступи
-                        // py: 5  // Вертикальні відступи
-                    }}
-                >
-                <Routes>
-                    <Route path="/" element={<BookSearchPage />} />
-                    <Route path="/books" element={<BookSearchPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/books/add" element={<BookAddPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/books/:id" element={<BookDetailsPage />} />
-                    <Route path="/books/edit/:id" element={<BookEditPage />} />
-                    <Route path="/authors/:id" element={<AuthorDetailsPage />} />
-                    <Route path="/authors" element={<AuthorListPage />} />
-                    <Route path="/authors/add" element={<AuthorAddPage />} />
-                    <Route path="/authors/edit/:id" element={<AuthorEditPage />} />
-                    <Route path="/tags" element={<TagListPage />} />
-                    <Route path="/tags/add" element={<TagAddPage />} />
-                    <Route path="/tags/edit/:id" element={<TagEditPage />} />
-                    <Route path="/tags/:id" element={<TagDetailsPage />} />
-                    <Route path="/users">
-                        <Route index element={<UsersPage />} />
-                        <Route path=":id" element={<UserProfilePage />} />
-                        <Route path="edit/:id" element={<EditUserPage />} />
-                    </Route>
-                    <Route path="/booklists/:id" element={<BookListPage />} />
-                    <Route path="/cheatsheet" element={<CheatSheetPage />} />
-                </Routes>
-                </Box>
-            </BrowserRouter>
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <ToastContainer position="top-center" />
+                <BrowserRouter>
+                    <Navbar />
+                    <Box
+                        component="main"
+                        sx={{
+                            pt: '80px', // Відступ висоти навбару
+                            minHeight: '100vh',
+                            px: 3, // Бокові відступи
+                            // py: 5  // Вертикальні відступи
+                        }}
+                    >
+                        <Routes>
+                            <Route path="/" element={<BookSearchPage />} />
+                            <Route path="/books" element={<BookSearchPage />} />
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route path="/books/add" element={<BookAddPage />} />
+                            <Route path="/register" element={<RegisterPage />} />
+                            <Route path="/books/:id" element={<BookDetailsPage />} />
+                            <Route path="/books/edit/:id" element={<BookEditPage />} />
+                            <Route path="/authors/:id" element={<AuthorDetailsPage />} />
+                            <Route path="/authors" element={<AuthorListPage />} />
+                            <Route path="/authors/add" element={<AuthorAddPage />} />
+                            <Route path="/authors/edit/:id" element={<AuthorEditPage />} />
+                            <Route path="/tags" element={<TagListPage />} />
+                            <Route path="/tags/add" element={<TagAddPage />} />
+                            <Route path="/tags/edit/:id" element={<TagEditPage />} />
+                            <Route path="/tags/:id" element={<TagDetailsPage />} />
+                            <Route path="/users" element={<UsersPage />} />
+                            <Route path="/users/:id" element={<UserProfilePage />} />
+                            <Route path="/users/edit/:id" element={<EditUserPage />} />
+                            <Route path="/booklists/:id" element={<BookListPage />} />
+                            <Route path="/cheatsheet" element={<CheatSheetPage />} />
+                        </Routes>
+                    </Box>
+                </BrowserRouter>
+            </AuthProvider>
+        </QueryClientProvider>
     );
 }
 

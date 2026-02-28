@@ -1,19 +1,14 @@
 import React, { useState } from "react";
 import {
   Card, CardContent, CardMedia, Typography, Box,
-  IconButton, Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button
+  IconButton, Chip
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook } from "@mui/icons-material";
-import { deleteBook, toggleLike } from "../../Api/BookApi";
+import { deleteBook } from "../../Api/BookApi";
+import { useToggleLike } from "../../hooks/useBooks";
 import { useAuth } from "../../Contexts/AuthContext";
 import { SimpleAuthor, SimpleTag } from "../../types";
-import BASE_URL from "../../config";
 import { toast } from "react-fox-toast";
 import ConfirmDialog from "../ConfirmDialog";
 
@@ -47,16 +42,20 @@ const BookCard: React.FC<BookCardProps> = ({
   const handleNavigate = () => navigate(`/books/${id}`);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  const { mutateAsync: toggleLikeMutation } = useToggleLike();
+
   const handleLikeToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return navigate("/login");
 
+    // Оптимістичне оновлення UI
     setLiked(!liked);
     setLikeCount(prev => liked ? prev - 1 : prev + 1);
 
     try {
-      await toggleLike(id);
+      await toggleLikeMutation(id);
     } catch {
+      // Відкат у разі помилки
       setLiked(liked);
       setLikeCount(prev => liked ? prev + 1 : prev - 1);
       toast.error("Помилка при зміні лайку.");
