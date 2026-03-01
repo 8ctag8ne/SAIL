@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Tag } from "../../../types";
 import BASE_URL from "../../../config";
 import { useAuth } from "../../../contexts/AuthContext";
-import { deleteTag, updateTag } from "../../../api/TagApi";
+import { useUpdateTag, useDeleteTag } from "../../../hooks/useTags";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
 import EntityModal from "../../ui/EntityModal/EntityModal";
@@ -25,6 +25,8 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { mutateAsync: updateTagMutation } = useUpdateTag();
+  const { mutateAsync: deleteTagMutation } = useDeleteTag();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -33,9 +35,8 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
 
   const handleEditSubmit = async (data: { title: string; info?: string; image?: File | null; bookIds: number[] }) => {
     try {
-      await updateTag(tag.id, { title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds });
+      await updateTagMutation({ id: tag.id, data: { title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds } });
       toast.success("Тег оновлено успішно!");
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
       setIsEditModalOpen(false);
     } catch (error) {
       toast.error("Не вдалося оновити тег.");
@@ -49,7 +50,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteTag(tag.id);
+      await deleteTagMutation(tag.id);
       toast.success("Тег видалений успішно!");
       navigate("/tags");
     } catch (error) {

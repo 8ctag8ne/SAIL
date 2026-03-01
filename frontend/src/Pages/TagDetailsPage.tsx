@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getTagById, deleteTag } from "../api/TagApi";
+import { getTagById } from "../api/TagApi";
 import { Tag } from "../types";
+import { useUpdateTag, useDeleteTag } from "../hooks/useTags";
 import PageContainer from "../components/layout/PageContainer/PageContainer";
 import BooksPageComponent from "../components/books/BooksPageComponent/BooksPageComponent";
 import { Card, CardContent, CardMedia, Typography, Box, Button, IconButton } from "@mui/material";
@@ -15,7 +16,6 @@ import EntityModal from "../components/ui/EntityModal/EntityModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
 import TagForm from "../components/tags/TagForm/TagForm";
-import { updateTag } from "../api/TagApi";
 import { useQueryClient } from "@tanstack/react-query";
 
 
@@ -28,6 +28,8 @@ const TagDetailsPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { mutateAsync: updateTagMutation } = useUpdateTag();
+  const { mutateAsync: deleteTagMutation } = useDeleteTag();
 
   useEffect(() => {
     const fetchTag = async () => {
@@ -53,9 +55,8 @@ const TagDetailsPage: React.FC = () => {
 
   const handleEditSubmit = async (data: { title: string; info?: string; image?: File | null; bookIds: number[] }) => {
     try {
-      await updateTag(Number(id), { title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds });
+      await updateTagMutation({ id: Number(id), data: { title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds } });
       toast.success("Тег оновлено успішно!");
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
       // Reload to get new tag details since it's fetched directly via useEffect here
       setIsEditModalOpen(false);
       window.location.reload();
@@ -71,7 +72,7 @@ const TagDetailsPage: React.FC = () => {
   const handleConfirmDelete = async () => {
     try {
       if (id) {
-        await deleteTag(Number(id));
+        await deleteTagMutation(Number(id));
         toast.success("тег видалений успішно!");
         navigate("/tags");
       }

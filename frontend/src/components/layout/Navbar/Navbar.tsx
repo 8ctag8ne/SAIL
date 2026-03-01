@@ -6,11 +6,10 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../../books/BookForm/BookForm";
 import AuthorForm from "../../authors/AuthorForm/AuthorForm";
 import TagForm from "../../tags/TagForm/TagForm";
-import { addBook } from "../../../api/BookApi";
-import { addAuthor } from "../../../api/AuthorApi";
-import { addTag } from "../../../api/TagApi";
 import { toast } from "react-fox-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useAddBook } from "../../../hooks/useBooks";
+import { useAddAuthor } from "../../../hooks/useAuthors";
+import { useAddTag } from "../../../hooks/useTags";
 import AddIcon from "@mui/icons-material/Add";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import PeopleIcon from "@mui/icons-material/People";
@@ -22,7 +21,10 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const location = useLocation();
-  const queryClient = useQueryClient();
+
+  const { mutateAsync: addBookMutation } = useAddBook();
+  const { mutateAsync: addAuthorMutation } = useAddAuthor();
+  const { mutateAsync: addTagMutation } = useAddTag();
 
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
   const [isAddAuthorOpen, setIsAddAuthorOpen] = useState(false);
@@ -46,9 +48,8 @@ const Navbar = () => {
 
   const handleAddBookSubmit = async (formData: FormData) => {
     try {
-      await addBook(formData);
+      await addBookMutation(formData);
       toast.success("Книга створена успішно!");
-      queryClient.invalidateQueries({ queryKey: ["books"] });
       setIsAddBookOpen(false);
     } catch (error) {
       toast.error("Не вдалося створити книгу.");
@@ -57,9 +58,8 @@ const Navbar = () => {
 
   const handleAddAuthorSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
     try {
-      await addAuthor({ name: data.name, info: data.info, image: data.image ?? undefined });
+      await addAuthorMutation({ name: data.name, info: data.info, image: data.image ?? undefined });
       toast.success("Автора успішно додано!");
-      queryClient.invalidateQueries({ queryKey: ["authors"] });
       setIsAddAuthorOpen(false);
     } catch (error) {
       toast.error("Не вдалося додати автора.");
@@ -68,9 +68,8 @@ const Navbar = () => {
 
   const handleAddTagSubmit = async (data: { title: string; info?: string; image?: File | null; bookIds: number[] }) => {
     try {
-      await addTag({ title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds });
+      await addTagMutation({ title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds });
       toast.success("Тег успішно додано!");
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
       setIsAddTagOpen(false);
     } catch (error) {
       toast.error("Не вдалося додати тег.");

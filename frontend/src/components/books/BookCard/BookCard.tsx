@@ -4,9 +4,7 @@ import {
   IconButton, Chip
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook } from "@mui/icons-material";
-import { deleteBook } from "../../../api/BookApi";
-import { useToggleLike } from "../../../hooks/useBooks";
+import { useToggleLike, useUpdateBook, useDeleteBook } from "../../../hooks/useBooks";
 import { useAuth } from "../../../contexts/AuthContext";
 import { SimpleAuthor, SimpleTag } from "../../../types";
 import { toast } from "react-fox-toast";
@@ -15,6 +13,7 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../BookForm/BookForm";
 import { updateBook } from "../../../api/BookApi";
 import { useQueryClient } from "@tanstack/react-query";
+import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook } from "@mui/icons-material";
 
 type BookCardProps = {
   id: number;
@@ -49,6 +48,8 @@ const BookCard: React.FC<BookCardProps> = ({
   const queryClient = useQueryClient();
 
   const { mutateAsync: toggleLikeMutation } = useToggleLike();
+  const { mutateAsync: updateBookMutation } = useUpdateBook();
+  const { mutateAsync: deleteBookMutation } = useDeleteBook();
 
   const handleLikeToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,10 +83,8 @@ const BookCard: React.FC<BookCardProps> = ({
 
   const handleEditSubmit = async (formData: FormData) => {
     try {
-      await updateBook(id, formData);
+      await updateBookMutation({ id, data: formData });
       toast.success("Книгу оновлено успішно!");
-      queryClient.invalidateQueries({ queryKey: ["books"] });
-      // If book details are fetched individually, they should invalidate as well via query key
       setIsEditModalOpen(false);
     } catch (error) {
       toast.error("Не вдалося оновити книгу.");
@@ -99,7 +98,7 @@ const BookCard: React.FC<BookCardProps> = ({
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteBook(Number(id));
+      await deleteBookMutation(id);
       toast.success("Книга успішно видалена!");
       navigate("/");
     } catch (error) {

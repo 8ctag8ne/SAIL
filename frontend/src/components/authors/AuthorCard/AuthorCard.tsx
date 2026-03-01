@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardMedia, Typography, Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
-import { deleteAuthor } from "../../../api/AuthorApi";
+import { useUpdateAuthor, useDeleteAuthor } from "../../../hooks/useAuthors";
 import BASE_URL from "../../../config";
 import { Author, AuthorCardProps } from "../../../types";
 import PersonIcon from "@mui/icons-material/Person";
@@ -12,8 +12,6 @@ import { toast } from "react-fox-toast";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import ConfirmDialog from "../../ui/ConfirmDialog";
 import AuthorForm from "../AuthorForm/AuthorForm";
-import { useState } from "react";
-import { updateAuthor } from "../../../api/AuthorApi";
 import { useQueryClient } from "@tanstack/react-query";
 
 const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
@@ -22,6 +20,8 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { mutateAsync: updateAuthorMutation } = useUpdateAuthor();
+  const { mutateAsync: deleteAuthorMutation } = useDeleteAuthor();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -30,9 +30,8 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
 
   const handleEditSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
     try {
-      await updateAuthor(author.id, { name: data.name, info: data.info, image: data.image ?? undefined });
+      await updateAuthorMutation({ id: author.id, data: { name: data.name, info: data.info, image: data.image ?? undefined } });
       toast.success("Автора оновлено успішно!");
-      queryClient.invalidateQueries({ queryKey: ["authors"] });
       setIsEditModalOpen(false);
     } catch (error) {
       toast.error("Не вдалося оновити автора.");
@@ -46,7 +45,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteAuthor(author.id);
+      await deleteAuthorMutation(author.id);
       toast.success("Author deleted successfully!");
       navigate("/authors");
     } catch (error) {

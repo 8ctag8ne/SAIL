@@ -15,8 +15,8 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import BASE_URL from "../../../config";
 import { SimpleAuthor, SimpleTag } from "../../../types";
-import { deleteBook, downloadBookFile, updateBook } from "../../../api/BookApi";
-import { useToggleLike } from "../../../hooks/useBooks";
+import { downloadBookFile } from "../../../api/BookApi";
+import { useToggleLike, useUpdateBook, useDeleteBook } from "../../../hooks/useBooks";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import EntityModal from "../../ui/EntityModal/EntityModal";
@@ -84,6 +84,8 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   };
 
   const { mutateAsync: toggleLikeMutation } = useToggleLike();
+  const { mutateAsync: updateBookMutation } = useUpdateBook();
+  const { mutateAsync: deleteBookMutation } = useDeleteBook();
 
   const handleLikeClick = async () => {
     if (!user) {
@@ -109,10 +111,8 @@ const BookDetails: React.FC<BookDetailsProps> = ({
 
   const handleEditSubmit = async (formData: FormData) => {
     try {
-      await updateBook(Number(id), formData);
+      await updateBookMutation({ id: Number(id), data: formData });
       toast.success("Книга оновлена успішно!");
-      queryClient.invalidateQueries({ queryKey: ["book", Number(id)] });
-      queryClient.invalidateQueries({ queryKey: ["books"] });
       setIsEditModalOpen(false);
     } catch (error) {
       toast.error("Не вдалося оновити книгу.");
@@ -125,7 +125,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteBook(Number(id));
+      await deleteBookMutation(Number(id));
       toast.success("Book deleted successfully!");
       navigate("/");
     } catch (error) {

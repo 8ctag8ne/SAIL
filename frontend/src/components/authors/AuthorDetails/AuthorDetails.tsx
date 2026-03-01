@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardMedia, Typography, Box, Button, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,8 +9,7 @@ import { Author } from "../../../types";
 import PersonIcon from "@mui/icons-material/Person";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import AuthorForm from "../AuthorForm/AuthorForm";
-import { useState } from "react";
-import { updateAuthor } from "../../../api/AuthorApi";
+import { useUpdateAuthor } from "../../../hooks/useAuthors";
 import { toast } from "react-fox-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -25,6 +24,7 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
   const { user } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { mutateAsync: updateAuthorMutation } = useUpdateAuthor();
 
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
 
@@ -34,9 +34,8 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
 
   const handleEditSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
     try {
-      await updateAuthor(author.id, { name: data.name, info: data.info, image: data.image ?? undefined });
+      await updateAuthorMutation({ id: author.id, data: { name: data.name, info: data.info, image: data.image ?? undefined } });
       toast.success("Автора оновлено успішно!");
-      queryClient.invalidateQueries({ queryKey: ["authors"] });
       // If there was a specific route like ["author", author.id], invalidate that too, 
       // though typically AuthorDetails refetches entirely or we invalidate the specific query name.
       // But author details page gets it directly right now, need to check that.
