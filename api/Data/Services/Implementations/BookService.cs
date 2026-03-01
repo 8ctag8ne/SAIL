@@ -43,16 +43,12 @@ namespace MilLib.Services.Implementations
 
             if (query.TagIds != null && query.TagIds.Count != 0)
             {
-                booksQuery = booksQuery.Where(b => 
-                    query.TagIds.All(tagId =>
-                        b.Tags.Any(bt => bt.TagId == tagId)
-                    ));
-                // booksQuery = booksQuery.Where(b => b.Tags.Any(t => query.TagIds.Contains(t.TagId)));
+                booksQuery = booksQuery.Where(b => b.Tags.Any(t => query.TagIds.Contains(t.TagId)));
             }
 
-            if (query.AuthorId != null)
+            if (query.AuthorIds != null && query.AuthorIds.Count != 0)
             {
-                booksQuery = booksQuery.Where(b => b.Authors.Any(ab => ab.AuthorId == query.AuthorId));
+                booksQuery = booksQuery.Where(b => b.Authors.Any(ab => query.AuthorIds.Contains(ab.AuthorId)));
             }
 
             // Сортування

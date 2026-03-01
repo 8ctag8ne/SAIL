@@ -9,7 +9,7 @@ namespace MilLib.Helpers
     {
         //filtering
         public string? Title { get; set; } = null;
-        public int? AuthorId { get; set; } = null;
+        public List<int> AuthorIds { get; set; } = new List<int>();
         public List<int> TagIds { get; set; } = new List<int>();
 
         //sorting
