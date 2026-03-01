@@ -3,7 +3,15 @@ import instance from "./axios";
 
 // Пошук та пагінація книг
 export const getBooks = async (query: Record<string, any> = {}): Promise<PaginatedBooks> => {
-    const queryString = new URLSearchParams(query).toString();
+    const params = new URLSearchParams();
+    for (const key in query) {
+        if (Array.isArray(query[key])) {
+            query[key].forEach((val: any) => params.append(key, val.toString()));
+        } else if (query[key] !== undefined && query[key] !== null) {
+            params.append(key, query[key].toString());
+        }
+    }
+    const queryString = params.toString();
     const res = await instance.get<PaginatedBooks>(`/Book?${queryString}`);
     return res.data;
 };

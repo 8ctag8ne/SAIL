@@ -6,7 +6,7 @@ import { SimpleAuthor, SimpleTag } from "../../../types";
 import SingleAuthorSelect from "../../authors/SingleAuthorSelect/SingleAuthorSelect";
 import BASE_URL from "../../../config";
 import { renderPdfFirstPage, analyzeBookPdf } from "../../../api/FileApi";
-import TagNameMultiInput from "../../tags/TagNameMultiInput/TagNameMultiInput";
+import SimpleChipInput from "../../ui/SimpleChipInput";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { addAuthor } from "../../../api/AuthorApi";
@@ -419,7 +419,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               selectedTags={form.tags || []}
               onChange={(tags) => setForm((prev) => ({ ...prev, tags }))}
             />
-            <TagNameMultiInput
+            <SimpleChipInput
               tagNames={suggestedTagNames ?? []}
               onChange={setSuggestedTagNames}
               label="Пропоновані теги"

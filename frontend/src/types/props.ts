@@ -22,10 +22,7 @@ export type SingleAuthorSelectProps = {
     onChange: (authorId: number | null) => void;
 };
 
-export type TagNameMultiInputProps = {
-    tags: string[];
-    onChange: (tags: string[]) => void;
-};
+
 
 export type SearchBarProps = {
     onSearch: (query: string) => void;

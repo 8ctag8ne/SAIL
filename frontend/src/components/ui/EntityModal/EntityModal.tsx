@@ -12,7 +12,7 @@ const EntityModal: React.FC<EntityModalProps> = ({ open, onClose, children }) =>
         <Dialog
             open={open}
             onClose={onClose}
-            maxWidth="lg"
+            maxWidth="xl"
             fullWidth
             PaperProps={{
                 sx: {
@@ -24,7 +24,7 @@ const EntityModal: React.FC<EntityModalProps> = ({ open, onClose, children }) =>
             }}
             sx={{
                 "& .MuiBackdrop-root": {
-                    backgroundColor: "rgba(255, 255, 255, 0.8)", // Напівпрозорий білий фон
+                    backgroundColor: "rgba(255, 255, 255, 0.7)", // Напівпрозорий білий фон
                     backdropFilter: "blur(4px)", // Легке розмиття для приглушення неактивної сторінки
                 },
             }}
@@ -32,7 +32,7 @@ const EntityModal: React.FC<EntityModalProps> = ({ open, onClose, children }) =>
         >
             <DialogContent
                 sx={{
-                    p: 0,
+                    padding: 0,
                     backgroundColor: "transparent",
                     overflowY: "auto",
                     overflowX: "hidden"
