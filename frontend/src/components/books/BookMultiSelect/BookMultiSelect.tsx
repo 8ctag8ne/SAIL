@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Box, Chip, TextField, CircularProgress, Typography } from "@mui/material";
+import { Box, Chip, TextField, Typography } from "@mui/material";
 import { SimpleBook } from "../../../types";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { getBooks } from "../../../api/BookApi";
 
 type BookMultiSelectProps = {
@@ -19,7 +20,7 @@ const BookMultiSelect: React.FC<BookMultiSelectProps> = ({ selectedBooks, onChan
       // Якщо getBooks повертає пагінований результат:
       setBooks(data.items.map((b: any) => ({ id: b.id, title: b.title })));
       // Якщо повертає масив:
-    //   setBooks(data.map((b: any) => ({ id: b.id, title: b.title })));
+      //   setBooks(data.map((b: any) => ({ id: b.id, title: b.title })));
       setLoading(false);
     });
   }, [search]);
@@ -48,7 +49,7 @@ const BookMultiSelect: React.FC<BookMultiSelectProps> = ({ selectedBooks, onChan
         size="small"
       />
       {loading ? (
-        <CircularProgress size={24} sx={{ mt: 2 }} />
+        <LoadingIndicator minHeight={24} />
       ) : (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
           {filteredBooks.length === 0 && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia, CircularProgress } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
 import { SimpleBook } from "../../../types";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import BookSearchMultiSelect from "../../search/BookSearchMultiSelect/BookSearchMultiSelect";
 import BASE_URL from "../../../config";
 
@@ -152,7 +153,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
               disabled={isSubmitting}
               sx={{ marginTop: 2, height: 48 }}
             >
-              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (initialData ? "Оновити тег" : "Додати тег")}
+              {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити тег" : "Додати тег")}
             </Button>
           </form>
         </Box>

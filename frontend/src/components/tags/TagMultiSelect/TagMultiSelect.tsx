@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Box, Chip, CircularProgress, Typography, Button } from "@mui/material";
+import { TextField, Box, Chip, Typography, Button } from "@mui/material";
 import { SimpleTag } from "../../../types";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { useTags } from "../../../hooks/useTags";
 
 type TagMultiSelectProps = {
@@ -48,7 +49,7 @@ const TagMultiSelect: React.FC<TagMultiSelectProps> = ({ selectedTags = [], onCh
         size="small"
       />
       {isLoading ? (
-        <CircularProgress size={24} sx={{ mt: 2 }} />
+        <LoadingIndicator minHeight={24} />
       ) : (
         <Box
           sx={{

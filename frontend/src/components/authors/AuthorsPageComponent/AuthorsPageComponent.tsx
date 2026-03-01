@@ -1,7 +1,8 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { Box, Typography, Pagination, CircularProgress } from "@mui/material";
+import { Box, Typography, Pagination } from "@mui/material";
 import AuthorCard from "../AuthorCard/AuthorCard";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { useAuthors } from "../../../hooks/useAuthors";
 
 const AuthorsPageComponent: React.FC = () => {
@@ -17,7 +18,7 @@ const AuthorsPageComponent: React.FC = () => {
     return (
         <Box sx={{ padding: 2 }}>
             {isLoading ? (
-                <CircularProgress />
+                <LoadingIndicator />
             ) : isError || !data || data.items.length === 0 ? (
                 <Typography>Не знайдено жодного автора.</Typography>
             ) : (

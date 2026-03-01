@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Box, MenuItem, CircularProgress, Button, Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete } from "@mui/material";
+import { TextField, Box, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete } from "@mui/material";
 import { SimpleAuthor } from "../../../types";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { getAuthors, addAuthor } from "../../../api/AuthorApi";
 
 type SingleAuthorSelectProps = {
@@ -30,15 +31,15 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
   const setSearchValue = onSearchChange || setInternalSearch;
 
   useEffect(() => {
-  setLoading(true);
-  // Додаємо параметри для отримання всіх авторів (без пагінації)
-  getAuthors({ PageSize: 1000, Title: search })
-    .then((data) => {
-      setAuthors(data.items.map((a) => ({ id: a.id, name: a.name || "" })));
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
-}, [search]);
+    setLoading(true);
+    // Додаємо параметри для отримання всіх авторів (без пагінації)
+    getAuthors({ PageSize: 1000, Title: search })
+      .then((data) => {
+        setAuthors(data.items.map((a) => ({ id: a.id, name: a.name || "" })));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [search]);
 
   // Додаємо selectedAuthor у список, якщо його там немає
   useEffect(() => {
@@ -88,7 +89,7 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
               ...params.InputProps,
               endAdornment: (
                 <>
-                  {loading ? <CircularProgress color="inherit" size={18} /> : null}
+                  {loading ? <LoadingIndicator minHeight={18} /> : null}
                   {params.InputProps.endAdornment}
                 </>
               ),

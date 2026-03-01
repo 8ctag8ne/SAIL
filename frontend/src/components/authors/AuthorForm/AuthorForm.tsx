@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia, CircularProgress } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import BASE_URL from "../../../config";
 
 type AuthorFormProps = {
@@ -138,7 +139,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
               disabled={isSubmitting}
               sx={{ marginTop: 2, height: 48 }}
             >
-              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (initialData ? "Оновити автора" : "Додати автора")}
+              {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити автора" : "Додати автора")}
             </Button>
           </form>
         </Box>

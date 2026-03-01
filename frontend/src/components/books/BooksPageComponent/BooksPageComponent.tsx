@@ -1,7 +1,8 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { Box, Typography, Pagination, CircularProgress } from "@mui/material";
+import { Box, Typography, Pagination } from "@mui/material";
 import BookCard from "../BookCard/BookCard";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { useBooks } from "../../../hooks/useBooks";
 
 type BooksPageComponentProps = {
@@ -17,7 +18,7 @@ const BooksPageComponent: React.FC<BooksPageComponentProps> = ({ queryParams = {
   return (
     <Box sx={{ padding: 2 }}>
       {isLoading ? (
-        <CircularProgress />
+        <LoadingIndicator />
       ) : isError || !data || data.items.length === 0 ? (
         <Typography>Нічого не знайдено.</Typography>
       ) : (

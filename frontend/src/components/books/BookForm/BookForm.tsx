@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia, CircularProgress, IconButton, Stack } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, Stack } from "@mui/material";
 import TagMultiSelect from "../../tags/TagMultiSelect/TagMultiSelect";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { SimpleAuthor, SimpleTag } from "../../../types";
 import SingleAuthorSelect from "../../authors/SingleAuthorSelect/SingleAuthorSelect";
 import BASE_URL from "../../../config";
@@ -341,7 +342,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               onClick={handleAnalyzeBook}
               disabled={analyzing}
             >
-              {analyzing ? <CircularProgress size={20} /> : "Аналізувати книгу"}
+              {analyzing ? <LoadingIndicator minHeight={20} /> : "Аналізувати книгу"}
             </Button>
           )}
           {form.file && form.file.type === "application/pdf" && (
@@ -352,7 +353,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               onClick={handleGenerateCover}
               disabled={generatingCover}
             >
-              {generatingCover ? <CircularProgress size={20} /> : "Звичайна обкладинка"}
+              {generatingCover ? <LoadingIndicator minHeight={20} /> : "Звичайна обкладинка"}
             </Button>
           )}
         </Box>
@@ -431,7 +432,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               disabled={isSubmitting}
               sx={{ marginTop: 2, height: 48 }}
             >
-              {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (initialData ? "Оновити книгу" : "Додати книгу")}
+              {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити книгу" : "Додати книгу")}
             </Button>
           </form>
         </Box>

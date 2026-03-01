@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Box, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
 import SearchBar from "../components/search/SearchBar/SearchBar";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
 import CheatSheetView from "../components/ui/CheatSheetView/CheatSheetView";
 import { getCheatSheet } from "../api/FileApi";
 import { CheatSheet } from "../types";
@@ -45,7 +46,7 @@ const CheatSheetPage: React.FC = () => {
           value={query}
           icon={<AutoAwesomeIcon />}
         />
-      {!loading && cheatSheet && (
+        {!loading && cheatSheet && (
           <button
             onClick={() => generatePDF(cheatSheet)}
             style={{
@@ -64,7 +65,7 @@ const CheatSheetPage: React.FC = () => {
           </button>
         )}
       </Box>
-      {loading && <CircularProgress sx={{ mt: 4 }} />}
+      {loading && <LoadingIndicator />}
       {!loading && cheatSheet && (
         <CheatSheetView ref={cheatSheetRef} cheatSheet={cheatSheet} />
       )}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Checkbox, Typography, Box, Paper, CircularProgress } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Checkbox, Typography, Box, Paper } from "@mui/material";
 import { getBookListsForUser, addBookToLists } from "../../../api/BookListApi";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { BookList } from "../../../types";
 import { getBookListIdsForBook } from "../../../api/BookApi";
 import CreateBookListButton from "./CreateBookListButton";
@@ -100,7 +101,7 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
           disabled={selected.length === 0 || isSubmitting}
           variant="contained"
         >
-          {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Додати до списку"}
+          {isSubmitting ? <LoadingIndicator minHeight={24} /> : "Додати до списку"}
         </Button>
       </DialogActions>
     </Dialog>

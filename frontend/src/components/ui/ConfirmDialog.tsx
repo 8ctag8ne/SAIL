@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Dialog, DialogTitle, DialogActions, Button, CircularProgress } from "@mui/material";
+import { Dialog, DialogTitle, DialogActions, Button } from "@mui/material";
+import LoadingIndicator from "./LoadingIndicator";
 
 interface ConfirmDialogProps {
     open: boolean;
@@ -26,7 +27,7 @@ const ConfirmDialog = ({ open, title, onConfirm, onCancel }: ConfirmDialogProps)
             <DialogActions>
                 <Button onClick={onCancel} color="secondary" disabled={isSubmitting}>Скасувати</Button>
                 <Button onClick={handleConfirm} color="error" disabled={isSubmitting}>
-                    {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Підтвердити"}
+                    {isSubmitting ? <LoadingIndicator minHeight={24} /> : "Підтвердити"}
                 </Button>
             </DialogActions>
         </Dialog>

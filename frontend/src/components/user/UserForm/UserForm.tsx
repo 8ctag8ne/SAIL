@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, Button, Typography, Paper, FormControl, InputLabel, Select, MenuItem, CircularProgress } from "@mui/material";
+import { Box, TextField, Button, Typography, Paper, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useAuth } from "../../../contexts/AuthContext";
+import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 
 const ROLES = ["User", "Librarian", "Admin"];
 
@@ -96,7 +97,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit }) => {
                         disabled={isSubmitting}
                         sx={{ marginTop: 2, height: 48 }}
                     >
-                        {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Зберегти"}
+                        {isSubmitting ? <LoadingIndicator minHeight={24} /> : "Зберегти"}
                     </Button>
                 </form>
             </Paper>
