@@ -1,8 +1,8 @@
 import React from "react";
 import { Typography, Box } from "@mui/material";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import TagsPageComponent from "../Components/TagsPageComponent/TagsPageComponent";
-import SearchBar from "../Components/SearchBar/SearchBar";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import TagsPageComponent from "../components/tags/TagsPageComponent/TagsPageComponent";
+import SearchBar from "../components/search/SearchBar/SearchBar";
 import { useSearchParams } from "react-router-dom";
 
 const TagListPage: React.FC = () => {

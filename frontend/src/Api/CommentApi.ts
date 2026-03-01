@@ -1,5 +1,5 @@
+import { Comment, CommentCreate, CommentUpdate } from "../types";
 import instance from "./axios";
-import { Comment } from "../types";
 
 // Отримати всі коментарі (з реплаями)
 export const getComments = async (): Promise<Comment[]> => {
@@ -13,21 +13,9 @@ export const getCommentById = async (id: number): Promise<Comment> => {
   return res.data;
 };
 
-// Створити новий коментар
-export type CommentCreate = {
-  bookId: number;
-  content: string;
-  replyToId?: number | null;
-};
-
 export const addComment = async (comment: CommentCreate): Promise<Comment> => {
   const res = await instance.post<Comment>("/Comment", comment);
   return res.data;
-};
-
-// Оновити коментар
-export type CommentUpdate = {
-  content: string;
 };
 
 export const updateComment = async (id: number, comment: CommentUpdate): Promise<Comment> => {

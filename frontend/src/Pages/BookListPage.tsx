@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getBookListById, removeBookFromList, updateBookList, deleteBookList } from "../Api/BookListApi";
+import { getBookListById, removeBookFromList, updateBookList, deleteBookList } from "../api/BookListApi";
 import { BookList } from "../types";
-import BookCard from "../Components/BookCard/BookCard";
+import BookCard from "../components/books/BookCard/BookCard";
 import { Box, Typography, Card, CardContent, IconButton, TextField, Switch, FormControlLabel } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
@@ -10,7 +10,9 @@ import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAuth } from "../Contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
 
 const BookListPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +28,8 @@ const BookListPage: React.FC = () => {
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isDeleteListConfirmOpen, setIsDeleteListConfirmOpen] = useState(false);
+  const [removeBookConfirmId, setRemoveBookConfirmId] = useState<number | null>(null);
 
   const fetchList = async () => {
     if (id) {
@@ -42,10 +46,18 @@ const BookListPage: React.FC = () => {
     // eslint-disable-next-line
   }, [id]);
 
-  const handleRemoveBook = async (bookId: number) => {
-    if (!bookList) return;
-    await removeBookFromList(bookId, bookList.id);
-    fetchList();
+  const handleRemoveBookClick = (bookId: number) => {
+    setRemoveBookConfirmId(bookId);
+  };
+
+  const handleConfirmRemoveBook = async () => {
+    if (!bookList || removeBookConfirmId === null) return;
+    try {
+      await removeBookFromList(removeBookConfirmId, bookList.id);
+      fetchList();
+    } finally {
+      setRemoveBookConfirmId(null);
+    }
   };
 
   const handleSave = async () => {
@@ -62,13 +74,22 @@ const BookListPage: React.FC = () => {
     setBookList(updated);
   };
 
-  const handleDeleteList = async () => {
-    if (!bookList) return;
-    await deleteBookList(bookList.id);
-    navigate("/users/" + user?.id); // або на головну, або на профіль користувача
+  const handleDeleteListClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleteListConfirmOpen(true);
   };
 
-  if (!bookList) return <Typography>Завантаження...</Typography>;
+  const handleConfirmDeleteList = async () => {
+    if (!bookList) return;
+    try {
+      await deleteBookList(bookList.id);
+      navigate("/users/" + user?.id);
+    } finally {
+      setIsDeleteListConfirmOpen(false);
+    }
+  };
+
+  if (!bookList) return <LoadingIndicator />;
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
@@ -104,10 +125,7 @@ const BookListPage: React.FC = () => {
                     <IconButton
                       size="small"
                       color="error"
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleDeleteList();
-                      }}
+                      onClick={handleDeleteListClick}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -190,7 +208,7 @@ const BookListPage: React.FC = () => {
                 <IconButton
                   sx={{ position: "absolute", top: 8, right: 8 }}
                   color="error"
-                  onClick={() => handleRemoveBook(book.id)}
+                  onClick={() => handleRemoveBookClick(book.id)}
                 >
                   <RemoveCircleOutlineIcon />
                 </IconButton>
@@ -199,6 +217,20 @@ const BookListPage: React.FC = () => {
           ))
         )}
       </Box>
+
+      <ConfirmDialog
+        open={isDeleteListConfirmOpen}
+        title="Ви впевнені, що хочете видалити цей список?"
+        onConfirm={handleConfirmDeleteList}
+        onCancel={() => setIsDeleteListConfirmOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={removeBookConfirmId !== null}
+        title="Ви впевнені, що хочете видалити цю книгу зі списку?"
+        onConfirm={handleConfirmRemoveBook}
+        onCancel={() => setRemoveBookConfirmId(null)}
+      />
     </Box>
   );
 };

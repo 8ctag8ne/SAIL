@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import SearchBar from "../Components/SearchBar/SearchBar";
-import BooksPageComponent from "../Components/BooksPageComponent/BooksPageComponent";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import AdvancedSearch from "../Components/AdvancedSearch/AdvancedSearch";
-import { Box, IconButton } from "@mui/material";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SearchBar from "../components/search/SearchBar/SearchBar";
+import BooksPageComponent from "../components/books/BooksPageComponent/BooksPageComponent";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import AdvancedSearch from "../components/search/AdvancedSearch/AdvancedSearch";
+import { Box } from "@mui/material";
 
 
 const SEARCH_WIDTH = 700;
@@ -15,65 +13,52 @@ const BookSearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const searchQuery = searchParams.get("query") || "";
-  const [advanced, setAdvanced] = useState<{ AuthorId?: number; TagIds?: number[] }>({});
+  const [advanced, setAdvanced] = useState<{ AuthorIds?: number[]; TagIds?: number[] }>({});
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const handleSearch = (query: string) => {
-    setSearchParams({ query, page: "1" });
-    setAdvanced({});
-    setShowAdvanced(false);
-  };
-
-  const handleAdvancedSearch = (params: { AuthorId?: number; TagIds?: number[] }) => {
-    setAdvanced(params);
+  const applyCombinedSearch = (query: string, filters: { AuthorIds?: number[]; TagIds?: number[] }) => {
     setSearchParams({
-      query: searchQuery,
-      ...(params.AuthorId ? { author: params.AuthorId.toString() } : {}),
-      ...(params.TagIds && params.TagIds.length > 0 ? { tags: params.TagIds.join(",") } : {}),
+      query,
+      ...(filters.AuthorIds && filters.AuthorIds.length > 0 ? { authors: filters.AuthorIds.join(",") } : {}),
+      ...(filters.TagIds && filters.TagIds.length > 0 ? { tags: filters.TagIds.join(",") } : {}),
       page: "1",
     });
   };
 
+  const handleSearch = (query: string) => {
+    applyCombinedSearch(query, advanced);
+  };
+
+  const handleAdvancedSearch = (params: { AuthorIds?: number[]; TagIds?: number[] }) => {
+    setAdvanced(params);
+    applyCombinedSearch(searchQuery, params);
+  };
+
   const queryParams: any = {
     Title: searchQuery,
-    ...(advanced.AuthorId ? { AuthorId: advanced.AuthorId } : {}),
+    ...(advanced.AuthorIds && advanced.AuthorIds.length > 0 ? { AuthorIds: advanced.AuthorIds } : {}),
     ...(advanced.TagIds && advanced.TagIds.length > 0 ? { TagIds: advanced.TagIds } : {}),
   };
 
   return (
     <PageContainer>
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", width: SEARCH_WIDTH }}>
-          <Box sx={{ flex: 1 }}>
-            <SearchBar
-              onSearch={handleSearch}
-              placeholder="Пошук книг..."
-              value={searchQuery}
-            />
-          </Box>
-          <IconButton
-            aria-label="Розширений пошук"
-            onClick={() => setShowAdvanced((v) => !v)}
-            color={showAdvanced ? "primary" : "default"}
-            size="large"
-            sx={{ ml: 1 }}
-          >
-            <FilterAltIcon />
-          </IconButton>
-          <IconButton
-            aria-label="CheatSheet"
-            onClick={() => navigate("/cheatsheet")}
-            color="secondary"
-            size="large"
-            // sx={{ ml: 1 }}
-          >
-            <AutoAwesomeIcon />
-          </IconButton>
+        <Box sx={{
+          display: "flex",
+          width: "100%",
+          maxWidth: SEARCH_WIDTH,
+        }}>
+          <SearchBar
+            onSearch={handleSearch}
+            placeholder="Пошук книг..."
+            value={searchQuery}
+            onFilterToggle={() => setShowAdvanced((v) => !v)}
+            isFilterActive={showAdvanced}
+          />
         </Box>
         {showAdvanced && (
           <AdvancedSearch
             onSearch={handleAdvancedSearch}
-            width={SEARCH_WIDTH}
           />
         )}
       </Box>

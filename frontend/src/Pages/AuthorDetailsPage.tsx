@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getAuthorById, deleteAuthor } from "../Api/AuthorApi";
+import { getAuthorById } from "../api/AuthorApi";
 import { Author } from "../types";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import BooksPageComponent from "../Components/BooksPageComponent/BooksPageComponent";
-import AuthorDetails from "../Components/AuthorDetails/AuthorDetails";
+import { useDeleteAuthor } from "../hooks/useAuthors";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import BooksPageComponent from "../components/books/BooksPageComponent/BooksPageComponent";
+import AuthorDetails from "../components/authors/AuthorDetails/AuthorDetails";
 import { Typography } from "@mui/material";
 import { toast } from "react-fox-toast";
-import LoadingIndicator from "../Components/LoadingIndicator";
-import ConfirmDialog from "../Components/ConfirmDialog";
+import LoadingIndicator from "../components/ui/LoadingIndicator";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 
 const AuthorDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,7 @@ const AuthorDetailsPage: React.FC = () => {
   const [author, setAuthor] = useState<Author | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const { mutateAsync: deleteAuthorMutation } = useDeleteAuthor();
 
   useEffect(() => {
     const fetchAuthor = async () => {
@@ -37,7 +39,7 @@ const AuthorDetailsPage: React.FC = () => {
   const handleDelete = async () => {
     try {
       if (id) {
-        await deleteAuthor(Number(id));
+        await deleteAuthorMutation(Number(id));
         toast.success("Автор видалений успішно!");
         navigate("/authors");
       }

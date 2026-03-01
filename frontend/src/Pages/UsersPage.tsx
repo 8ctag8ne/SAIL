@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { getAllUsers } from "../Api/Account";
+import { getAllUsers } from "../api/Account";
 import { User } from "../types";
-import PageContainer from "../Components/PageContainer/PageContainer";
-import UserCard from "../Components/UserCard/UserCard";
+import PageContainer from "../components/layout/PageContainer/PageContainer";
+import UserCard from "../components/user/UserCard/UserCard";
 import { Typography, Box } from "@mui/material";
-import { useAuth } from "../Contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 
 const UsersPage: React.FC = () => {
   const { user } = useAuth();
