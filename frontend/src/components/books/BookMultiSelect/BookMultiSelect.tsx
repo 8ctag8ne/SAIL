@@ -19,8 +19,6 @@ const BookMultiSelect: React.FC<BookMultiSelectProps> = ({ selectedBooks, onChan
     getBooks({ query: search }).then((data) => {
       // Якщо getBooks повертає пагінований результат:
       setBooks(data.items.map((b: any) => ({ id: b.id, title: b.title })));
-      // Якщо повертає масив:
-      //   setBooks(data.map((b: any) => ({ id: b.id, title: b.title })));
       setLoading(false);
     });
   }, [search]);

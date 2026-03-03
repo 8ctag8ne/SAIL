@@ -30,24 +30,20 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setForm({
-        title: initialData.title || "",
-        info: initialData.info || "",
-        image: null,
-        books: initialData.books || [],
-      });
-      if (initialData.imageUrl) {
-        setImagePreview(initialData.imageUrl);
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
       }
-    }
-  }, [initialData]);
+    };
+  }, [imagePreview]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setForm((prev) => ({ ...prev, image: file }));
     if (file) {
       setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImagePreview(initialData?.imageUrl ?? undefined);
     }
   };
 

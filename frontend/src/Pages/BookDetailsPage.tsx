@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useBook } from "../hooks/useBooks";
 import BookDetails from "../components/books/BookDetails/BookDetails";
 import CommentSection from "../components/comments/CommentSection/CommentSection";
-import BASE_URL from "../config"; // Імпорт BASE_URL
 import PageContainer from "../components/layout/PageContainer/PageContainer";
-import { BookDetailsData, Comment, SimpleTag } from "../types";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
 
 const BookDetailsPage: React.FC = () => {

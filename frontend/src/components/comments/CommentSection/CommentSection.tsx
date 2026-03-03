@@ -32,10 +32,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     const [deleteDialogId, setDeleteDialogId] = useState<number | null>(null);
     const [localComments, setLocalComments] = useState<Comment[]>(comments);
 
-    // Оновлювати локальні коментарі при зміні пропса
-    React.useEffect(() => {
-        setLocalComments(comments);
-    }, [comments]);
+
 
     const canEditOrDelete = (comment: Comment) =>
         user &&

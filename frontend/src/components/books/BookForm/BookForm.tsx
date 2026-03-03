@@ -47,36 +47,27 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setForm((prev) => ({
-        ...prev,
-        title: initialData.title || "",
-        info: initialData.info || "",
-        tags: initialData.tags || [],
-        authors: initialData.authors || [],
-      }));
-      setAuthorSearch(initialData.authors?.map(a => a.name) || [""]);
-      if (initialData.imageUrl) {
-        setImagePreview(initialData.imageUrl);
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
       }
-      if (initialData.fileUrl) {
-        setFileName(initialData.fileUrl.split("/").pop() || "");
-      }
-    }
-  }, [initialData]);
+    };
+  }, [imagePreview]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setForm((prev) => ({ ...prev, image: file }));
     if (file) {
       setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImagePreview(initialData?.imageUrl ?? undefined);
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setForm((prev) => ({ ...prev, file }));
-    setFileName(file ? file.name : "");
+    setFileName(file ? file.name : (initialData?.fileUrl ? initialData.fileUrl.split("/").pop() || "" : ""));
 
     if (file && !form.image && file.type === "application/pdf") {
       setGeneratingCover(true);

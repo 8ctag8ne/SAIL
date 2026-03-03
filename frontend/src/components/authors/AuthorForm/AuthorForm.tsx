@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
-import BASE_URL from "../../../config";
 
 type AuthorFormProps = {
   initialData?: {
@@ -26,23 +25,20 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setForm({
-        name: initialData.name || "",
-        info: initialData.info || "",
-        image: null,
-      });
-      if (initialData.image) {
-        setImagePreview(initialData.image);
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
       }
-    }
-  }, [initialData]);
+    };
+  }, [imagePreview]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setForm((prev) => ({ ...prev, image: file }));
     if (file) {
       setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImagePreview(initialData?.image ? initialData.image : undefined);
     }
   };
 

@@ -28,15 +28,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit }) => {
     const [role, setRole] = useState<string>(initialData.role || "User");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        setForm({
-            userName: initialData.userName || "",
-            email: initialData.email || "",
-            about: initialData.about || "",
-            phoneNumber: initialData.phoneNumber || "",
-        });
-        setRole(initialData.role || "User");
-    }, [initialData]);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });

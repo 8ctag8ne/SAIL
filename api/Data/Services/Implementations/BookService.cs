@@ -38,7 +38,7 @@ namespace MilLib.Services.Implementations
             // Фільтрація
             if (!string.IsNullOrEmpty(query.Title))
             {
-                booksQuery = booksQuery.Where(b => b.Title.Contains(query.Title));
+                booksQuery = booksQuery.Where(b => b.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
             }
 
             if (query.TagIds != null && query.TagIds.Count != 0)

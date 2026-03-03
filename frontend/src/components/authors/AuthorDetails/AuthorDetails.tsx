@@ -4,7 +4,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
-import BASE_URL from "../../../config";
 import { Author } from "../../../types";
 import PersonIcon from "@mui/icons-material/Person";
 import EntityModal from "../../ui/EntityModal/EntityModal";
