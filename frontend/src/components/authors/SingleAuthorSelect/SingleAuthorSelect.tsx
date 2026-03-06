@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Box, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete } from "@mui/material";
+import { TextField, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete } from "@mui/material";
 import { SimpleAuthor } from "../../../types";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { getAuthors, addAuthor } from "../../../api/AuthorApi";

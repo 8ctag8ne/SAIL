@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, Stack } from "@mui/material";
-import TagMultiSelect from "../../tags/TagMultiSelect/TagMultiSelect";
+import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import UniversalCreatableSelector from "../../ui/UniversalCreatableSelector";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { SimpleAuthor, SimpleTag } from "../../../types";
-import SingleAuthorSelect from "../../authors/SingleAuthorSelect/SingleAuthorSelect";
 import BASE_URL from "../../../config";
 import { renderPdfFirstPage, analyzeBookPdf } from "../../../api/FileApi";
-import SimpleChipInput from "../../ui/SimpleChipInput";
-import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
-import { addAuthor } from "../../../api/AuthorApi";
 import { toast } from "react-fox-toast";
+import { useTags } from "../../../hooks/useTags";
+import { useAuthors } from "../../../hooks/useAuthors";
 
 type BookFormProps = {
   initialData?: {
@@ -34,8 +31,8 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
     authors: initialData?.authors || ([] as SimpleAuthor[]), // ОНОВЛЕНО
   });
   const [analyzing, setAnalyzing] = useState(false);
-  const [authorSearch, setAuthorSearch] = useState<string[]>(form.authors.map(a => a.name) || [""]);
   const [suggestedTagNames, setSuggestedTagNames] = useState<string[]>([]);
+  const [newAuthorNames, setNewAuthorNames] = useState<string[]>([]);
 
   const [imagePreview, setImagePreview] = useState<string | undefined>(
     initialData?.imageUrl ?? undefined
@@ -46,37 +43,34 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   const [generatingCover, setGeneratingCover] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { data: tagsData, isLoading: tagsLoading } = useTags({ PageSize: 1000 });
+  const allTags = tagsData?.items.map((t) => ({ id: t.id, title: t.title || "" })) || [];
+
+  const { data: authorsData, isLoading: authorsLoading } = useAuthors({ PageSize: 1000 });
+  const allAuthors = authorsData?.items.map((a) => ({ id: a.id, name: a.name || "" })) || [];
+
   useEffect(() => {
-    if (initialData) {
-      setForm((prev) => ({
-        ...prev,
-        title: initialData.title || "",
-        info: initialData.info || "",
-        tags: initialData.tags || [],
-        authors: initialData.authors || [],
-      }));
-      setAuthorSearch(initialData.authors?.map(a => a.name) || [""]);
-      if (initialData.imageUrl) {
-        setImagePreview(initialData.imageUrl);
+    return () => {
+      if (imagePreview && imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
       }
-      if (initialData.fileUrl) {
-        setFileName(initialData.fileUrl.split("/").pop() || "");
-      }
-    }
-  }, [initialData]);
+    };
+  }, [imagePreview]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setForm((prev) => ({ ...prev, image: file }));
     if (file) {
       setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImagePreview(initialData?.imageUrl ?? undefined);
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setForm((prev) => ({ ...prev, file }));
-    setFileName(file ? file.name : "");
+    setFileName(file ? file.name : (initialData?.fileUrl ? initialData.fileUrl.split("/").pop() || "" : ""));
 
     if (file && !form.image && file.type === "application/pdf") {
       setGeneratingCover(true);
@@ -125,17 +119,25 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
           const newAuthors = result.authors.map(a => ({
             id: a.id || 0,
             name: a.name || ""
-          }));
+          })).filter(a => a.id !== 0);
 
-          setForm(prev => ({
-            ...prev,
-            authors: [...prev.authors, ...newAuthors]
-          }));
+          const newSuggestedAuthors = result.authors
+            .filter(a => a.id === 0 && a.name)
+            .map(a => a.name || "");
 
-          setAuthorSearch(prev => [
-            ...prev,
-            ...result.authors.map(a => a.name || "")
-          ]);
+          setForm(prev => {
+            const existingAuthorIds = new Set(prev.authors.map(a => a.id));
+            const distinctNewAuthors = newAuthors.filter(a => !existingAuthorIds.has(a.id));
+            return {
+              ...prev,
+              authors: [...prev.authors, ...distinctNewAuthors]
+            };
+          });
+
+          setNewAuthorNames(prev => {
+            const combined = [...prev, ...newSuggestedAuthors];
+            return Array.from(new Set(combined));
+          });
         }
 
         setSuggestedTagNames(result.suggestedTags ?? []);
@@ -149,37 +151,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
     }
   };
 
-  // Додаємо нового автора (пустий селектор)
-  const handleAddAuthor = () => {
-    setForm((prev) => ({
-      ...prev,
-      authors: [...prev.authors, { id: 0, name: "" } as SimpleAuthor],
-    }));
-    setAuthorSearch((prev) => [...prev, ""]);
-  };
-
-  // Видаляємо автора
-  const handleRemoveAuthor = (idx: number) => {
-    setForm((prev) => ({
-      ...prev,
-      authors: prev.authors.filter((_, i) => i !== idx),
-    }));
-    setAuthorSearch((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  // Оновлення автора
-  const handleAuthorChange = (idx: number, author: SimpleAuthor | null) => {
-    if (!author) return;
-    setForm((prev) => ({
-      ...prev,
-      authors: prev.authors.map((a, i) => (i === idx ? author : a)),
-    }));
-  };
-
-  // Оновлення пошуку автора
-  const handleAuthorSearchChange = (idx: number, value: string) => {
-    setAuthorSearch((prev) => prev.map((v, i) => (i === idx ? value : v)));
-  };
+  // (Handlers for Manual Author Inputs Remove)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,8 +163,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
     }
 
     // Перевірка наявності хоча б одного коректного автора
-    const validAuthors = form.authors.filter(a => a.id !== 0 && a.name?.trim());
-    if (validAuthors.length === 0) {
+    if (form.authors.length === 0 && newAuthorNames.length === 0) {
       toast.warning("Додайте хоча б одного автора");
       return;
     }
@@ -219,8 +190,13 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
       formData.append("info", form.info);
 
       // Автори
-      validAuthors.forEach(a =>
+      form.authors.forEach(a =>
         formData.append("AuthorIds", a.id.toString())
+      );
+
+      // Нові автори
+      newAuthorNames.forEach(aName =>
+        formData.append("NewAuthorNames", aName)
       );
 
       // Теги
@@ -246,7 +222,8 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
   return (
     <Box
       sx={{
-        width: "100%",
+        width: "900px",
+        maxWidth: "100%",
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
@@ -358,7 +335,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
           )}
         </Box>
         {/* Права частина: форма */}
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, width: "100%" }}>
           <Typography variant="h5" gutterBottom>
             {initialData ? "Редагувати книгу" : "Створити книгу"}
           </Typography>
@@ -379,50 +356,23 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               value={form.info}
               onChange={(e) => setForm({ ...form, info: e.target.value })}
             />
-            <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-              Автори
-            </Typography>
-            <Stack spacing={1}>
-              {form.authors.map((author, idx) => (
-                <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", }}>
-                  <Box sx={{ flex: 1 }}>
-                    <SingleAuthorSelect
-                      selectedAuthor={author}
-                      onChange={(a) => handleAuthorChange(idx, a)}
-                      searchValue={authorSearch[idx] || ""}
-                      onSearchChange={(val) => handleAuthorSearchChange(idx, val)}
-                    />
-                  </Box>
-                  <IconButton
-                    aria-label="remove author"
-                    color="error"
-                    onClick={() => handleRemoveAuthor(idx)}
-                    size="small"
-                    sx={{ mt: 1 }}
-                    disabled={form.authors.length === 1}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
-            </Stack>
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              sx={{ mt: 1, mb: 2 }}
-              onClick={handleAddAuthor}
-              disabled={form.authors.length >= 5}
-            >
-              Додати автора
-            </Button>
-            <TagMultiSelect
-              selectedTags={form.tags || []}
-              onChange={(tags) => setForm((prev) => ({ ...prev, tags }))}
+            <UniversalCreatableSelector
+              label="Автори"
+              options={allAuthors}
+              selectedExisting={form.authors || []}
+              selectedNew={newAuthorNames ?? []}
+              onExistingChange={(authors) => setForm((prev) => ({ ...prev, authors: authors as SimpleAuthor[] }))}
+              onNewChange={setNewAuthorNames}
+              isLoading={authorsLoading}
             />
-            <SimpleChipInput
-              tagNames={suggestedTagNames ?? []}
-              onChange={setSuggestedTagNames}
-              label="Пропоновані теги"
+            <UniversalCreatableSelector
+              label="Теги"
+              options={allTags}
+              selectedExisting={form.tags || []}
+              selectedNew={suggestedTagNames ?? []}
+              onExistingChange={(tags) => setForm((prev) => ({ ...prev, tags: tags as SimpleTag[] }))}
+              onNewChange={setSuggestedTagNames}
+              isLoading={tagsLoading}
             />
             <Button
               type="submit"

@@ -45,6 +45,7 @@ const BookSearchPage: React.FC = () => {
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 2 }}>
         <Box sx={{
           display: "flex",
+          flexDirection: "column",
           width: "100%",
           maxWidth: SEARCH_WIDTH,
         }}>
@@ -55,12 +56,12 @@ const BookSearchPage: React.FC = () => {
             onFilterToggle={() => setShowAdvanced((v) => !v)}
             isFilterActive={showAdvanced}
           />
+          {showAdvanced && (
+            <AdvancedSearch
+              onSearch={handleAdvancedSearch}
+            />
+          )}
         </Box>
-        {showAdvanced && (
-          <AdvancedSearch
-            onSearch={handleAdvancedSearch}
-          />
-        )}
       </Box>
       <BooksPageComponent queryParams={queryParams} />
     </PageContainer>

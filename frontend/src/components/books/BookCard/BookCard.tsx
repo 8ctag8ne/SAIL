@@ -13,7 +13,7 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../BookForm/BookForm";
 import { updateBook } from "../../../api/BookApi";
 import { useQueryClient } from "@tanstack/react-query";
-import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook } from "@mui/icons-material";
+import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book } from "@mui/icons-material";
 
 type BookCardProps = {
   id: number;

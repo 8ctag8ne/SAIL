@@ -1,4 +1,4 @@
-import { BookList, SimpleBook } from "../types";
+import { BookList } from "../types";
 import { BookListCreate, BookListUpdate } from "../types/api";
 import instance from "./axios";
 
