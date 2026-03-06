@@ -36,16 +36,21 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch }) => {
         flexDirection: "column",
         gap: 3,
         width: "100%",
-        maxWidth: "600px",
-        mx: "auto",
         mt: 2,
       }}
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <Box>
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: "medium" }}>
-            Автори
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+              Автори
+            </Typography>
+            {selectedAuthors.length > 0 && (
+              <Button size="small" color="error" onClick={() => setSelectedAuthors([])} sx={{ textTransform: 'none', p: 0, minWidth: 'auto' }}>
+                Очистити
+              </Button>
+            )}
+          </Box>
           <EntityChipSelect<SimpleAuthor>
             label="Виберіть авторів"
             availableItems={availableAuthors}
@@ -56,9 +61,16 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch }) => {
         </Box>
 
         <Box>
-          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: "medium" }}>
-            Теги
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+              Теги
+            </Typography>
+            {selectedTags.length > 0 && (
+              <Button size="small" color="error" onClick={() => setSelectedTags([])} sx={{ textTransform: 'none', p: 0, minWidth: 'auto' }}>
+                Очистити
+              </Button>
+            )}
+          </Box>
           <EntityChipSelect<SimpleTag>
             label="Виберіть теги"
             availableItems={availableTags}
@@ -73,10 +85,8 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch }) => {
         type="submit"
         variant="contained"
         size="large"
-        sx={{
-          alignSelf: { xs: "stretch", sm: "flex-start" },
-          px: { sm: 4 },
-        }}
+        fullWidth
+        sx={{ mt: 2 }}
       >
         Застосувати фільтри
       </Button>
