@@ -74,7 +74,7 @@ const AuthorDetailsPage: React.FC = () => {
       <Typography variant="h5" gutterBottom>
         Книги від автора {author.name}:
       </Typography>
-      <BooksPageComponent queryParams={{ AuthorId: id }} />
+      <BooksPageComponent queryParams={{ AuthorIds: [id] }} />
     </PageContainer>
   );
 };
