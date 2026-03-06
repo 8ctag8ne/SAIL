@@ -182,19 +182,6 @@ namespace MilLib.Services.Implementations
 
         public async Task<BookDto> CreateBookAsync(BookCreateDto bookDto)
         {
-            // Валідація авторів
-            if (bookDto.AuthorIds == null || bookDto.AuthorIds.Count == 0)
-                throw new InvalidOperationException("Authors are required");
-
-            // ОПТИМІЗАЦІЯ: одним запитом перевіряємо всіх авторів
-            var existingAuthorIds = await _context.Authors
-                .Where(a => bookDto.AuthorIds.Contains(a.Id))
-                .Select(a => a.Id)
-                .ToListAsync();
-
-            var missingAuthors = bookDto.AuthorIds.Except(existingAuthorIds).ToList();
-            if (missingAuthors.Count != 0)
-                throw new InvalidOperationException($"Authors not found: {string.Join(", ", missingAuthors)}");
 
             // Валідація унікальності назви
             if (await _context.Books.AnyAsync(b => b.Title == bookDto.Title))
@@ -202,6 +189,8 @@ namespace MilLib.Services.Implementations
 
             // ОПТИМІЗАЦІЯ: обробка тегів оптимізовано
             var allTagIds = await ProcessTagsAsync(bookDto.TagIds, bookDto.NewTagTitles);
+
+            var allAuthorIds = await ProcessAuthorsAsync(bookDto.AuthorIds, bookDto.NewAuthorNames);
 
             // Завантаження файлів
             var imageUrl = await _fileService.UploadAsync(bookDto.Image, "Books/Images");
@@ -297,16 +286,23 @@ namespace MilLib.Services.Implementations
             }
 
             // ОПТИМІЗАЦІЯ: оновлення авторів
-            if (bookDto.AuthorIds != null && bookDto.AuthorIds.Count != 0)
+            if (bookDto.AuthorIds != null || bookDto.NewAuthorNames != null)
             {
+                var allAuthorIds = await ProcessAuthorsAsync(bookDto.AuthorIds, bookDto.NewAuthorNames);
+                var newAuthorIds = allAuthorIds.Distinct().ToHashSet();
+                var currentAuthorIds = book.Authors.Select(a => a.AuthorId).ToHashSet();
+
                 // Видаляємо старі зв'язки
-                book.Authors.Clear();
+                var authorsToRemove = book.Authors.Where(a => !newAuthorIds.Contains(a.AuthorId)).ToList();
+                _context.AuthorBooks.RemoveRange(authorsToRemove);
 
                 // Додаємо нові
-                foreach (var authorId in bookDto.AuthorIds)
-                {
-                    book.Authors.Add(new AuthorBook { BookId = book.Id, AuthorId = authorId });
-                }
+                var authorsToAdd = newAuthorIds
+                    .Where(authId => !currentAuthorIds.Contains(authId))
+                    .Select(authId => new AuthorBook { BookId = book.Id, AuthorId = authId })
+                    .ToList();
+
+                _context.AuthorBooks.AddRange(authorsToAdd);
             }
 
             await _context.SaveChangesAsync();
@@ -534,5 +530,47 @@ namespace MilLib.Services.Implementations
 
             return allTagIds;
         }
+
+        private async Task<List<int>> ProcessAuthorsAsync(List<int>? existingAuthorIds, List<string>? newAuthorNames)
+        {
+            var allAuthorIds = new List<int>(existingAuthorIds ?? new List<int>());
+
+            if (newAuthorNames == null || newAuthorNames.Count == 0)
+                return allAuthorIds;
+
+            var normalizedNames = newAuthorNames
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Select(n => n.Trim())
+                .Distinct()
+                .ToList();
+
+            if (normalizedNames.Count == 0)
+                return allAuthorIds;
+
+            // Шукаємо авторів, які вже існують за іменами
+            var existingAuthors = await _context.Authors
+                .Where(a => normalizedNames.Contains(a.Name))
+                .Select(a => new { a.Id, a.Name })
+                .ToListAsync();
+
+            var existingAuthorNames = existingAuthors.Select(a => a.Name).ToHashSet();
+            allAuthorIds.AddRange(existingAuthors.Select(a => a.Id));
+
+            // Створюємо нових авторів
+            var newAuthors = normalizedNames
+                .Where(name => !existingAuthorNames.Contains(name))
+                .Select(name => new Author { Name = name })
+                .ToList();
+
+            if (newAuthors.Count != 0)
+            {
+                _context.Authors.AddRange(newAuthors);
+                await _context.SaveChangesAsync();
+                allAuthorIds.AddRange(newAuthors.Select(a => a.Id));
+            }
+
+            return allAuthorIds.Distinct().ToList();
+        }
     }
+
 }

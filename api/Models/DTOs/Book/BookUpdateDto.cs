@@ -12,9 +12,9 @@ namespace MilLib.Models.DTOs.Book
         public IFormFile? File {get; set;}
         public IFormFile? Image {get; set;}
         public string? Info {get; set;}
-        // public int? LikesCount {get; set;}
         public List<int>? TagIds {get; set;}
         public List<int>? AuthorIds {get; set;}
         public List<string> NewTagTitles {get; set;} = new List<string>();
+        public List<string> NewAuthorNames { get; set; } = new List<string>();
     }
 }
