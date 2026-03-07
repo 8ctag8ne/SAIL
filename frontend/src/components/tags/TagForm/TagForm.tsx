@@ -79,6 +79,8 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
           padding: 4,
           width: "100%",
           maxWidth: 800,
+          height: "100%",
+          maxHeight: 600,
         }}
       >
         {/* Ліва частина: фото */}
