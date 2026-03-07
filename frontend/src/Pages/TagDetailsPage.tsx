@@ -140,6 +140,7 @@ const TagDetailsPage: React.FC = () => {
         </CardContent>
         <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
           <TagForm
+            key={isEditModalOpen ? "open" : "closed"}
             initialData={{
               title: tag.title ?? "",
               info: tag.info ?? undefined,

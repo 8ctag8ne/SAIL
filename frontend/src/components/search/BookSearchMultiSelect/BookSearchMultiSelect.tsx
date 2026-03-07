@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Box, TextField, Button, Checkbox, List, ListItem, ListItemText, ListItemIcon, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { getBooks } from "../../../api/BookApi";
 import { SimpleBook } from "../../../types";
+import EntityListSelector from "../../ui/EntityListSelector";
 
 type BookSearchMultiSelectProps = {
   selectedBooks: SimpleBook[];
@@ -54,57 +55,30 @@ const BookSearchMultiSelect: React.FC<BookSearchMultiSelectProps> = ({ selectedB
 
   return (
     <Box sx={{ mt: 2 }}>
-      <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <TextField
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Пошук книги для додавання"
-          size="small"
-          fullWidth
-        />
-        <Button type="submit" variant="contained">
-          Пошук
-        </Button>
-      </form>
-      <List dense sx={{ maxHeight: 200, overflow: "auto", border: "1px solid #eee", borderRadius: 1 }}>
-        {books.map((book) => (
-          <ListItem
-            key={book.id}
-            disablePadding
-            sx={{
-              cursor: "pointer",
-              background: selectedBooks.some((b) => b.id === book.id) ? "#f0f0f0" : "inherit",
-              "&:hover": { background: "#f5f5f5" }
-            }}
-            onClick={() => handleToggle(book)}
-          >
-            <ListItemIcon>
-              <Checkbox
-                edge="start"
-                checked={selectedBooks.some((b) => b.id === book.id)}
-                tabIndex={-1}
-                disableRipple
-              />
-            </ListItemIcon>
-            <ListItemText primary={book.title} />
-          </ListItem>
-        ))}
-        {books.length === 0 && !loading && (
-          <ListItem>
-            <ListItemText primary={<Typography color="text.secondary">Нічого не знайдено</Typography>} />
-          </ListItem>
-        )}
-      </List>
-      {page < totalPages && (
-        <Button
-          variant="outlined"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={loading}
-          sx={{ mt: 1, width: "100%" }}
-        >
-          More books
-        </Button>
-      )}
+      <EntityListSelector
+        items={books}
+        loading={loading}
+        searchQuery={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={handleSearchSubmit}
+        searchPlaceholder="Пошук книги для додавання"
+        keyExtractor={(item) => item.id}
+        renderItem={(item) => <Typography>{item.title}</Typography>}
+        isItemSelected={(item) => selectedBooks.some((b) => b.id === item.id)}
+        onToggleItem={handleToggle}
+        footerAction={
+          page < totalPages ? (
+            <Button
+              variant="outlined"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={loading}
+              sx={{ width: "100%" }}
+            >
+              More books
+            </Button>
+          ) : undefined
+        }
+      />
     </Box>
   );
 };

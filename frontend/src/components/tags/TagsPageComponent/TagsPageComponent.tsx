@@ -1,17 +1,12 @@
-// TagsPageComponent.tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { Box, Typography, Pagination, Select, MenuItem, FormControlLabel, Switch } from "@mui/material";
 import TagCard from "../TagCard/TagCard";
-import { getTags } from "../../../api/TagApi";
+import { useTags } from "../../../hooks/useTags";
 import { Tag } from "../../../types";
 import LoadingIndicator from "../../ui/LoadingIndicator";
 
 const TagsPageComponent: React.FC = () => {
-    const [tags, setTags] = useState<Tag[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [totalPages, setTotalPages] = useState(1);
-
     const [searchParams, setSearchParams] = useSearchParams();
     const pageNumber = parseInt(searchParams.get("page") || "1", 10);
 
@@ -24,22 +19,10 @@ const TagsPageComponent: React.FC = () => {
         IsDescenging: searchParams.get("isDescending") === "true"
     };
 
-    const fetchTags = async () => {
-        setLoading(true);
-        try {
-            const data = await getTags(defaultParams);
-            setTags(data.items);
-            setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error("Error fetching tags:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data, isLoading: loading } = useTags(defaultParams);
 
-    useEffect(() => {
-        fetchTags();
-    }, [searchParams]);
+    const tags = data?.items || [];
+    const totalPages = data?.totalPages || 1;
 
     return (
         <Box sx={{}}>

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
 import { SimpleBook } from "../../../types";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
-import BookSearchMultiSelect from "../../search/BookSearchMultiSelect/BookSearchMultiSelect";
-import BASE_URL from "../../../config";
+import EntityListSelector from "../../ui/EntityListSelector";
+import { useBooks } from "../../../hooks/useBooks";
 
 type TagFormProps = {
   initialData?: {
@@ -27,6 +27,8 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
     initialData?.imageUrl ?? undefined
   );
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: booksData, isLoading: isLoadingBooks } = useBooks({ PageSize: 1000 });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -62,6 +64,23 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
     }
   };
 
+  const handleToggleBook = (book: SimpleBook) => {
+    setForm(prev => {
+      const isSelected = prev.books.some(b => b.id === book.id);
+      return {
+        ...prev,
+        books: isSelected
+          ? prev.books.filter(b => b.id !== book.id)
+          : [...prev.books, book]
+      };
+    });
+  };
+
+  const allBooks = booksData?.items || [];
+  const filteredBooks = allBooks.filter(b =>
+    (b.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Box
       sx={{
@@ -77,8 +96,10 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
           flexDirection: { xs: "column", md: "row" },
           gap: 4,
           padding: 4,
-          width: "100%",
-          maxWidth: 800,
+          width: 800,
+          maxWidth: "100%",
+          height: "100%",
+          maxHeight: 600,
         }}
       >
         {/* Ліва частина: фото */}
@@ -115,11 +136,11 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
           </Typography>
         </Box>
         {/* Права частина: форма */}
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <Typography variant="h5" gutterBottom>
             {initialData ? "Редагувати тег" : "Додати тег"}
           </Typography>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <TextField
               label="Назва"
               fullWidth
@@ -137,10 +158,28 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
               value={form.info}
               onChange={(e) => setForm({ ...form, info: e.target.value })}
             />
-            <BookSearchMultiSelect
-              selectedBooks={form.books}
-              onChange={(books) => setForm((prev) => ({ ...prev, books }))}
-            />
+
+            <Box sx={{ mt: 2, flex: 1 }}>
+              {/* <Typography variant="subtitle2" gutterBottom>
+                Виберіть книги для тегу
+              </Typography> */}
+              <EntityListSelector
+                items={filteredBooks}
+                loading={isLoadingBooks}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Пошук книг..."
+                keyExtractor={(book) => book.id}
+                isItemSelected={(book) => form.books.some(b => b.id === book.id)}
+                onToggleItem={handleToggleBook}
+                renderItem={(book) => (
+                  <Typography variant="body1">
+                    {book.title}
+                  </Typography>
+                )}
+              />
+            </Box>
+
             <Button
               type="submit"
               variant="contained"
