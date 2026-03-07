@@ -96,8 +96,8 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
           flexDirection: { xs: "column", md: "row" },
           gap: 4,
           padding: 4,
-          width: "100%",
-          maxWidth: 800,
+          width: 800,
+          maxWidth: "100%",
           height: "100%",
           maxHeight: 600,
         }}
