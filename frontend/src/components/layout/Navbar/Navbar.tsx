@@ -164,7 +164,7 @@ const Navbar = () => {
             </EntityModal>
 
             <EntityModal open={isAddTagOpen} onClose={() => setIsAddTagOpen(false)}>
-              <TagForm onSubmit={handleAddTagSubmit} />
+              <TagForm key={isAddTagOpen ? "open" : "closed"} onSubmit={handleAddTagSubmit} />
             </EntityModal>
           </>
         )}

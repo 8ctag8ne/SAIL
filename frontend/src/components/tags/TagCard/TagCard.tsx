@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { Tag } from "../../../types";
 import BASE_URL from "../../../config";
 import { useAuth } from "../../../contexts/AuthContext";
-import { useUpdateTag, useDeleteTag } from "../../../hooks/useTags";
+import { useUpdateTag, useDeleteTag, useTag } from "../../../hooks/useTags";
+import LoadingIndicator from "../../ui/LoadingIndicator";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
 import EntityModal from "../../ui/EntityModal/EntityModal";
@@ -27,6 +28,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
   const queryClient = useQueryClient();
   const { mutateAsync: updateTagMutation } = useUpdateTag();
   const { mutateAsync: deleteTagMutation } = useDeleteTag();
+  const { data: fullTag, isLoading: isLoadingFullTag } = useTag(isEditModalOpen ? tag.id : 0);
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -125,15 +127,22 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
       </CardContent>
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
-        <TagForm
-          initialData={{
-            title: tag.title ?? "",
-            info: tag.info ?? undefined,
-            imageUrl: tag.imageUrl ?? undefined,
-            books: tag.books,
-          }}
-          onSubmit={handleEditSubmit}
-        />
+        {isLoadingFullTag ? (
+          <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
+            <LoadingIndicator />
+          </Box>
+        ) : fullTag ? (
+          <TagForm
+            key={isEditModalOpen ? "open" : "closed"}
+            initialData={{
+              title: fullTag.title ?? "",
+              info: fullTag.info ?? undefined,
+              imageUrl: fullTag.imageUrl ?? undefined,
+              books: fullTag.books,
+            }}
+            onSubmit={handleEditSubmit}
+          />
+        ) : null}
       </EntityModal>
 
       <ConfirmDialog
