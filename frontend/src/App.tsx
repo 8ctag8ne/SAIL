@@ -19,6 +19,9 @@ import { Box } from "@mui/material";
 import { ToastContainer } from "react-fox-toast";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { theme } from "./theme";
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -39,39 +42,42 @@ const UserProfileRoute = () => {
 
 function App() {
     return (
-        <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <ToastContainer position="top-center" />
-                <BrowserRouter>
-                    <Navbar />
-                    <Box
-                        component="main"
-                        sx={{
-                            pt: '80px', // Відступ висоти навбару
-                            minHeight: '100vh',
-                            px: 3, // Бокові відступи
-                            // py: 5  // Вертикальні відступи
-                        }}
-                    >
-                        <Routes>
-                            <Route path="/" element={<BookSearchPage />} />
-                            <Route path="/books" element={<BookSearchPage />} />
-                            <Route path="/login" element={<LoginPage />} />
-                            <Route path="/register" element={<RegisterPage />} />
-                            <Route path="/books/:id" element={<BookDetailsPage />} />
-                            <Route path="/authors/:id" element={<AuthorDetailsPage />} />
-                            <Route path="/authors" element={<AuthorListPage />} />
-                            <Route path="/tags" element={<TagListPage />} />
-                            <Route path="/tags/:id" element={<TagDetailsPage />} />
-                            <Route path="/users" element={<UsersPage />} />
-                            <Route path="/users/:id" element={<UserProfileRoute />} />
-                            <Route path="/booklists/:id" element={<BookListPage />} />
-                            <Route path="/cheatsheet" element={<CheatSheetPage />} />
-                        </Routes>
-                    </Box>
-                </BrowserRouter>
-            </AuthProvider>
-        </QueryClientProvider>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                    <ToastContainer position="top-center" />
+                    <BrowserRouter>
+                        <Navbar />
+                        <Box
+                            component="main"
+                            sx={{
+                                pt: '80px', // Відступ висоти навбару
+                                minHeight: '100vh',
+                                px: 3, // Бокові відступи
+                                // py: 5  // Вертикальні відступи
+                            }}
+                        >
+                            <Routes>
+                                <Route path="/" element={<BookSearchPage />} />
+                                <Route path="/books" element={<BookSearchPage />} />
+                                <Route path="/login" element={<LoginPage />} />
+                                <Route path="/register" element={<RegisterPage />} />
+                                <Route path="/books/:id" element={<BookDetailsPage />} />
+                                <Route path="/authors/:id" element={<AuthorDetailsPage />} />
+                                <Route path="/authors" element={<AuthorListPage />} />
+                                <Route path="/tags" element={<TagListPage />} />
+                                <Route path="/tags/:id" element={<TagDetailsPage />} />
+                                <Route path="/users" element={<UsersPage />} />
+                                <Route path="/users/:id" element={<UserProfileRoute />} />
+                                <Route path="/booklists/:id" element={<BookListPage />} />
+                                <Route path="/cheatsheet" element={<CheatSheetPage />} />
+                            </Routes>
+                        </Box>
+                    </BrowserRouter>
+                </AuthProvider>
+            </QueryClientProvider>
+        </ThemeProvider>
     );
 }
 
