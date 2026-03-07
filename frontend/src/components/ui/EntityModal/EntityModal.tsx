@@ -24,8 +24,7 @@ const EntityModal: React.FC<EntityModalProps> = ({ open, onClose, children }) =>
             }}
             sx={{
                 "& .MuiBackdrop-root": {
-                    backgroundColor: "rgba(255, 255, 255, 0.7)", // Напівпрозорий білий фон
-                    backdropFilter: "blur(4px)", // Легке розмиття для приглушення неактивної сторінки
+                    backgroundColor: "#000000cc", // Dark flat background without blur
                 },
             }}
             onClick={(e) => e.stopPropagation()}

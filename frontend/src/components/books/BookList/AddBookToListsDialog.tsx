@@ -94,7 +94,7 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
         <Button
           onClick={handleAdd}
           disabled={selected.length === 0 || isSubmitting}
-          variant="contained"
+          variant="outlined"
         >
           {isSubmitting ? <LoadingIndicator minHeight={24} /> : "Додати до списку"}
         </Button>

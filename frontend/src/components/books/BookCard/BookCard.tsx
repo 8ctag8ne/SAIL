@@ -116,12 +116,12 @@ const BookCard: React.FC<BookCardProps> = ({
 
   return (
     <Card
+      className="MuiCard-interactive"
       onClick={handleNavigate}
       sx={{
         display: "flex", flexDirection: "row", alignItems: "center",
         padding: 2, marginY: 2, marginX: "auto",
-        cursor: "pointer", boxShadow: 2, "&:hover": { boxShadow: 6 },
-        position: "relative", overflow: "hidden"
+        position: "relative", overflow: "hidden",
       }}
     >
       <ConfirmDialog
@@ -165,13 +165,26 @@ const BookCard: React.FC<BookCardProps> = ({
           <Typography variant="subtitle2" color="primary">
             Авторство:{" "}
             {authors.map((a, idx) => (
-              <span
-                key={a.id}
-                onClick={(e) => handleAuthorClick(e, a.id)}
-                style={{ textDecoration: "underline", cursor: "pointer" }}
-              >
-                {a.name}{idx < authors.length - 1 ? ", " : ""}
-              </span>
+              <React.Fragment key={a.id}>
+                <Box
+                  component="span"
+                  onClick={(e) => handleAuthorClick(e, a.id)}
+                  sx={{
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    color: "primary.main",
+                    transition: "all 0.1s ease-in-out",
+                    "&:hover": {
+                      backgroundColor: "primary.main",
+                      color: "#0d0f12",
+                      textDecoration: "none",
+                    }
+                  }}
+                >
+                  [ {a.name} ]
+                </Box>
+                {idx < authors.length - 1 ? ", " : ""}
+              </React.Fragment>
             ))}
           </Typography>
         )}

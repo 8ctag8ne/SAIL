@@ -34,7 +34,7 @@ export default function RegisterPage() {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "transparent",
       }}
     >
       <Paper
@@ -69,7 +69,7 @@ export default function RegisterPage() {
             margin="normal"
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: 2 }}>
+          <Button type="submit" variant="outlined" color="primary" fullWidth sx={{ marginTop: 2 }}>
             Зареєструватися
           </Button>
         </form>

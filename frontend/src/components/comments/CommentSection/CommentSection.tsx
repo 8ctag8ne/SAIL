@@ -89,7 +89,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                         maxRows={4}
                     />
                     <Button
-                        variant="contained"
+                        variant="outlined"
                         color="primary"
                         startIcon={<AddCommentIcon />}
                         onClick={handleAddComment}
@@ -134,7 +134,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                                     />
                                     <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
                                         <Button
-                                            variant="contained"
+                                            variant="outlined"
                                             color="primary"
                                             size="small"
                                             onClick={() => handleEditComment(comment.id)}

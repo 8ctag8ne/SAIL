@@ -59,7 +59,10 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
   };
 
   return (
-    <Card sx={{ my: 2, cursor: "pointer", maxWidth: 400, mx: "auto", position: "relative" }} onClick={() => navigate(`/users/${user.id}`)}>
+    <Card
+      className="MuiCard-interactive"
+      sx={{ my: 2, cursor: "pointer", maxWidth: 400, mx: "auto", position: "relative" }}
+      onClick={() => navigate(`/users/${user.id}`)}>
       <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         {getRoleIcon(user.roles)}
         <Box>

@@ -76,12 +76,36 @@ const Navbar = () => {
     }
   };
 
+  const navActionSx = {
+    borderRadius: 0,
+    color: "inherit",
+    border: "1px solid transparent",
+    transition: "all 0.2s ease-in-out",
+    "&:hover": {
+      borderColor: "primary.main",
+      backgroundColor: "primary.main",
+      color: "#0d0f12",
+      "& .MuiSvgIcon-root": {
+        color: "#0d0f12",
+      },
+    },
+  };
+
+  const menuItemSx = {
+    "&:hover": {
+      backgroundColor: "primary.main",
+      color: "#0d0f12",
+    },
+  };
+
   return (
     <AppBar
-      position="fixed" // Змінюємо з static на fixed
+      position="fixed"
       sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1, // Забезпечуємо правильний z-index
-        boxShadow: 1 // Додаємо тінь для кращого візуального відокремлення
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        boxShadow: "none",
+        borderBottom: "1px solid #2d2f33",
+        backgroundColor: "background.default",
       }}
     >
       <Toolbar>
@@ -89,37 +113,35 @@ const Navbar = () => {
           variant="h6"
           component={Link}
           to="/"
-          sx={{ flexGrow: 1, textDecoration: "none", color: "inherit" }}
+          sx={{ flexGrow: 1, textDecoration: "none", color: "inherit", "&:hover": { color: "primary.main" } }}
         >
           Smart AI - integrated Library
         </Typography>
-        {/* Лівий блок: Authors, Tags */}
         <Box sx={{ display: "flex", gap: 1, mr: 2 }}>
-          <Button color="inherit" component={Link} to="/books">
+          <Button color="inherit" component={Link} to="/books" sx={navActionSx}>
             Книги
           </Button>
-          <Button color="inherit" component={Link} to="/authors">
+          <Button color="inherit" component={Link} to="/authors" sx={navActionSx}>
             Автори
           </Button>
-          <Button color="inherit" component={Link} to="/tags">
+          <Button color="inherit" component={Link} to="/tags" sx={navActionSx}>
             Теги
           </Button>
-          <Button color="inherit" component={Link} to="/cheatsheet" startIcon={<AutoAwesomeIcon />}>
+          <Button color="inherit" component={Link} to="/cheatsheet" startIcon={<AutoAwesomeIcon />} sx={navActionSx}>
             Чит - лист
           </Button>
           {isAdmin && (
-            <Button color="inherit" component={Link} to="/users" startIcon={<PeopleIcon />}>
+            <Button color="inherit" component={Link} to="/users" startIcon={<PeopleIcon />} sx={navActionSx}>
               Користувачі
             </Button>
           )}
         </Box>
-        {/* Add menu (лише для Admin/Librarian) */}
         {isAdminOrLibrarian && (
           <>
             <IconButton
               color="inherit"
               onClick={handleAddMenuOpen}
-              sx={{ ml: 1 }}
+              sx={{ ml: 1, ...navActionSx }}
               aria-label="add"
             >
               <AddIcon />
@@ -128,8 +150,15 @@ const Navbar = () => {
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={handleAddMenuClose}
+              sx={{
+                "& .MuiPaper-root": {
+                  borderRadius: 0,
+                  border: "1px solid #2d2f33",
+                }
+              }}
             >
               <MenuItem
+                sx={menuItemSx}
                 onClick={() => {
                   handleAddMenuClose();
                   setIsAddBookOpen(true);
@@ -138,6 +167,7 @@ const Navbar = () => {
                 Книга
               </MenuItem>
               <MenuItem
+                sx={menuItemSx}
                 onClick={() => {
                   handleAddMenuClose();
                   setIsAddTagOpen(true);
@@ -146,6 +176,7 @@ const Navbar = () => {
                 Тег
               </MenuItem>
               <MenuItem
+                sx={menuItemSx}
                 onClick={() => {
                   handleAddMenuClose();
                   setIsAddAuthorOpen(true);
@@ -168,27 +199,26 @@ const Navbar = () => {
             </EntityModal>
           </>
         )}
-        {/* Правий блок: Profile/Login/Register/Logout */}
         {user ? (
           <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
             <IconButton
               color="inherit"
               onClick={() => navigate(`/users/${user.id}`)}
-              sx={{ mr: 1 }}
+              sx={{ mr: 1, ...navActionSx }}
               aria-label="profile"
             >
               <AccountCircleIcon />
             </IconButton>
-            <Button color="inherit" onClick={handleLogout}>
+            <Button color="inherit" onClick={handleLogout} sx={navActionSx}>
               Вийти
             </Button>
           </Box>
         ) : (
           <Box sx={{ display: "flex", gap: 1, ml: 2 }}>
-            <Button color="inherit" onClick={() => navigate("/login")}>
+            <Button color="inherit" onClick={() => navigate("/login")} sx={navActionSx}>
               Логін
             </Button>
-            <Button color="inherit" onClick={() => navigate("/register")}>
+            <Button color="inherit" onClick={() => navigate("/register")} sx={navActionSx}>
               Реєстрація
             </Button>
           </Box>

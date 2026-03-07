@@ -59,16 +59,14 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
 
   return (
     <Card
+      className="MuiCard-interactive"
       onClick={() => navigate(`/authors/${author.id}`)}
       sx={{
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
         padding: 2,
-        marginY: 1,
-        cursor: "pointer",
-        transition: "box-shadow 0.3s",
-        "&:hover": { boxShadow: 6 },
+        marginY: 2,
       }}
     >
       {author.imageUrl ? (

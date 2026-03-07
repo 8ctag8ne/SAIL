@@ -57,7 +57,10 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
   };
 
   return (
-    <Card sx={{ my: 2, position: "relative", cursor: "pointer" }} onClick={() => navigate(`/booklists/${list.id}`)}>
+    <Card
+      sx={{ my: 2, position: "relative", cursor: "pointer" }}
+      className="MuiCard-interactive"
+      onClick={() => navigate(`/booklists/${list.id}`)}>
       <CardContent sx={{ position: "relative", pb: 4 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {editing ? (

@@ -67,16 +67,14 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
 
   return (
     <Card
+      className="MuiCard-interactive"
       onClick={() => navigate(`/tags/${tag.id}`)}
       sx={{
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
         padding: 2,
-        marginY: 1,
-        cursor: "pointer",
-        transition: "box-shadow 0.3s",
-        "&:hover": { boxShadow: 6 },
+        marginY: 2,
       }}
     >
       {tag.imageUrl ? (

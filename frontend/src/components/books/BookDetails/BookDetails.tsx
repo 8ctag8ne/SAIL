@@ -168,7 +168,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         {fileUrl && (
           <Box sx={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 1 }}>
             <Button
-              variant="contained"
+              variant="outlined"
               color="primary"
               startIcon={<BookIcon />}
               href={fileUrl}
@@ -178,7 +178,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               Читати
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
               color="secondary"
               startIcon={<DownloadIcon />}
               sx={{ width: "100%" }}
@@ -212,14 +212,30 @@ const BookDetails: React.FC<BookDetailsProps> = ({
           <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>
             Авторство:{" "}
             {authors.map((a, idx) => (
-              <span
-                key={a.id}
-                style={{ textDecoration: "underline", cursor: "pointer" }}
-                onClick={() => handleAuthorClick(a.id)}
-              >
-                {a.name}
+              <React.Fragment key={a.id}>
+                <Box
+                  component="span"
+                  key={a.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAuthorClick(a.id);
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    color: "primary.main",
+                    transition: "all 0.1s ease-in-out",
+                    "&:hover": {
+                      backgroundColor: "primary.main",
+                      color: "#0d0f12",
+                      textDecoration: "none",
+                    }
+                  }}
+                >
+                  [ {a.name} ]
+                </Box>
                 {idx < authors.length - 1 ? ", " : ""}
-              </span>
+              </React.Fragment>
             ))}
           </Typography>
         )}
