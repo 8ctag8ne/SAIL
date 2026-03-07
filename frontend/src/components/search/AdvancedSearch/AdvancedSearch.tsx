@@ -46,7 +46,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch }) => {
               Автори
             </Typography>
             {selectedAuthors.length > 0 && (
-              <Button size="small" color="error" onClick={() => setSelectedAuthors([])} sx={{ textTransform: 'none', p: 0, minWidth: 'auto' }}>
+              <Button size="small" color="error" onClick={() => setSelectedAuthors([])} sx={{ textTransform: 'none', paddingX: 0.5, paddingY: 0, minWidth: 'auto' }}>
                 Очистити
               </Button>
             )}
@@ -66,7 +66,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch }) => {
               Теги
             </Typography>
             {selectedTags.length > 0 && (
-              <Button size="small" color="error" onClick={() => setSelectedTags([])} sx={{ textTransform: 'none', p: 0, minWidth: 'auto' }}>
+              <Button size="small" color="error" onClick={() => setSelectedTags([])} sx={{ textTransform: 'none', paddingX: 0.5, paddingY: 0, minWidth: 'auto', }}>
                 Очистити
               </Button>
             )}
@@ -83,7 +83,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch }) => {
 
       <Button
         type="submit"
-        variant="contained"
+        variant="outlined"
         size="large"
         fullWidth
         sx={{ mt: 2 }}

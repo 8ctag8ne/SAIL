@@ -47,7 +47,7 @@ export const EntityListSelector = <T,>({
                         fullWidth
                     />
                     {onSearchSubmit && (
-                        <Button type="submit" variant="contained">
+                        <Button type="submit" variant="outlined">
                             Пошук
                         </Button>
                     )}
@@ -59,13 +59,15 @@ export const EntityListSelector = <T,>({
                     height: 250,
                     overflowY: "auto",
                     p: 1,
-                    border: "1px solid #eee",
-                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: 'divider',
+                    borderRadius: 0,
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 1,
                     position: 'relative',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'background.paper',
                 }}
             >
                 {loading ? (
@@ -90,18 +92,21 @@ export const EntityListSelector = <T,>({
                                         display: 'flex',
                                         alignItems: 'center',
                                         p: 1,
-                                        border: "1px solid #eee",
+                                        border: "1px solid",
+                                        borderColor: selected ? 'primary.main' : 'divider',
+                                        borderRadius: 0,
                                         cursor: disabled ? "not-allowed" : "pointer",
                                         opacity: disabled ? 0.5 : 1,
-                                        background: selected ? "#e3f2fd" : "#fff",
+                                        background: selected ? "rgba(126, 211, 33, 0.08)" : "transparent",
                                         '&:hover': {
-                                            background: selected ? "#e3f2fd" : disabled ? "#fff" : "#f5f5f5"
+                                            background: selected ? "rgba(126, 211, 33, 0.15)" : disabled ? "transparent" : "rgba(255, 255, 255, 0.04)"
                                         }
                                     }}
                                 >
                                     <Checkbox
                                         checked={selected}
                                         disabled={disabled}
+                                        color="primary"
                                         sx={{ mr: 1, p: 0 }}
                                     />
                                     {renderItem(item)}

@@ -83,7 +83,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit }) => {
 
                     <Button
                         type="submit"
-                        variant="contained"
+                        variant="outlined"
                         color="primary"
                         fullWidth
                         disabled={isSubmitting}

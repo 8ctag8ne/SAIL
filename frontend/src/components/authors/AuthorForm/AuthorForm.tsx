@@ -86,7 +86,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
             alt="Author photo"
           />
           <Button
-            variant="contained"
+            variant="outlined"
             component="label"
             fullWidth
             sx={{ mt: 1 }}
@@ -129,7 +129,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
             />
             <Button
               type="submit"
-              variant="contained"
+              variant="outlined"
               color="primary"
               fullWidth
               disabled={isSubmitting}

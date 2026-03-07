@@ -98,8 +98,8 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
           padding: 4,
           width: 800,
           maxWidth: "100%",
-          height: "100%",
-          maxHeight: 600,
+          height: 700,
+          maxHeight: "100%",
         }}
       >
         {/* Ліва частина: фото */}
@@ -117,7 +117,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
             alt="Tag image"
           />
           <Button
-            variant="contained"
+            variant="outlined"
             component="label"
             fullWidth
             sx={{ mt: 1 }}
@@ -182,7 +182,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
 
             <Button
               type="submit"
-              variant="contained"
+              variant="outlined"
               color="primary"
               fullWidth
               disabled={isSubmitting}

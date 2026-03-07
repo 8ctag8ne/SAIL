@@ -22,7 +22,7 @@ const ForbiddenPage: React.FC = () => {
       <Typography variant="body1" gutterBottom>
         Ви не маєте прав для доступу до цієї сторінки.
       </Typography>
-      <Button variant="contained" color="primary" onClick={() => navigate("/")}>
+      <Button variant="outlined" color="primary" onClick={() => navigate("/")}>
         Повернутися на головну
       </Button>
     </Box>

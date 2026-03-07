@@ -168,7 +168,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         {fileUrl && (
           <Box sx={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 1 }}>
             <Button
-              variant="contained"
+              variant="outlined"
               color="primary"
               startIcon={<BookIcon />}
               href={fileUrl}
@@ -178,7 +178,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               Читати
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
               color="secondary"
               startIcon={<DownloadIcon />}
               sx={{ width: "100%" }}

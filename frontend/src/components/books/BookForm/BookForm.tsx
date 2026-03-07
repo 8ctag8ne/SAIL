@@ -255,7 +255,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             alt="Book cover"
           />
           <Button
-            variant="contained"
+            variant="outlined"
             component="label"
             fullWidth
             sx={{ mt: 1 }}
@@ -284,7 +284,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             {form.image && form.image.name}
           </Typography>
           <Button
-            variant="contained"
+            variant="outlined"
             component="label"
             fullWidth
             sx={{ mt: 2 }}
@@ -376,7 +376,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             />
             <Button
               type="submit"
-              variant="contained"
+              variant="outlined"
               color="primary"
               fullWidth
               disabled={isSubmitting}

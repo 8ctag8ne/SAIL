@@ -23,7 +23,7 @@ const CreateBookListButton: React.FC<Props> = ({ onCreated }) => {
 
   return (
     <>
-      <Button startIcon={<AddIcon />} variant="contained" onClick={() => setOpen(true)}>
+      <Button startIcon={<AddIcon />} variant="outlined" onClick={() => setOpen(true)}>
         Новий список
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -48,7 +48,7 @@ const CreateBookListButton: React.FC<Props> = ({ onCreated }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Скасувати</Button>
-          <Button onClick={handleCreate} disabled={!title.trim()} variant="contained">
+          <Button onClick={handleCreate} disabled={!title.trim()} variant="outlined">
             Створити
           </Button>
         </DialogActions>

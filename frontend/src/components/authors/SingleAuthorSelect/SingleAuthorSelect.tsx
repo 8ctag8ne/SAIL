@@ -152,7 +152,7 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
           <Button
             onClick={handleAddAuthor}
             disabled={!newAuthorName.trim() || adding}
-            variant="contained"
+            variant="outlined"
           >
             Додати
           </Button>

@@ -8,7 +8,13 @@ export const theme = createTheme({
             paper: '#15171a',
         },
         primary: {
-            main: '#7ed321',
+            main: '#7ed321', // military green
+        },
+        secondary: {
+            main: '#b388ff', // violet
+        },
+        error: {
+            main: '#ff5252', // red
         },
         text: {
             primary: '#e0e0e0',
@@ -29,13 +35,34 @@ export const theme = createTheme({
                 variant: 'outlined',
             },
             styleOverrides: {
-                root: {
+                root: ({ ownerState, theme }) => ({
                     textTransform: 'none',
-                    '&:hover': {
-                        backgroundColor: '#7ed321',
-                        color: '#0d0f12',
-                    },
-                },
+                    borderRadius: 0,
+                    ...(ownerState.color === 'error' && {
+                        borderColor: theme.palette.error.main,
+                        color: theme.palette.error.main,
+                        '&:hover': {
+                            backgroundColor: theme.palette.error.main,
+                            color: '#0d0f12',
+                        },
+                    }),
+                    ...(ownerState.color === 'primary' && {
+                        borderColor: theme.palette.primary.main,
+                        color: theme.palette.primary.main,
+                        '&:hover': {
+                            backgroundColor: theme.palette.primary.main,
+                            color: '#0d0f12',
+                        },
+                    }),
+                    ...(ownerState.color === 'secondary' && {
+                        borderColor: theme.palette.secondary.main,
+                        color: theme.palette.secondary.main,
+                        '&:hover': {
+                            backgroundColor: theme.palette.secondary.main,
+                            color: '#0d0f12',
+                        },
+                    }),
+                }),
             },
         },
         MuiChip: {
@@ -90,6 +117,7 @@ export const theme = createTheme({
                 root: {
                     backgroundImage: 'none',
                     border: '1px solid #2d2f33',
+                    borderRadius: 0,
                 },
             },
         },

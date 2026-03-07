@@ -56,7 +56,7 @@ export default function LoginPage() {
             margin="normal"
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: 2 }}>
+          <Button type="submit" variant="outlined" color="primary" fullWidth sx={{ marginTop: 2 }}>
             Вхід
           </Button>
         </form>
