@@ -60,17 +60,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
           ),
           sx: {
             borderRadius: 0,
-            borderRight: 'none',
+            // borderRight: 'none',
             '& fieldset': {
-              borderRight: 'none',
+              // borderRight: 'none',
               borderRadius: 0,
             },
-            '&:hover fieldset': {
-              borderRight: 'none !important',
-            },
-            '&.Mui-focused fieldset': {
-              borderRight: 'none !important',
-            }
+            // '&:hover fieldset': {
+            //   borderRight: 'none !important',
+            // },
+            // '&.Mui-focused fieldset': {
+            //   borderRight: 'none !important',
+            // }
           }
         }}
       />

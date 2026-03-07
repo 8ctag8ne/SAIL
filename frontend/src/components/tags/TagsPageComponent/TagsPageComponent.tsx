@@ -25,7 +25,7 @@ const TagsPageComponent: React.FC = () => {
     const totalPages = data?.totalPages || 1;
 
     return (
-        <Box sx={{}}>
+        <Box sx={{ padding: 2 }}>
             {/* Додайте фільтри, як у BooksPageComponent */}
             {/* <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
                 <Select

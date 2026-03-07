@@ -129,5 +129,23 @@ export const theme = createTheme({
                 },
             },
         },
+        MuiCard: {
+            styleOverrides: {
+                root: ({ theme }) => ({
+                    borderRadius: 0,
+                    border: '1px solid #2d2f33',
+                    backgroundImage: 'none',
+                    '&.MuiCard-interactive': {
+                        transition: 'all 0.2s ease-in-out',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            borderColor: theme.palette.primary.main,
+                            backgroundColor: 'rgba(126, 211, 33, 0.04)',
+                            transform: 'translateY(-2px)',
+                        },
+                    },
+                }),
+            },
+        },
     },
 });
