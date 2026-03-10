@@ -60,23 +60,6 @@ public class PdfService : IPdfRenderService, IPdfTextExtractorService
         return Task.FromResult(image.CloneAs<Rgba32>());
     }
 
-    // public async Task<Image<Rgba32>> RenderPageAsync(IDocReader docReader, int pageNumber, int dpi)
-    // {
-    //     var dimensions = new PageDimensions(
-    //         (int)(8.27 * dpi), 
-    //         (int)(11.69 * dpi)
-    //     );
-
-    //     using var pageReader = docReader.GetPageReader(pageNumber);
-        
-    //     var rawBytes = pageReader.GetImage();
-    //     return Image.LoadPixelData<Bgra32>(
-    //         rawBytes, 
-    //         pageReader.GetPageWidth(), 
-    //         pageReader.GetPageHeight()
-    //     ).CloneAs<Rgba32>();
-    // }
-
     private byte[] ReadAllBytes(Stream input)
     {
         using var ms = new MemoryStream();

@@ -14,6 +14,7 @@ using Microsoft.OpenApi.Models;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
 using dotenv.net;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 DotEnv.Load();
@@ -136,15 +137,17 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
 builder.Services.AddScoped<IPdfTextExtractorService, PdfService>();
-builder.Services.AddScoped<IOcrService, OcrService>();
+// builder.Services.AddScoped<IOcrService, OcrService>();
 // Реєстрація PredictionServiceClient через JSON-ключ
 builder.Services.AddScoped<PredictionServiceClient>(provider =>
 {
     var location = Environment.GetEnvironmentVariable("Gemini__Location") ?? "us-central1";
-    var jsonPath = Environment.GetEnvironmentVariable("Gemini__JsonKeyPath")!;
+    var base64 = Environment.GetEnvironmentVariable("Gemini__Credentials_Base64");
+
+    var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
 
     var credential = GoogleCredential
-        .FromFile(jsonPath)
+        .FromJson(json)
         .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
 
     return new PredictionServiceClientBuilder

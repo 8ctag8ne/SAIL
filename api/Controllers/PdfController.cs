@@ -17,7 +17,7 @@ namespace MilLib.Controllers
     public class PdfController : ControllerBase
     {
         private readonly IPdfRenderService _pdfRenderService;
-        private readonly IOcrService _ocrService;
+        // private readonly IOcrService _ocrService;
         private readonly IPdfTextExtractorService _pdfTextExtractor;
         private readonly IBookInfoAnalyzerService _bookInfoAnalyzer;
 
@@ -25,9 +25,8 @@ namespace MilLib.Controllers
         private readonly ITagService _tagService;
         private readonly ICheatSheetService _cheatSheetService;
 
-        public PdfController(IPdfRenderService pdfRenderService, IOcrService ocrService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorService authorService, ITagService tagService, ICheatSheetService cheatSheetService)
+        public PdfController(IPdfRenderService pdfRenderService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorService authorService, ITagService tagService, ICheatSheetService cheatSheetService)
         {
-            _ocrService = ocrService;
             _pdfRenderService = pdfRenderService;
             _pdfTextExtractor = pdfTextExtractor;
             _bookInfoAnalyzer = bookInfoAnalyzer;
@@ -76,36 +75,36 @@ namespace MilLib.Controllers
             return ms.ToArray();
         }
 
-        [HttpPost("ocr")]
-        [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> ExtractText([FromForm] OcrRequestDto dto)
-        {
-            try
-            {
-                var file = dto.PdfFile;
-                if (file == null || file.Length == 0)
-                    return BadRequest("PDF file is required.");
+        // [HttpPost("ocr")]
+        // [Authorize(Roles = "Admin,Librarian")]
+        // public async Task<IActionResult> ExtractText([FromForm] OcrRequestDto dto)
+        // {
+        //     try
+        //     {
+        //         var file = dto.PdfFile;
+        //         if (file == null || file.Length == 0)
+        //             return BadRequest("PDF file is required.");
 
-                // // Читання PDF
-                using var stream = file.OpenReadStream();
-                var pdfBytes = await ReadAllBytesAsync(stream);
+        //         // // Читання PDF
+        //         using var stream = file.OpenReadStream();
+        //         var pdfBytes = await ReadAllBytesAsync(stream);
 
-                // Спроба витягти текст через PDF Text Extractor
-                var pdfText = _pdfTextExtractor.ExtractText(pdfBytes, dto.PageCount);
-                if (IsTextValid(pdfText))
-                    return Ok(pdfText);
+        //         // Спроба витягти текст через PDF Text Extractor
+        //         var pdfText = _pdfTextExtractor.ExtractText(pdfBytes, dto.PageCount);
+        //         if (IsTextValid(pdfText))
+        //             return Ok(pdfText);
 
-                // // Якщо текст невалідний — використовуємо OCR з DPI=300
-                using var ocrStream = file.OpenReadStream();
-                var ocrText = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
-                return Ok(ocrText);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("OCR processing failed: " + ex.Message);
-                return StatusCode(500, $"Error: {ex.Message}");
-            }
-        }
+        //         // // Якщо текст невалідний — використовуємо OCR з DPI=300
+        //         using var ocrStream = file.OpenReadStream();
+        //         var ocrText = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
+        //         return Ok(ocrText);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine("OCR processing failed: " + ex.Message);
+        //         return StatusCode(500, $"Error: {ex.Message}");
+        //     }
+        // }
 
         private bool IsTextValid(string text)
         {
@@ -132,12 +131,12 @@ namespace MilLib.Controllers
 
                 // Спроба витягнути текст як searchable
                 var text = _pdfTextExtractor.ExtractText(pdfBytes, dto.PageCount);
-                if (!IsTextValid(text))
-                {
-                    // Якщо текст невалідний — виконуємо OCR
-                    using var ocrStream = file.OpenReadStream();
-                    text = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
-                }
+                // if (!IsTextValid(text))
+                // {
+                //     // Якщо текст невалідний — виконуємо OCR
+                //     using var ocrStream = file.OpenReadStream();
+                //     text = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
+                // }
 
                 if (!IsTextValid(text))
                     return BadRequest("Не вдалося витягнути достатньо тексту для аналізу.");
