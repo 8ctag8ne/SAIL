@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, FormControlLabel, Checkbox } from "@mui/material";
+import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { addBookList } from "../../../api/BookListApi";
 import { BookListCreate } from "../../../types";
+import EntityModal from "../../ui/EntityModal/EntityModal";
+import BookListForm from "./BookListForm";
 
 type Props = {
   onCreated?: () => void;
@@ -10,49 +12,24 @@ type Props = {
 
 const CreateBookListButton: React.FC<Props> = ({ onCreated }) => {
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
 
-  const handleCreate = async () => {
-    await addBookList({ title, isPrivate, bookIds: [] });
+  const handleCreate = async (data: BookListCreate) => {
+    await addBookList(data);
     setOpen(false);
-    setTitle("");
-    setIsPrivate(false);
     onCreated?.();
   };
 
   return (
     <>
-      <Button startIcon={<AddIcon />} variant="outlined" onClick={() => setOpen(true)}>
+      <Button startIcon={<AddIcon />} variant="outlined" onClick={() => setOpen(true)} sx={{ borderRadius: 0, fontFamily: "JetBrains Mono" }}>
         Новий список
       </Button>
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Створити список книг</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Назва"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            fullWidth
-            margin="normal"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isPrivate}
-                onChange={e => setIsPrivate(e.target.checked)}
-              />
-            }
-            label="Приватний"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Скасувати</Button>
-          <Button onClick={handleCreate} disabled={!title.trim()} variant="outlined">
-            Створити
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <EntityModal open={open} onClose={() => setOpen(false)}>
+        <BookListForm
+          onSubmit={handleCreate}
+          onClose={() => setOpen(false)}
+        />
+      </EntityModal>
     </>
   );
 };

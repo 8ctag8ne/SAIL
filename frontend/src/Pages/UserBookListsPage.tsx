@@ -81,7 +81,9 @@ const UserBookListsPage: React.FC = () => {
       if (isAdmin && data.role !== (profile.roles[0] || "User")) {
         await setUserRole(profile.id, data.role);
       }
-      toast.success("Дані користувача оновлено успішно!");
+      toast.success("Дані користувача оновлено успішно!", {
+        isCloseBtn: true,
+      });
 
       // Reload profile data locally 
       const updatedUser = await getUserById(profile.id);
@@ -93,7 +95,9 @@ const UserBookListsPage: React.FC = () => {
         // For now window reload as fallback or relying on another fetch if Context requires
       }
     } catch (error) {
-      toast.error("Не вдалося оновити дані.");
+      toast.error("Не вдалося оновити дані.", {
+        isCloseBtn: true,
+      });
     }
   };
 

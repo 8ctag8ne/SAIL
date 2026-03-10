@@ -23,7 +23,9 @@ export default function RegisterPage() {
       // Перенаправлення на головну сторінку
       navigate("/");
     } catch (err) {
-      toast.error("Реєстрація не вдалась. Перевірте дані та спробуйте ще раз.");
+      toast.error("Реєстрація не вдалась. Перевірте дані та спробуйте ще раз.", {
+        isCloseBtn: true,
+      });
     }
   };
 

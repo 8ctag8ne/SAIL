@@ -17,7 +17,9 @@ export default function LoginPage() {
       doLogin(response.token, { id: response.id, username: response.userName, roles: response.roles });
       navigate("/");
     } catch (err) {
-      toast.error("Логін не вдався. Перевірте ім'я користувача та пароль.");
+      toast.error("Логін не вдався. Перевірте ім'я користувача та пароль.", {
+        isCloseBtn: true,
+      });
     }
   };
 

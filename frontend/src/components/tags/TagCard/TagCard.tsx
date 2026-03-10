@@ -38,10 +38,14 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
   const handleEditSubmit = async (data: { title: string; info?: string; image?: File | null; bookIds: number[] }) => {
     try {
       await updateTagMutation({ id: tag.id, data: { title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds } });
-      toast.success("Тег оновлено успішно!");
+      toast.success("Тег оновлено успішно!", {
+        isCloseBtn: true,
+      });
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error("Не вдалося оновити тег.");
+      toast.error("Не вдалося оновити тег.", {
+        isCloseBtn: true,
+      });
     }
   };
 
@@ -53,11 +57,14 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
   const handleConfirmDelete = async () => {
     try {
       await deleteTagMutation(tag.id);
-      toast.success("Тег видалений успішно!");
+      toast.success("Тег видалений успішно!", {
+        isCloseBtn: true,
+      });
       navigate("/tags");
     } catch (error) {
-      console.error("Failed to delete tag:", error);
-      toast.error("не вдалося видалити тег.");
+      toast.error("Не вдалося видалити тег.", {
+        isCloseBtn: true,
+      });
     } finally {
       setIsDeleteConfirmOpen(false);
     }

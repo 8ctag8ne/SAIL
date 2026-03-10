@@ -34,7 +34,9 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
   const handleEditSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
     try {
       await updateAuthorMutation({ id: author.id, data: { name: data.name, info: data.info, image: data.image ?? undefined } });
-      toast.success("Автора оновлено успішно!");
+      toast.success("Автора оновлено успішно!", {
+        isCloseBtn: true,
+      });
       // If there was a specific route like ["author", author.id], invalidate that too, 
       // though typically AuthorDetails refetches entirely or we invalidate the specific query name.
       // But author details page gets it directly right now, need to check that.
@@ -42,7 +44,9 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
       // We will refresh the page or reload the author, actually AuthorDetailsPage needs to be invalidated if we are using React Query there. Wait, AuthorDetailsPage uses `getAuthorById` manually. Let's do window.location.reload() for now or let the parent component handle it. Let's just reload.
       window.location.reload();
     } catch (error) {
-      toast.error("Не вдалося оновити автора.");
+      toast.error("Не вдалося оновити автора.", {
+        isCloseBtn: true,
+      });
     }
   };
 

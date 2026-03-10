@@ -65,7 +65,9 @@ const BookCard: React.FC<BookCardProps> = ({
       // Відкат у разі помилки
       setLiked(liked);
       setLikeCount(prev => liked ? prev + 1 : prev - 1);
-      toast.error("Помилка при зміні лайку.");
+      toast.error("Помилка при зміні лайку.", {
+        isCloseBtn: true,
+      });
     }
   };
 
@@ -84,10 +86,14 @@ const BookCard: React.FC<BookCardProps> = ({
   const handleEditSubmit = async (formData: FormData) => {
     try {
       await updateBookMutation({ id, data: formData });
-      toast.success("Книгу оновлено успішно!");
+      toast.success("Книгу оновлено успішно!", {
+        isCloseBtn: true,
+      });
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error("Не вдалося оновити книгу.");
+      toast.error("Не вдалося оновити книгу.", {
+        isCloseBtn: true,
+      });
     }
   };
 
@@ -99,11 +105,15 @@ const BookCard: React.FC<BookCardProps> = ({
   const handleConfirmDelete = async () => {
     try {
       await deleteBookMutation(id);
-      toast.success("Книга успішно видалена!");
+      toast.success("Книга успішно видалена!", {
+        isCloseBtn: true,
+      });
       navigate("/");
     } catch (error) {
       console.error("Failed to delete book:", error);
-      toast.error("Не вдалося видалити книгу.");
+      toast.error("Не вдалося видалити книгу.", {
+        isCloseBtn: true,
+      });
     } finally {
       setConfirmOpen(false);
     }

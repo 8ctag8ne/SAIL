@@ -112,10 +112,14 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const handleEditSubmit = async (formData: FormData) => {
     try {
       await updateBookMutation({ id: Number(id), data: formData });
-      toast.success("Книга оновлена успішно!");
+      toast.success("Книга оновлена успішно!", {
+        isCloseBtn: true,
+      });
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error("Не вдалося оновити книгу.");
+      toast.error("Не вдалося оновити книгу.", {
+        isCloseBtn: true,
+      });
     }
   };
 
@@ -126,11 +130,14 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const handleConfirmDelete = async () => {
     try {
       await deleteBookMutation(Number(id));
-      toast.success("Book deleted successfully!");
+      toast.success("Книга успішно видалена!", {
+        isCloseBtn: true,
+      });
       navigate("/");
     } catch (error) {
-      console.error("Failed to delete book:", error);
-      toast.error("Failed to delete book.");
+      toast.error("Не вдалося видалити книгу.", {
+        isCloseBtn: true,
+      });
     } finally {
       setIsDeleteConfirmOpen(false);
     }

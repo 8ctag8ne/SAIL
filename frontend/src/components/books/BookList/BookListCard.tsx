@@ -1,15 +1,16 @@
 import React, { useState } from "react";
-import { Card, CardContent, Typography, Box, IconButton, TextField, Switch, FormControlLabel } from "@mui/material";
+import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LockIcon from "@mui/icons-material/Lock";
-import SaveIcon from "@mui/icons-material/Save";
-import CloseIcon from "@mui/icons-material/Close";
-import { BookList } from "../../../types";
+import { BookList, BookListCreate } from "../../../types";
 import { useAuth } from "../../../contexts/AuthContext";
 import { updateBookList, deleteBookList } from "../../../api/BookListApi";
 import { useNavigate } from "react-router-dom";
 import ConfirmDialog from "../../ui/ConfirmDialog";
+import EntityModal from "../../ui/EntityModal/EntityModal";
+import BookListForm from "./BookListForm";
+import { toast } from "react-fox-toast";
 
 type BookListCardProps = {
   list: BookList;
@@ -23,21 +24,10 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
   const isOwner = user?.id === list.userId || user?.roles.includes("Admin");
 
   const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(list.title || "");
-  const [description, setDescription] = useState(list.description || "");
-  const [isPrivate, setIsPrivate] = useState(list.isPrivate ?? false);
-  const [saving, setSaving] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  const handleSave = async () => {
-    setSaving(true);
-    const updated = await updateBookList(list.id, {
-      title,
-      description,
-      isPrivate,
-      bookIds: list.books.map(b => b.id),
-    });
-    setSaving(false);
+  const handleSave = async (data: BookListCreate) => {
+    const updated = await updateBookList(list.id, data);
     setEditing(false);
     onUpdated?.(updated);
   };
@@ -50,132 +40,86 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
   const handleConfirmDelete = async () => {
     try {
       await deleteBookList(list.id);
+      toast.success("Список успішно видалений!", {
+        isCloseBtn: true,
+      });
       onDeleted?.(list.id);
+    } catch (error) {
+      toast.error("Не вдалося видалити список.", {
+        isCloseBtn: true,
+      });
     } finally {
       setIsDeleteConfirmOpen(false);
     }
   };
 
   return (
-    <Card
-      sx={{ my: 2, position: "relative", cursor: "pointer" }}
-      className="MuiCard-interactive"
-      onClick={() => navigate(`/booklists/${list.id}`)}>
-      <CardContent sx={{ position: "relative", pb: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {editing ? (
-            <TextField
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              size="small"
-              variant="standard"
-              sx={{ fontWeight: "bold", fontSize: 22, flex: 1 }}
-              onClick={e => e.stopPropagation()}
-            />
-          ) : (
+    <>
+      <Card
+        sx={{
+          my: 2,
+          position: "relative",
+          cursor: "pointer",
+          border: "1px solid #2d2f33",
+          borderRadius: 0,
+          boxShadow: "none",
+        }}
+        className="MuiCard-interactive"
+        onClick={() => navigate(`/booklists/${list.id}`)}>
+        <CardContent sx={{ position: "relative", pb: 4 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography variant="h6" fontWeight="bold">
               {list.title}
             </Typography>
-          )}
-          {(!editing && isPrivate) && <LockIcon fontSize="small" color="action" />}
-          {/* Іконки справа */}
-          {isOwner && (
-            <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-              {!editing ? (
-                <>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setEditing(true);
-                    }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={handleDeleteClick}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </>
-              ) : (
-                <>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    disabled={saving}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleSave();
-                    }}
-                  >
-                    <SaveIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setEditing(false);
-                      setTitle(list.title || "");
-                      setDescription(list.description || "");
-                      setIsPrivate(list.isPrivate ?? false);
-                    }}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </>
-              )}
-            </Box>
-          )}
-        </Box>
-        {editing ? (
-          <>
-            <TextField
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              size="small"
-              variant="standard"
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={4}
-              sx={{ mt: 1 }}
-              onClick={e => e.stopPropagation()}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isPrivate}
-                  onChange={e => setIsPrivate(e.target.checked)}
+            {list.isPrivate && <LockIcon fontSize="small" color="action" />}
+            {isOwner && (
+              <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
+                <IconButton
+                  size="small"
                   color="primary"
-                  onClick={e => e.stopPropagation()}
-                />
-              }
-              label="Приватний"
-              sx={{ mt: 1 }}
-              onClick={e => e.stopPropagation()}
-            />
-          </>
-        ) : (
+                  onClick={e => {
+                    e.stopPropagation();
+                    setEditing(true);
+                  }}
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={handleDeleteClick}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+          {list.description ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {list.description}
+            </Typography>
+          ) : null}
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {list.description}
+            Книги: {list.books.map(b => b.title).join(", ")}
           </Typography>
-        )}
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Книги: {list.books.map(b => b.title).join(", ")}
-        </Typography>
-      </CardContent>
+        </CardContent>
 
-      <ConfirmDialog
-        open={isDeleteConfirmOpen}
-        title="Ви впевнені, що хочете видалити цей список?"
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setIsDeleteConfirmOpen(false)}
-      />
-    </Card>
+        <ConfirmDialog
+          open={isDeleteConfirmOpen}
+          title="Ви впевнені, що хочете видалити цей список?"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setIsDeleteConfirmOpen(false)}
+        />
+      </Card>
+
+      <EntityModal open={editing} onClose={() => setEditing(false)}>
+        <BookListForm
+          initialData={list}
+          onSubmit={handleSave}
+          onClose={() => setEditing(false)}
+        />
+      </EntityModal>
+    </>
   );
 };
 

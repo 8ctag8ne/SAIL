@@ -30,10 +30,14 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const handleEditSubmit = async (data: { name: string; info?: string; image?: File | null }) => {
     try {
       await updateAuthorMutation({ id: author.id, data: { name: data.name, info: data.info, image: data.image ?? undefined } });
-      toast.success("Автора оновлено успішно!");
+      toast.success("Автора оновлено успішно!", {
+        isCloseBtn: true,
+      });
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error("Не вдалося оновити автора.");
+      toast.error("Не вдалося оновити автора.", {
+        isCloseBtn: true,
+      });
     }
   };
 
@@ -45,11 +49,14 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const handleConfirmDelete = async () => {
     try {
       await deleteAuthorMutation(author.id);
-      toast.success("Author deleted successfully!");
+      toast.success("Автор успішно видалений!", {
+        isCloseBtn: true,
+      });
       navigate("/authors");
     } catch (error) {
-      console.error("Failed to delete author:", error);
-      toast.error("Failed to delete author.");
+      toast.error("Не вдалося видалити автора.", {
+        isCloseBtn: true,
+      });
     } finally {
       setIsDeleteConfirmOpen(false);
     }

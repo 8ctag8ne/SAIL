@@ -56,12 +56,16 @@ const TagDetailsPage: React.FC = () => {
   const handleEditSubmit = async (data: { title: string; info?: string; image?: File | null; bookIds: number[] }) => {
     try {
       await updateTagMutation({ id: Number(id), data: { title: data.title, info: data.info, image: data.image ?? undefined, bookIds: data.bookIds } });
-      toast.success("Тег оновлено успішно!");
+      toast.success("Тег оновлено успішно!", {
+        isCloseBtn: true,
+      });
       // Reload to get new tag details since it's fetched directly via useEffect here
       setIsEditModalOpen(false);
       window.location.reload();
     } catch (error) {
-      toast.error("Не вдалося оновити тег.");
+      toast.error("Не вдалося оновити тег.", {
+        isCloseBtn: true,
+      });
     }
   };
 
@@ -73,12 +77,16 @@ const TagDetailsPage: React.FC = () => {
     try {
       if (id) {
         await deleteTagMutation(Number(id));
-        toast.success("тег видалений успішно!");
+        toast.success("тег видалений успішно!", {
+          isCloseBtn: true,
+        });
         navigate("/tags");
       }
     } catch (error) {
       console.error("Failed to delete tag:", error);
-      toast.error("не вдалося видалити тег.");
+      toast.error("не вдалося видалити тег.", {
+        isCloseBtn: true,
+      });
     } finally {
       setIsDeleteConfirmOpen(false);
     }

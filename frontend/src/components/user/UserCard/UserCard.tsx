@@ -50,11 +50,15 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
       if (isAdmin && data.role !== (user.roles[0] || "User")) {
         await setUserRole(user.id, data.role);
       }
-      toast.success("Дані користувача оновлено успішно!");
+      toast.success("Дані користувача оновлено успішно!", {
+        isCloseBtn: true,
+      });
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error("Не вдалося оновити дані.");
+      toast.error("Не вдалося оновити дані.", {
+        isCloseBtn: true,
+      });
     }
   };
 

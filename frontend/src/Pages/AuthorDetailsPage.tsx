@@ -40,12 +40,16 @@ const AuthorDetailsPage: React.FC = () => {
     try {
       if (id) {
         await deleteAuthorMutation(Number(id));
-        toast.success("Автор видалений успішно!");
+        toast.success("Автор видалений успішно!", {
+          isCloseBtn: true,
+        });
         navigate("/authors");
       }
     } catch (error) {
       console.error("Failed to delete author:", error);
-      toast.error("Не вдалося видалити автора.");
+      toast.error("Не вдалося видалити автора.", {
+        isCloseBtn: true,
+      });
     }
   };
 

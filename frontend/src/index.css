@@ -13,3 +13,84 @@ code {
   font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* 
+ * react-fox-toast Overrides
+ * Styling for the "Modern Terminal" aesthetic defined in theme.ts
+ */
+
+div[class*="toast-container-default-"] {
+  /* 1. Global Toast Style */
+  font-family: "JetBrains Mono", monospace !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: 1px solid #2d2f33 !important;
+  background-color: #15171a !important;
+
+}
+
+/* 2. Type-Specific Borders */
+div[class*="toast-container-default-"][type="success"] {
+  border: 1px solid #7ed321 !important;
+}
+
+div[class*="toast-container-default-"][type="error"] {
+  border: 1px solid #ff5252 !important;
+}
+
+div[class*="toast-container-default-"][type="info"],
+div[class*="toast-container-default-"][type="warning"] {
+  border: 1px solid #b388ff !important;
+}
+
+/* 3. Internal Elements - Text */
+div[class*="toast-container-default-"] * {
+  color: #e0e0e0 !important;
+}
+
+/* Keep icon svg elements from turning entirely grey if they have their own fill */
+div[class*="toast-container-default-"] svg,
+div[class*="toast-container-default-"] svg * {
+  color: inherit !important;
+}
+
+/* 3. Internal Elements - Close Button */
+div[class*="toast-container-default-"] button {
+  border-radius: 0 !important;
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: #e0e0e0 !important;
+  font-family: "JetBrains Mono", monospace !important;
+  font-size: 0 !important;
+  /* Hide the default unicode cross */
+  padding: 0 4px !important;
+  width: auto !important;
+  height: auto !important;
+  top: 1px !important;
+  right: -1px !important;
+  left: auto !important;
+}
+
+div[class*="toast-container-default-"] button::after {
+  content: "X";
+  font-size: 13px !important;
+  color: #e0e0e0 !important;
+}
+
+div[class*="toast-container-default-"] button:hover {
+  background-color: transparent !important;
+  transform: none !important;
+  /* override the default scale(1.1) */
+}
+
+div[class*="toast-container-default-"] button:hover::after {
+  color: #ff5252 !important;
+}
+
+/* 3. Internal Elements - Progress Bar (if one appears) */
+div[class*="toast-container-default-"] progress,
+div[class*="toast-container-default-"] [role="progressbar"] {
+  background: #7ed321 !important;
+  border-radius: 0 !important;
+}

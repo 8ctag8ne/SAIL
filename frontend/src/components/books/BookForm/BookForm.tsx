@@ -144,7 +144,9 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
 
       } catch (error) {
         console.error("Помилка аналізу:", error);
-        toast.error("Не вдалося проаналізувати файл");
+        toast.error("Не вдалося проаналізувати файл", {
+          isCloseBtn: true,
+        });
       } finally {
         setAnalyzing(false);
       }
@@ -213,7 +215,9 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
 
     } catch (error) {
       console.error("Помилка при збереженні:", error);
-      toast.error("Сталася помилка. Перевірте дані.");
+      toast.error("Сталася помилка. Перевірте дані.", {
+        isCloseBtn: true,
+      });
     } finally {
       setIsSubmitting(false);
     }
