@@ -1,0 +1,19 @@
+# Ядро мікросервісу
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-multipart
+
+# База даних (Entity Framework style)
+sqlalchemy
+asyncpg            # Асинхронний драйвер для Postgres
+pgvector           # Підтримка векторів у SQLAlchemy
+
+# ШІ та RAG
+langchain
+langchain-openai   # Використовуємо для OpenRouter
+langchain-community
+
+# Unstructured (лише клієнт для API, без важких локальних моделей)
+unstructured-client

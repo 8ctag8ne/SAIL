@@ -141,7 +141,6 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
 builder.Services.AddScoped<IPdfTextExtractorService, PdfService>();
-// builder.Services.AddScoped<IOcrService, OcrService>();
 // Реєстрація PredictionServiceClient через JSON-ключ
 builder.Services.AddScoped<PredictionServiceClient>(provider =>
 {
