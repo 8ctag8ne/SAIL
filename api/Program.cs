@@ -33,11 +33,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if(builder.Environment.IsProduction())
     {
-        options.UseNpgsql(builder.Configuration["SUPABASE_SESSION_POOLER"])  //prod (cloud)
+        options.UseNpgsql(
+            builder.Configuration["SUPABASE_SESSION_POOLER"], 
+            o => o.UseVector())  //prod (cloud)
             .UseSnakeCaseNamingConvention();
     } else
     {
-        options.UseNpgsql(builder.Configuration["DB_CONNECTION_LOCAL"])  //dev (local)
+        options.UseNpgsql(
+            builder.Configuration["DB_CONNECTION_LOCAL"],
+            o => o.UseVector())  //dev (local)
             .UseSnakeCaseNamingConvention(); 
     }
 });
@@ -192,5 +196,11 @@ catch(Exception ex)
 }
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
 
 app.Run();

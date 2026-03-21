@@ -20,14 +20,29 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<Comment> Comments {get; set;}
     public DbSet<Like> Likes {get; set;}
 
+    public DbSet<DocumentChunk> DocumentChunks { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("vector"); // enable pgvector
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<BookList>()
             .HasOne(b => b.User)
             .WithMany(a => a.BookLists)
             .HasForeignKey(b => b.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DocumentChunk>()
+            .HasOne(d => d.Parent)
+            .WithMany(d => d.Children)
+            .HasForeignKey(d => d.ParentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DocumentChunk>()
+            .HasOne(d => d.Book)
+            .WithMany(b => b.Chunks)
+            .HasForeignKey(d => d.BookId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<BookTag>()

@@ -1,14 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using api.Models.Entities;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 
 namespace api.Services.Implementations
