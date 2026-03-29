@@ -14,6 +14,6 @@ pgvector           # Підтримка векторів у SQLAlchemy
 langchain
 langchain-openai   # Використовуємо для OpenRouter
 langchain-community
+openai
 
-# Unstructured (лише клієнт для API, без важких локальних моделей)
-unstructured-client
+docling

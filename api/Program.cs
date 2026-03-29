@@ -141,6 +141,10 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
 builder.Services.AddScoped<IPdfTextExtractorService, PdfService>();
+
+builder.Services.AddHttpClient("AiService", c => c.BaseAddress = new Uri("http://sail-ai:8000/"));
+
+
 // Реєстрація PredictionServiceClient через JSON-ключ
 builder.Services.AddScoped<PredictionServiceClient>(provider =>
 {

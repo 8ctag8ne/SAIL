@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DATABASE_URL: str
+    UNSTRUCTURED_API_KEY: str
+    OPENROUTER_API_KEY: str
     
     @property
     def is_development(self) -> bool:
