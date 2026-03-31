@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 from app.db.database import get_db
 from app.db.models import Book, Tag, Author
 from app.db.schemas import BookResponse, TagResponse, AuthorResponse
-from app.services.md_service import process_pdf_to_markdown, refine_markdown_semantically, convert_with_docling
+from app.services.md_service import process_document_combined
 
 app = FastAPI(title="AI Knowledge Service")
 
@@ -25,8 +25,7 @@ TASKS_DB: Dict[str, dict] = {}
 class TaskResponse(BaseModel):
     task_id: str
     status: str
-    md_ocr: Optional[str] = None       # Сирий результат від Docling
-    md_final: Optional[str] = None     # Результат після LLM
+    markdown: Optional[str] = None
     execution_time_seconds: Optional[float] = None
     error: Optional[str] = None
 
@@ -38,13 +37,7 @@ async def background_conversion_task(task_id: str, file_bytes: bytes, filename: 
     try:
         # 1. OCR через Docling (виконуємо в окремому потоці, щоб не блокувати FastAPI)
         # Припускаємо, що ти виніс логіку конвертації Docling в окрему функцію convert_with_docling
-        raw_md = await convert_with_docling(file_bytes, filename)
-        
-        # Проміжне збереження (на випадок, якщо LLM впаде)
-        TASKS_DB[task_id]["md_ocr"] = raw_md
-        
-        # 2. Форматування через LLM (Llama 3.3)
-        final_md = await refine_markdown_semantically(raw_md)
+        markdown = await process_document_combined(file_bytes=file_bytes, filename=filename)
         
         # 3. Фіксуємо час
         execution_time = round(time.time() - start_time, 2)
@@ -52,7 +45,7 @@ async def background_conversion_task(task_id: str, file_bytes: bytes, filename: 
         # Оновлюємо базу тасок
         TASKS_DB[task_id].update({
             "status": "completed",
-            "md_final": final_md,
+            "markdown": markdown,
             "execution_time_seconds": execution_time
         })
         
@@ -90,8 +83,7 @@ async def get_status(task_id: str):
     return TaskResponse(
         task_id=task_id,
         status=task_data["status"],
-        md_ocr=task_data.get("md_ocr"),
-        md_final=task_data.get("md_final"),
+        markdown=task_data.get("markdown"),
         execution_time_seconds=task_data.get("execution_time_seconds"),
         error=task_data.get("error")
     )

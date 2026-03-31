@@ -16,4 +16,5 @@ langchain-openai   # Використовуємо для OpenRouter
 langchain-community
 openai
 
-docling
+pymupdf
+liteparse

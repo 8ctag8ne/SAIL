@@ -1,139 +1,102 @@
-# services/md_service.py
-import re
-import tempfile
-import os
+import fitz  # PyMuPDF
+import base64
 import asyncio
-from docling.document_converter import DocumentConverter
-from docling.datamodel.base_models import InputFormat
-from docling.document_converter import PdfFormatOption
-from docling.datamodel.pipeline_options import PdfPipelineOptions
 from openai import AsyncOpenAI
-
 from app.core.config import settings
-sem = asyncio.Semaphore(8)
+import re
+from liteparse import LiteParse
 
-# Налаштовуємо пайплайн для PDF
-pipeline_options = PdfPipelineOptions()
-pipeline_options.do_ocr = True # Дозволяємо OCR для картинок/сканів
-# Вказуємо мови для розпізнавання (en - англійська, uk - українська)
-pipeline_options.ocr_options.lang = ["en", "uk", "ru"] 
-
-# Ініціалізуємо конвертер з нашими налаштуваннями
-converter = DocumentConverter(
-    allowed_formats=[InputFormat.PDF, InputFormat.DOCX],
-    format_options={
-        InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options),
-        InputFormat.DOCX: PdfFormatOption(pipeline_options=pipeline_options),
-    }
-)
-
+# Ініціалізація клієнта OpenRouter
 llm_client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=settings.OPENROUTER_API_KEY,
 )
 
-async def process_pdf_to_markdown(file_bytes: bytes, filename: str) -> str:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        tmp_file.write(file_bytes)
-        tmp_file_path = tmp_file.name
+parser = LiteParse()
 
-    try:
-        # 1. Парсимо через Docling (синхронно, бо це CPU-bound операція)
-        result = await asyncio.to_thread(converter.convert, tmp_file_path)
-        raw_markdown = result.document.export_to_markdown()
-        
-        # 2. Очищуємо та структуруємо через LLM (асинхронно)
-        refined_markdown = await refine_markdown_semantically(raw_markdown)
-        
-        return refined_markdown
-        
-    finally:
-        if os.path.exists(tmp_file_path):
-            os.remove(tmp_file_path)
+# Лімітуємо паралельні запити, щоб не зловити Rate Limit від OpenRouter
+sem = asyncio.Semaphore(5)
 
-async def convert_with_docling(file_bytes: bytes, filename: str) -> str:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        tmp_file.write(file_bytes)
-        tmp_file_path = tmp_file.name
+async def process_page_with_vlm(image_base64: str, page_num: int) -> str:
+    """Відправляє одну картинку у Qwen VL для отримання ідеальної розмітки."""
+    prompt = """
+You are a strictly automated Vision-Language Document Parser. Your sole purpose is to convert an image of a SINGLE document page into clean, accurate Markdown.
 
-    try:
-        # 1. Парсимо через Docling (синхронно, бо це CPU-bound операція)
-        result = await asyncio.to_thread(converter.convert, tmp_file_path)
-        raw_markdown = result.document.export_to_markdown()
-        
-        return raw_markdown
-        
-    finally:
-        if os.path.exists(tmp_file_path):
-            os.remove(tmp_file_path)
+CONTEXT: You are processing just ONE PAGE of a larger document. The text at the top may start mid-sentence or mid-paragraph from the previous page. The text at the bottom may end mid-sentence or mid-paragraph that continues on the next page (it can also be a heading that stands alone). The page may contain various elements such as paragraphs, headings, lists, tables, images, and more. Your task is to analyze the visual layout and content of this page and produce a Markdown representation that faithfully captures the structure and formatting.
 
-
-async def refine_chunk_safe(chunk_text: str, chunk_index: int) -> str:
-    """Обгортка, яка контролює паралельність запитів"""
+RULES:
+1. EXACT REPRODUCTION: Transcribe the main body text exactly as it appears. Do not summarize text, add conversational filler, or invent structure.
+2. HEADER/FOOTER EXCLUSION: Completely ignore and exclude page numbers, running headers, and footers from your output.
+3. IMAGES & DIAGRAMS: If the page contains images, charts, or diagrams, generate a concise textual description of their contents. Format it exactly as: `> **[Illustration]:** <your description>`
+Convert this document page into clean, structured Markdown.
+4. TEXT & HEADINGS: Extract all text exactly as it appears. Use `#`, `##`, `###` for headings based strictly on visual cues (larger font, bold text, standalone lines).
+5. TABLES: Format all tabular data strictly as Markdown tables (using |---|---| syntax).
+6. OUTPUT: Return ONLY the raw Markdown text.
+7. EMPTY PAGES: If there is no readable text or meaningful diagram, return an empty string.
+8. OUTPUT FORMAT: Output ONLY the raw Markdown text. Do not add introductions or conclusions.
+"""
+    
     async with sem:
-        return await refine_chunk(chunk_text, chunk_index)
-
-async def refine_chunk(chunk_text: str, chunk_index: int) -> str:
-    """Обробляє один невеликий шматок тексту через LLM."""
-    system_prompt = """
-    You are a STRICT Markdown formatting engine. 
-    Your ONLY job is to fix the Markdown hierarchy and tables from OCR output.
-    You do NOT converse, you do NOT summarize, and you do NOT add ANY introductory or concluding remarks.
-    
-    YOUR EXACT TASK:
-    1. Receive raw, unformatted text extracted from an OCR engine.
-    2. DO NOT REPHRASE, SUMMARIZE, OR CHANGE ANY WORDS. Keep the exact original text, even if OCR has minor typos. Your job is ONLY markup.
-    3. Reconstruct the logical hierarchy using Markdown headings (# for main title, ## for chapters, ### for sections, etc.) based on context and numbering (e.g., 1., 1.1, 1.1.1).
-    4. Fix broken tables and lists, formatting them perfectly in Markdown.
-    5. Remove all garbage data: page numbers, repetitive headers/footers, and meaningless characters.
-    6. DO NOT alter the original meaning, facts, or language of the text. Keep it in the original language (Ukrainian/English/Russian).
-    
-    CRITICAL CONSTRAINT: Output ONLY the formatted Markdown. If you output phrases like "Here is the formatted text:" or "The text says...", you will fail your core directive.
-    """
-    try:
+        # Використовуємо вказану тобою модель (переконайся, що ID точний для OpenRouter)
         response = await llm_client.chat.completions.create(
-            model="qwen/qwen-2.5-72b-instruct",
+            model="qwen/qwen3-vl-32b-instruct", 
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"RAW TEXT TO FORMAT:\n\n{chunk_text}"}
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
+                    ]
+                }
             ],
-            temperature=0.0,
-            max_tokens=8000 # Даємо моделі простір для відповіді
+            temperature=0.0
         )
         return response.choices[0].message.content.strip()
+
+async def fallback_liteparse(file_bytes: bytes, filename: str) -> str:
+    print("⚠️ LiteParse fallback (layout-aware)...")
+
+    result = await asyncio.to_thread(parser.parse, file_bytes)
+
+    return postprocess_text(result.text)
+
+def postprocess_text(text: str) -> str:
+    text = fix_hyphenation(text)
+    return text.strip()
+
+
+def fix_hyphenation(text: str) -> str:
+    import re
+    return re.sub(r'(\w+)-\s+(\w+)', r'\1\2', text)
+
+
+
+async def process_document_combined(file_bytes: bytes, filename: str) -> str:
+    """
+    Головний метод: намагається використати VLM, при помилці падає на фолбек.
+    """
+    try:
+        print("🚀 Запуск основної VLM моделі через OpenRouter...")
+        
+        # 1. Читаємо PDF прямо з пам'яті (блискавично швидка операція)
+        pdf_document = fitz.open(stream=file_bytes, filetype="pdf")
+        tasks = []
+        
+        # 2. Нарізаємо сторінки
+        for page_num in range(len(pdf_document)):
+            page = pdf_document.load_page(page_num)
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2)) 
+            img_base64 = base64.b64encode(pix.tobytes("jpeg")).decode("utf-8")
+            
+            # Додаємо сторінку в пул задач
+            tasks.append(process_page_with_vlm(img_base64, page_num + 1))
+            
+        # 3. Чекаємо на відповідь від усіх сторінок паралельно
+        pages_markdown = await asyncio.gather(*tasks)
+        
+        return "\n\n".join(pages_markdown)
+
     except Exception as e:
-        print(f"Помилка в чанку {chunk_index}: {e}")
-        return chunk_text # Повертаємо як є у разі збою
-
-async def refine_markdown_semantically(raw_markdown: str, max_chunk_size: int = 10000) -> str:
-    """Розбиває текст ПО ЗАГОЛОВКАХ, щоб не розривати контекст."""
-    
-    # Регулярний вираз: шукає початок рядка (^), за яким ідуть від 1 до 3 символів # і пробіл.
-    # Прапорець (?m) означає multiline.
-    # Ми розрізаємо текст ПЕРЕД заголовком, тому заголовок завжди буде на початку нового блоку.
-    parts = re.split(r'(?m)^(?=#{1,3}\s)', raw_markdown)
-    
-    chunks = []
-    current_chunk = ""
-    
-    for part in parts:
-        if not part.strip():
-            continue
-            
-        # Якщо додавання наступного розділу перевищить ліміт (20к символів)
-        # І поточний чанк вже має якісь дані, відправляємо його в масив
-        if len(current_chunk) + len(part) > max_chunk_size and current_chunk:
-            chunks.append(current_chunk)
-            current_chunk = part
-        else:
-            current_chunk += part
-            
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    print(f"Книгу розбито на {len(chunks)} семантичних блоків (по розділах).")
-    
-    tasks = [refine_chunk_safe(chunk, i) for i, chunk in enumerate(chunks)]
-    refined_chunks = await asyncio.gather(*tasks)
-    
-    return "\n\n".join(refined_chunks)
+        print(f"❌ Помилка основної VLM гілки: {str(e)}")
+        # 4. Якщо OpenRouter впав, відпрацьовує надійний локальний парсер
+        return await fallback_liteparse(file_bytes, filename)
