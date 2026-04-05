@@ -35,8 +35,6 @@ async def background_conversion_task(task_id: str, file_bytes: bytes, filename: 
     start_time = time.time() # Початок відліку
     
     try:
-        # 1. OCR через Docling (виконуємо в окремому потоці, щоб не блокувати FastAPI)
-        # Припускаємо, що ти виніс логіку конвертації Docling в окрему функцію convert_with_docling
         markdown = await process_document_combined(file_bytes=file_bytes, filename=filename)
         
         # 3. Фіксуємо час

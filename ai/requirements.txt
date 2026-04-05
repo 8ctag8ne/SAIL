@@ -4,6 +4,7 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 python-multipart
+regex
 
 # База даних (Entity Framework style)
 sqlalchemy
@@ -18,3 +19,4 @@ openai
 
 pymupdf
 liteparse
+langchain-opendataloader-pdf

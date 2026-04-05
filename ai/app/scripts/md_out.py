@@ -4,7 +4,7 @@ from pathlib import Path
 # === CONFIG ===
 BASE_DIR = Path(__file__).resolve().parent
 
-INPUT_FILE = BASE_DIR / "input_water_.txt"
+INPUT_FILE = BASE_DIR / "input_local.txt"
 OUTPUT_DIR = (BASE_DIR / "../artifacts").resolve()
 
 def main():

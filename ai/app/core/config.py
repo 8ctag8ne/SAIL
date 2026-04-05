@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     UNSTRUCTURED_API_KEY: str
     OPENROUTER_API_KEY: str
+    OLLAMA_API_BASE: str
     
     @property
     def is_development(self) -> bool:
