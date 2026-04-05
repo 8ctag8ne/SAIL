@@ -18,5 +18,5 @@ langchain-community
 openai
 
 pymupdf
-liteparse
+# liteparse
 langchain-opendataloader-pdf
