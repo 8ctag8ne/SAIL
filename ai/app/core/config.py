@@ -3,7 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
-    DATABASE_URL: str
+    DATABASE_URL_LOCAL: str
+    SUPABASE_SESSION_POOLER: str
     UNSTRUCTURED_API_KEY: str
     OPENROUTER_API_KEY: str
     OLLAMA_API_BASE: str

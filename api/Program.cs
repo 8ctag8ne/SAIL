@@ -137,7 +137,9 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
 
-builder.Services.AddHttpClient("AiService", c => c.BaseAddress = new Uri("http://sail-ai:8000/"));
+var aiServiceUrl = builder.Configuration["AI_SERVICE_URL"] ?? "http://localhost:8000";
+
+builder.Services.AddHttpClient("AiService", c => c.BaseAddress = new Uri(aiServiceUrl));
 
 var app = builder.Build();
 
@@ -153,6 +155,11 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
 
 try
 {
@@ -170,10 +177,5 @@ catch(Exception ex)
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
 
 app.Run();

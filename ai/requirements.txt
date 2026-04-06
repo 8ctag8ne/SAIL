@@ -14,9 +14,5 @@ pgvector           # Підтримка векторів у SQLAlchemy
 # ШІ та RAG
 langchain
 langchain-openai   # Використовуємо для OpenRouter
-langchain-community
-openai
-
-pymupdf
-# liteparse
 langchain-opendataloader-pdf
+# langchain-community

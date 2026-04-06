@@ -51,7 +51,7 @@ services:
       dockerfile: Dockerfile
     container_name: sail-ai
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/sail_db
+      - DATABASE_URL_LOCAL=postgresql+asyncpg://postgres:password@db:5432/sail_db
       - OPENROUTER_API_KEY=your_key_here
       - UNSTRUCTURED_API_KEY=your_key_here
     ports:
