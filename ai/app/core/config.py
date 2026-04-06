@@ -3,11 +3,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
-    DATABASE_URL_LOCAL: str
-    SUPABASE_SESSION_POOLER: str
-    UNSTRUCTURED_API_KEY: str
-    OPENROUTER_API_KEY: str
-    OLLAMA_API_BASE: str
+    DATABASE_URL_LOCAL: str | None = None
+    SUPABASE_SESSION_POOLER: str | None = None
+    OPENROUTER_API_KEY: str | None = None
+    OLLAMA_API_BASE: str | None = None  
     
     @property
     def is_development(self) -> bool:
