@@ -7,30 +7,8 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace MilLib.Services.Implementations;
-public class PdfService : IPdfRenderService, IPdfTextExtractorService
+public class PdfService : IPdfRenderService
 {
-    public string ExtractText(byte[] pdfBytes, int maxPages)
-    {
-        try
-        {
-            using var docReader = DocLib.Instance.GetDocReader(pdfBytes, new PageDimensions());
-            int totalPages = docReader.GetPageCount();
-            int pagesToExtract = Math.Min(totalPages, maxPages);
-
-            var text = new StringBuilder();
-            for (int i = 0; i < pagesToExtract; i++)
-            {
-                using var pageReader = docReader.GetPageReader(i);
-                text.Append(pageReader.GetText());
-            }
-            return text.ToString();
-        }
-        catch
-        {
-            return string.Empty;
-        }
-    }
-
     public Task<Image<Rgba32>> RenderFirstPageAsync(byte[] pdfBytes)
     {
         return RenderPageAsync(pdfBytes, 0);

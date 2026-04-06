@@ -1,9 +1,4 @@
 //api/Models/Entities/BookListBook.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace MilLib.Models.Entities
 {
     public class BookListBook

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Pgvector;
 
 #nullable disable
 
@@ -16,9 +17,10 @@ namespace api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -54,19 +56,19 @@ namespace api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "402a1338-7240-4e39-b928-1b44db8fda96",
+                            Id = "051175d7-28ea-4875-b47c-a96d4390bc24",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "a7340459-b0dd-4c73-93fd-bb212f183136",
+                            Id = "7d2be235-b0d5-4100-b5b1-df4c7799d92f",
                             Name = "Librarian",
                             NormalizedName = "LIBRARIAN"
                         },
                         new
                         {
-                            Id = "d48c3af6-8a3d-41c6-b3b3-82b55e6301e6",
+                            Id = "7f756616-709f-445e-a47c-2feba4e75d96",
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -227,9 +229,9 @@ namespace api.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("Id")
-                        .HasName("pk_author");
+                        .HasName("pk_authors");
 
-                    b.ToTable("author", (string)null);
+                    b.ToTable("authors", (string)null);
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.AuthorBook", b =>
@@ -243,12 +245,12 @@ namespace api.Migrations
                         .HasColumnName("author_id");
 
                     b.HasKey("BookId", "AuthorId")
-                        .HasName("pk_author_book");
+                        .HasName("pk_author_books");
 
                     b.HasIndex("AuthorId")
-                        .HasDatabaseName("ix_author_book_author_id");
+                        .HasDatabaseName("ix_author_books_author_id");
 
-                    b.ToTable("author_book", (string)null);
+                    b.ToTable("author_books", (string)null);
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.Book", b =>
@@ -259,6 +261,10 @@ namespace api.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(4096)")
+                        .HasColumnName("embedding");
 
                     b.Property<string>("FileUrl")
                         .HasColumnType("text")
@@ -282,9 +288,9 @@ namespace api.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("pk_book");
+                        .HasName("pk_books");
 
-                    b.ToTable("book", (string)null);
+                    b.ToTable("books", (string)null);
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.BookList", b =>
@@ -313,12 +319,12 @@ namespace api.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_book_list");
+                        .HasName("pk_book_lists");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_book_list_user_id");
+                        .HasDatabaseName("ix_book_lists_user_id");
 
-                    b.ToTable("book_list", (string)null);
+                    b.ToTable("book_lists", (string)null);
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.BookListBook", b =>
@@ -332,12 +338,12 @@ namespace api.Migrations
                         .HasColumnName("book_list_id");
 
                     b.HasKey("BookId", "BookListId")
-                        .HasName("pk_book_list_book");
+                        .HasName("pk_book_list_books");
 
                     b.HasIndex("BookListId")
-                        .HasDatabaseName("ix_book_list_book_book_list_id");
+                        .HasDatabaseName("ix_book_list_books_book_list_id");
 
-                    b.ToTable("book_list_book", (string)null);
+                    b.ToTable("book_list_books", (string)null);
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.BookTag", b =>
@@ -351,12 +357,12 @@ namespace api.Migrations
                         .HasColumnName("tag_id");
 
                     b.HasKey("BookId", "TagId")
-                        .HasName("pk_book_tag");
+                        .HasName("pk_book_tags");
 
                     b.HasIndex("TagId")
-                        .HasDatabaseName("ix_book_tag_tag_id");
+                        .HasDatabaseName("ix_book_tags_tag_id");
 
-                    b.ToTable("book_tag", (string)null);
+                    b.ToTable("book_tags", (string)null);
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.Comment", b =>
@@ -389,18 +395,66 @@ namespace api.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_comment");
+                        .HasName("pk_comments");
 
                     b.HasIndex("BookId")
-                        .HasDatabaseName("ix_comment_book_id");
+                        .HasDatabaseName("ix_comments_book_id");
 
                     b.HasIndex("ReplyToId")
-                        .HasDatabaseName("ix_comment_reply_to_id");
+                        .HasDatabaseName("ix_comments_reply_to_id");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_comment_user_id");
+                        .HasDatabaseName("ix_comments_user_id");
 
-                    b.ToTable("comment", (string)null);
+                    b.ToTable("comments", (string)null);
+                });
+
+            modelBuilder.Entity("MilLib.Models.Entities.DocumentChunk", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("integer")
+                        .HasColumnName("book_id");
+
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(2048)")
+                        .HasColumnName("embedding");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer")
+                        .HasColumnName("level");
+
+                    b.Property<int>("PageEnd")
+                        .HasColumnType("integer")
+                        .HasColumnName("page_end");
+
+                    b.Property<int>("PageStart")
+                        .HasColumnType("integer")
+                        .HasColumnName("page_start");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("text");
+
+                    b.HasKey("Id")
+                        .HasName("pk_document_chunks");
+
+                    b.HasIndex("BookId")
+                        .HasDatabaseName("ix_document_chunks_book_id");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("ix_document_chunks_parent_id");
+
+                    b.ToTable("document_chunks", (string)null);
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.Tag", b =>
@@ -425,9 +479,9 @@ namespace api.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("pk_tag");
+                        .HasName("pk_tags");
 
-                    b.ToTable("tag", (string)null);
+                    b.ToTable("tags", (string)null);
                 });
 
             modelBuilder.Entity("api.Models.Entities.Like", b =>
@@ -441,12 +495,12 @@ namespace api.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("BookId", "UserId")
-                        .HasName("pk_like");
+                        .HasName("pk_likes");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_like_user_id");
+                        .HasDatabaseName("ix_likes_user_id");
 
-                    b.ToTable("like", (string)null);
+                    b.ToTable("likes", (string)null);
                 });
 
             modelBuilder.Entity("api.Models.Entities.User", b =>
@@ -597,14 +651,14 @@ namespace api.Migrations
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_author_book_author_author_id");
+                        .HasConstraintName("fk_author_books_authors_author_id");
 
                     b.HasOne("MilLib.Models.Entities.Book", "Book")
                         .WithMany("Authors")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_author_book_book_book_id");
+                        .HasConstraintName("fk_author_books_books_book_id");
 
                     b.Navigation("Author");
 
@@ -617,7 +671,7 @@ namespace api.Migrations
                         .WithMany("BookLists")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_book_list_user_user_id");
+                        .HasConstraintName("fk_book_lists_users_user_id");
 
                     b.Navigation("User");
                 });
@@ -629,14 +683,14 @@ namespace api.Migrations
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_book_list_book_book_book_id");
+                        .HasConstraintName("fk_book_list_books_books_book_id");
 
                     b.HasOne("MilLib.Models.Entities.BookList", "BookList")
                         .WithMany("Books")
                         .HasForeignKey("BookListId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_book_list_book_book_list_book_list_id");
+                        .HasConstraintName("fk_book_list_books_book_lists_book_list_id");
 
                     b.Navigation("Book");
 
@@ -650,14 +704,14 @@ namespace api.Migrations
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_book_tag_book_book_id");
+                        .HasConstraintName("fk_book_tags_books_book_id");
 
                     b.HasOne("MilLib.Models.Entities.Tag", "Tag")
                         .WithMany("Books")
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_book_tag_tag_tag_id");
+                        .HasConstraintName("fk_book_tags_tags_tag_id");
 
                     b.Navigation("Book");
 
@@ -671,25 +725,45 @@ namespace api.Migrations
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_comment_book_book_id");
+                        .HasConstraintName("fk_comments_books_book_id");
 
                     b.HasOne("MilLib.Models.Entities.Comment", "ReplyTo")
                         .WithMany("Replies")
                         .HasForeignKey("ReplyToId")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("fk_comment_comment_reply_to_id");
+                        .HasConstraintName("fk_comments_comments_reply_to_id");
 
                     b.HasOne("api.Models.Entities.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_comment_user_user_id");
+                        .HasConstraintName("fk_comments_users_user_id");
 
                     b.Navigation("Book");
 
                     b.Navigation("ReplyTo");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MilLib.Models.Entities.DocumentChunk", b =>
+                {
+                    b.HasOne("MilLib.Models.Entities.Book", "Book")
+                        .WithMany("Chunks")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_document_chunks_books_book_id");
+
+                    b.HasOne("MilLib.Models.Entities.DocumentChunk", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_document_chunks_document_chunks_parent_id");
+
+                    b.Navigation("Book");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("api.Models.Entities.Like", b =>
@@ -699,14 +773,14 @@ namespace api.Migrations
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_like_book_book_id");
+                        .HasConstraintName("fk_likes_books_book_id");
 
                     b.HasOne("api.Models.Entities.User", "User")
                         .WithMany("Likes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_like_user_user_id");
+                        .HasConstraintName("fk_likes_users_user_id");
 
                     b.Navigation("Book");
 
@@ -724,6 +798,8 @@ namespace api.Migrations
 
                     b.Navigation("BookLists");
 
+                    b.Navigation("Chunks");
+
                     b.Navigation("Comments");
 
                     b.Navigation("Likes");
@@ -739,6 +815,11 @@ namespace api.Migrations
             modelBuilder.Entity("MilLib.Models.Entities.Comment", b =>
                 {
                     b.Navigation("Replies");
+                });
+
+            modelBuilder.Entity("MilLib.Models.Entities.DocumentChunk", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("MilLib.Models.Entities.Tag", b =>

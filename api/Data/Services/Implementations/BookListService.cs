@@ -30,10 +30,10 @@ namespace MilLib.Services.Implementations
                     bl.Description,
                     bl.IsPrivate,
                     bl.UserId,
-                    UserName = bl.User.UserName,
+                    UserName = bl.User!.UserName,
                     Books = bl.Books.Select(blb => new
                     {
-                        blb.Book.Id,
+                        blb.Book!.Id,
                         blb.Book.Title,
                         blb.Book.ImageUrl
                     }).ToList()
@@ -78,10 +78,10 @@ namespace MilLib.Services.Implementations
                     bl.Description,
                     bl.IsPrivate,
                     bl.UserId,
-                    UserName = bl.User.UserName,
+                    UserName = bl.User!.UserName,
                     Books = bl.Books.Select(blb => new
                     {
-                        blb.Book.Id,
+                        blb.Book!.Id,
                         blb.Book.Title,
                         blb.Book.ImageUrl
                     }).ToList()
@@ -117,10 +117,10 @@ namespace MilLib.Services.Implementations
                     bl.Description,
                     bl.IsPrivate,
                     bl.UserId,
-                    UserName = bl.User.UserName,
+                    UserName = bl.User!.UserName,
                     Books = bl.Books.Select(blb => new
                     {
-                        blb.Book.Id,
+                        blb.Book!.Id,
                         blb.Book.Title,
                         blb.Book.ImageUrl,
                         blb.Book.Info

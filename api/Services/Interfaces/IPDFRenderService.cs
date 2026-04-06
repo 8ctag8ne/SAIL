@@ -13,6 +13,5 @@ namespace api.Services.Interfaces
     {
         Task<Image<Rgba32>> RenderFirstPageAsync(byte[] pdfBytes);
         Task<Image<Rgba32>> RenderPageAsync(byte[] pdfBytes, int pageNumber, int dpi = 300);
-        // Task<Image<Rgba32>> RenderPageAsync(IDocReader docReader, int pageNumber, PageDimensions dimensions, int dpi);
     }
 }

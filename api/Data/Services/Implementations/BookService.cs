@@ -79,8 +79,8 @@ namespace MilLib.Services.Implementations
                     b.FileUrl,
                     b.Info,
                     b.LikesCount,
-                    Tags = b.Tags.Select(bt => new { bt.Tag.Id, bt.Tag.Title }).ToList(),
-                    Authors = b.Authors.Select(ab => new { ab.Author.Id, ab.Author.Name }).ToList()
+                    Tags = b.Tags.Select(bt => new { bt.Tag!.Id, bt.Tag.Title }).ToList(),
+                    Authors = b.Authors.Select(ab => new { ab.Author!.Id, ab.Author.Name }).ToList()
                 })
                 .ToListAsync();
 
@@ -135,15 +135,15 @@ namespace MilLib.Services.Implementations
                     b.Info,
                     b.FileUrl,
                     b.LikesCount,
-                    Tags = b.Tags.Select(bt => new { bt.Tag.Id, bt.Tag.Title }).ToList(),
-                    Authors = b.Authors.Select(ab => new { ab.Author.Id, ab.Author.Name }).ToList(),
+                    Tags = b.Tags.Select(bt => new { bt.Tag!.Id, bt.Tag.Title }).ToList(),
+                    Authors = b.Authors.Select(ab => new { ab.Author!.Id, ab.Author.Name }).ToList(),
                     Comments = b.Comments.Select(c => new
                     {
                         c.Id,
                         c.Content,
                         c.CreatedAt,
                         c.ReplyToId,
-                        User = new { c.User.Id, c.User.UserName }
+                        User = new { c.User!.Id, c.User.UserName }
                     }).ToList()
                 });
 

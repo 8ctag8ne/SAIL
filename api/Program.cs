@@ -3,9 +3,6 @@ using api.Helpers;
 using api.Models.Entities;
 using api.Services.Implementations;
 using api.Services.Interfaces;
-using Google.Apis.Auth.OAuth2;
-using Google.Cloud.AIPlatform.V1;
-using Grpc.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +11,6 @@ using Microsoft.OpenApi.Models;
 using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
 using dotenv.net;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 DotEnv.Load();
@@ -33,11 +29,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if(builder.Environment.IsProduction())
     {
-        options.UseNpgsql(builder.Configuration["SUPABASE_SESSION_POOLER"])  //prod (cloud)
+        options.UseNpgsql(
+            builder.Configuration["SUPABASE_SESSION_POOLER"], 
+            o => o.UseVector())  //prod (cloud)
             .UseSnakeCaseNamingConvention();
     } else
     {
-        options.UseNpgsql(builder.Configuration["DB_CONNECTION_LOCAL"])  //dev (local)
+        options.UseNpgsql(
+            builder.Configuration["DB_CONNECTION_LOCAL"],
+            o => o.UseVector())  //dev (local)
             .UseSnakeCaseNamingConvention(); 
     }
 });
@@ -68,7 +68,7 @@ builder.Services.AddAuthentication(options => {
         ValidAudience = builder.Configuration["JWT:Audience"],
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
-            System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"])
+            System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:SigningKey"]!)
         )
     };
 });
@@ -136,31 +136,10 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
-builder.Services.AddScoped<IPdfTextExtractorService, PdfService>();
-// builder.Services.AddScoped<IOcrService, OcrService>();
-// Реєстрація PredictionServiceClient через JSON-ключ
-builder.Services.AddScoped<PredictionServiceClient>(provider =>
-{
-    var location = Environment.GetEnvironmentVariable("Gemini__Location") ?? "us-central1";
-    var base64 = Environment.GetEnvironmentVariable("Gemini__Credentials_Base64");
 
-    var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+var aiServiceUrl = builder.Configuration["AI_SERVICE_URL"] ?? "http://localhost:8000";
 
-    var credential = GoogleCredential
-        .FromJson(json)
-        .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
-
-    return new PredictionServiceClientBuilder
-    {
-        Endpoint = $"{location}-aiplatform.googleapis.com",
-        ChannelCredentials = credential.ToChannelCredentials()
-    }.Build();
-});
-
-// Реєстрація сервісу з інтерфейсом
-builder.Services.AddScoped<IBookInfoAnalyzerService, GeminiVertexAiService>();
-builder.Services.AddScoped<ICheatSheetService, GeminiVertexAiService>();
-
+builder.Services.AddHttpClient("AiService", c => c.BaseAddress = new Uri(aiServiceUrl));
 
 var app = builder.Build();
 
@@ -176,6 +155,11 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
 
 try
 {
@@ -192,5 +176,6 @@ catch(Exception ex)
 }
 
 app.MapControllers();
+
 
 app.Run();

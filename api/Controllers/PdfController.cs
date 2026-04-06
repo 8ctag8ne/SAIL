@@ -1,12 +1,8 @@
 //api/Controllers/PdfController.cs
-using System.Text.RegularExpressions;
-using api.Models.DTOs;
-using api.Models.DTOs.PDFFile;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Models.DTOs.Pdf;
-using MilLib.Services.Implementations;
 using MilLib.Services.Interfaces;
 using SixLabors.ImageSharp.Formats.Png;
 
@@ -17,22 +13,10 @@ namespace MilLib.Controllers
     public class PdfController : ControllerBase
     {
         private readonly IPdfRenderService _pdfRenderService;
-        // private readonly IOcrService _ocrService;
-        private readonly IPdfTextExtractorService _pdfTextExtractor;
-        private readonly IBookInfoAnalyzerService _bookInfoAnalyzer;
 
-        private readonly IAuthorService _authorService;
-        private readonly ITagService _tagService;
-        private readonly ICheatSheetService _cheatSheetService;
-
-        public PdfController(IPdfRenderService pdfRenderService, IPdfTextExtractorService pdfTextExtractor, IBookInfoAnalyzerService bookInfoAnalyzer, IAuthorService authorService, ITagService tagService, ICheatSheetService cheatSheetService)
+        public PdfController(IPdfRenderService pdfRenderService, IAuthorService authorService, ITagService tagService)
         {
             _pdfRenderService = pdfRenderService;
-            _pdfTextExtractor = pdfTextExtractor;
-            _bookInfoAnalyzer = bookInfoAnalyzer;
-            _authorService = authorService;
-            _tagService = tagService;
-            _cheatSheetService = cheatSheetService;
         }
 
         [HttpPost("render-first-page")]
@@ -58,13 +42,13 @@ namespace MilLib.Controllers
 
                 return File(ms.ToArray(), "image/png");
             }
-            catch (ArgumentOutOfRangeException ex)
+            catch (ArgumentOutOfRangeException)
             {
                 return BadRequest("Invalid page number");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Error processing PDF");
+                return StatusCode(500, $"Error processing PDF: {ex.Message}");
             }
         }
 
@@ -73,106 +57,6 @@ namespace MilLib.Controllers
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             return ms.ToArray();
-        }
-
-        // [HttpPost("ocr")]
-        // [Authorize(Roles = "Admin,Librarian")]
-        // public async Task<IActionResult> ExtractText([FromForm] OcrRequestDto dto)
-        // {
-        //     try
-        //     {
-        //         var file = dto.PdfFile;
-        //         if (file == null || file.Length == 0)
-        //             return BadRequest("PDF file is required.");
-
-        //         // // Читання PDF
-        //         using var stream = file.OpenReadStream();
-        //         var pdfBytes = await ReadAllBytesAsync(stream);
-
-        //         // Спроба витягти текст через PDF Text Extractor
-        //         var pdfText = _pdfTextExtractor.ExtractText(pdfBytes, dto.PageCount);
-        //         if (IsTextValid(pdfText))
-        //             return Ok(pdfText);
-
-        //         // // Якщо текст невалідний — використовуємо OCR з DPI=300
-        //         using var ocrStream = file.OpenReadStream();
-        //         var ocrText = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
-        //         return Ok(ocrText);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Console.WriteLine("OCR processing failed: " + ex.Message);
-        //         return StatusCode(500, $"Error: {ex.Message}");
-        //     }
-        // }
-
-        private bool IsTextValid(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return false;
-
-            // Приклад перевірки: мінімум 50 слів довжиною від 3 літер
-            var wordMatches = Regex.Matches(text, @"\b\w{3,}\b");
-            return wordMatches.Count >= 50;
-        }
-
-        [HttpPost("analyze-book")]
-        [Authorize(Roles = "Admin,Librarian")]
-        public async Task<IActionResult> AnalyzeBookAsync([FromForm] OcrRequestDto dto)
-        {
-            try
-            {
-                var file = dto.PdfFile;
-                if (file == null || file.Length == 0)
-                    return BadRequest("PDF file is required.");
-
-                // Зчитування PDF
-                using var stream = file.OpenReadStream();
-                var pdfBytes = await ReadAllBytesAsync(stream);
-
-                // Спроба витягнути текст як searchable
-                var text = _pdfTextExtractor.ExtractText(pdfBytes, dto.PageCount);
-                // if (!IsTextValid(text))
-                // {
-                //     // Якщо текст невалідний — виконуємо OCR
-                //     using var ocrStream = file.OpenReadStream();
-                //     text = await _ocrService.ExtractTextAsync(ocrStream, dto.PageCount);
-                // }
-
-                if (!IsTextValid(text))
-                    return BadRequest("Не вдалося витягнути достатньо тексту для аналізу.");
-
-
-                var tags = await _tagService.GetAllSimpleAsync();
-                var authors = await _authorService.GetAllSimpleAsync();
-
-                var result = await _bookInfoAnalyzer.AnalyzeBookInfoAsync(text, tags, authors);
-                if (result.StartsWith("```json"))
-                {
-                    result = result.Substring(7);
-                }
-                result = result.TrimEnd('`');
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("AnalyzeBook failed: " + ex.Message);
-                return StatusCode(500, $"Error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("search-by-request")]
-        public async Task<IActionResult> GetCheatSheet([FromBody] string userRequest)
-        {
-            try
-            {
-                var cheatSheet = await _cheatSheetService.GenerateCheatSheet(userRequest);
-                return Ok(cheatSheet);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("GetCheatSheet failed: " + ex.Message);
-                throw;
-            }
         }
     }
 }

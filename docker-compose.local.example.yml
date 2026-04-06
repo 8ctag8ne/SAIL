@@ -1,6 +1,7 @@
 services:
+  # 1. База даних з підтримкою векторів
   db:
-    image: postgres:14-alpine
+    image: pgvector/pgvector:pg16 # Змінили на образ із pgvector
     container_name: sail-db
     environment:
       POSTGRES_DB: sail_db
@@ -9,11 +10,14 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d sail_db"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d sail_db" ]
       interval: 5s
       timeout: 5s
       retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
+  # 2. Твій основний .NET API
   api:
     build:
       context: ./api
@@ -21,22 +25,45 @@ services:
     container_name: sail-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      # ВАЖЛИВО: Host=db (назва сервісу в мережі Docker)
       - DB_CONNECTION_LOCAL=Host=db;Database=sail_db;Username=postgres;Password=password
-      - JWT__Issuer=http://localhost:8080/
-      - JWT__Audience=http://localhost:8080/
-      - JWT__SigningKey=YOUR_SECRET_JWT_SIGNING_KEY_HERE
-      - Gemini__ProjectId=YOUR_PROJECT_ID
-      - Gemini__Location=us-central1
-      - Gemini__Model=gemini-2.5-pro-preview-05-06
-      - Gemini__Publisher=google
-      - Gemini__JsonKeyPath=YOUR_GEMINI_KEY_FILE.json
-      - AllowedOrigins=http://localhost:3000
+      - AI_SERVICE_URL=http://ai-service:8000 # Посилання на Python сервіс
+      - AllowedOrigins=YOUR_ALLOWED_ORIGINS
+      - JWT__Issuer=YOUR_JWT_ISSUER
+      - JWT__Audience=YOUR_JWT_AUDIENCE
+      - JWT__SigningKey=YOUR_JWT_KEY
+      - Gemini__ProjectId=PROJECT_ID
+      - Gemini__Location=LOCATION
+      - Gemini__Model=MODEL
+      - Gemini__Publisher="google"
+      - Gemini__JsonKeyPath=PATH
+      - Gemini__Credentials_Base64=BASE_64_CREDS
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
 
+  # 3. Твій НОВИЙ Python AI-сервіс
+  ai-service:
+    build:
+      context: ./ai # Шлях до папки з Python кодом
+      dockerfile: Dockerfile
+    container_name: sail-ai
+    environment:
+      - DATABASE_URL_LOCAL=postgresql+asyncpg://postgres:password@db:5432/sail_db
+      - OPENROUTER_API_KEY=your_key_here
+      - UNSTRUCTURED_API_KEY=your_key_here
+    ports:
+      - "8000:8000"
+    dns:
+      - 8.8.8.8 # Google DNS
+      - 8.8.4.4
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 4. React Фронтенд
   frontend:
     image: node:22-alpine
     container_name: sail-frontend
@@ -50,3 +77,5 @@ services:
     command: sh -c "npm install && npm start"
     depends_on:
       - api
+volumes:
+  postgres_data:

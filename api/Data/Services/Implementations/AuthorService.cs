@@ -27,7 +27,7 @@ namespace MilLib.Services.Implementations
             // Фільтрація за іменем
             if (!string.IsNullOrEmpty(query.Title))
             {
-                authorsQuery = authorsQuery.Where(a => a.Name.Contains(query.Title));
+                authorsQuery = authorsQuery.Where(a => a.Name!.Contains(query.Title));
             }
 
             // Сортування
@@ -97,7 +97,7 @@ namespace MilLib.Services.Implementations
                     a.ImageUrl,
                     Books = a.Books.Select(ab => new
                     {
-                        ab.Book.Id,
+                        ab.Book!.Id,
                         ab.Book.Title,
                         ab.Book.ImageUrl,
                         ab.Book.Info

@@ -106,7 +106,7 @@ namespace MilLib.Controllers
                 var comment = await _commentService.UpdateCommentAsync(id, commentDto, currentUser.Id, isAdmin);
                 return Ok(comment);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 return Forbid();
             }
@@ -137,7 +137,7 @@ namespace MilLib.Controllers
                 await _commentService.DeleteCommentAsync(id, currentUser.Id, isAdmin);
                 return NoContent();
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
                 return Forbid();
             }
