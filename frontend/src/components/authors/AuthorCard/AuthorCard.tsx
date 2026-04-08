@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardMedia, Typography, Box, IconButton } from "@mui/material";
+import { Typography, Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import ConfirmDialog from "../../ui/ConfirmDialog";
 import AuthorForm from "../AuthorForm/AuthorForm";
 import { useQueryClient } from "@tanstack/react-query";
+import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
 
 const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const navigate = useNavigate();
@@ -65,60 +66,26 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
 
   return (
-    <Card
-      className="MuiCard-interactive"
-      onClick={() => navigate(`/authors/${author.id}`)}
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 2,
-        marginY: 2,
-      }}
-    >
-      {author.imageUrl ? (
-        <CardMedia
-          component="img"
-          sx={{ width: 150, height: 150, objectFit: "cover", marginRight: 2, borderRadius: 1, }}
-          image={author.imageUrl}
-          alt={author.name || "Author"}
-        />
-      ) : (
-        <Box
-          sx={{
-            width: 150,
-            height: 150,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 2,
-            background: "#eee",
-            borderRadius: 1,
-          }}
-        >
-          <PersonIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />
-        </Box>
-      )}
-      <CardContent sx={{ flex: 1, position: "relative" }}>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          {author.name}
-        </Typography>
-        {author.info && (
-          <Typography variant="body1" color="text.secondary" paragraph>
-            {author.info}
-          </Typography>
-        )}
-        {canEditOrDelete && (
-          <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-            <IconButton color="primary" onClick={handleEditClick}>
-              <EditIcon />
-            </IconButton>
-            <IconButton color="error" onClick={handleDeleteClick}>
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        )}
-      </CardContent>
+    <>
+      <BaseEntityCard
+        onClick={() => navigate(`/authors/${author.id}`)}
+        imageUrl={author.imageUrl}
+        imagePlaceholderIcon={<PersonIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
+        title={author.name}
+        description={author.info}
+        actions={
+          canEditOrDelete ? (
+            <>
+              <IconButton color="primary" onClick={handleEditClick}>
+                <EditIcon />
+              </IconButton>
+              <IconButton color="error" onClick={handleDeleteClick}>
+                <DeleteIcon />
+              </IconButton>
+            </>
+          ) : undefined
+        }
+      />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <AuthorForm
@@ -133,7 +100,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setIsDeleteConfirmOpen(false)}
       />
-    </Card>
+    </>
   );
 };
 
