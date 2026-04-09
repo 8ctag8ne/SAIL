@@ -30,11 +30,6 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
   footer,
   onClick,
 }) => {
-  const isDescriptionString = typeof description === "string";
-  const showGradient = isDescriptionString
-    ? (description as string).split("\n").length > 6
-    : true;
-
   const resolvedClassName = [className, onClick ? "MuiCard-interactive" : ""].filter(Boolean).join(" ");
 
   return (
@@ -49,7 +44,7 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
         marginY: 2,
         marginX: "auto",
         position: "relative",
-        overflow: "hidden",
+        overflow: "ellipsis",
         ...(onClick ? { cursor: "pointer" } : {}),
       }}
     >
@@ -89,29 +84,31 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           display: "flex",
           flexDirection: "column",
           flexGrow: 1,
+          minWidth: 0,
           p: 2,
-          overflow: "hidden",
+          overflow: "hidden", // Replaced invalid overflow: "ellipsis"
           "&:last-child": { pb: 2 } // Keep padding standard visually despite absolute bounds removal
         }}
       >
         {/* Top Row (Title & Actions) */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1, mb: 1 }}>
-          <Typography
-            variant="h5"
-            fontWeight="bold"
-            sx={{
-              flexGrow: 1,
-              minWidth: 0, // Fix flex truncation issues
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {title}
-          </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1, mb: 1, width: "100%" }}>
+          <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              sx={{
+                width: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {title}
+            </Typography>
+          </Box>
 
           {actions && (
-            <Box sx={{ flexShrink: 0, display: "flex", gap: 1 }}>
+            <Box sx={{ flex: "0 0 auto", display: "flex", gap: 1 }}>
               {actions}
             </Box>
           )}
@@ -120,21 +117,23 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
         {/* Middle Section (Subtitle & Description) */}
         {subtitle && <Box sx={{ mb: 1 }}>{subtitle}</Box>}
 
+        {tags && (
+          <Box sx={{ mb: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {tags}
+          </Box>
+        )}
+
         {description && (
-          <Box
-            sx={{
-              maxHeight: MAX_DESCRIPTION_HEIGHT,
-              overflow: "hidden",
-              position: "relative",
-              maxWidth: "100%",
-              mb: 1,
-            }}
-          >
+          <Box sx={{ mb: 1, width: "100%", maxWidth: "100%" }}>
             <Typography
               variant="body1"
               color="text.secondary"
               component="div"
               sx={{
+                display: "-webkit-box",
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
                 whiteSpace: "pre-line",
                 wordBreak: "break-word",
                 m: 0,
@@ -142,36 +141,18 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
             >
               {description}
             </Typography>
-            <Box
-              sx={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 32,
-                background: (theme) => `linear-gradient(to bottom, transparent 0%, ${theme.palette.background.paper} 100%)`,
-                pointerEvents: "none",
-                display: showGradient ? "block" : "none",
-              }}
-            />
           </Box>
         )}
 
         {/* Spacer (Crucial for standardized height) */}
         <Box sx={{ flexGrow: 1 }} />
 
-        {/* Bottom Row (Tags & Footer) */}
-        {(tags || footer) && (
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 2, mt: 2 }}>
-            <Box sx={{ flexGrow: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {tags}
+        {/* Bottom Row (Footer) */}
+        {footer && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", mt: 2 }}>
+            <Box sx={{ flexShrink: 0 }}>
+              {footer}
             </Box>
-
-            {footer && (
-              <Box sx={{ flexShrink: 0 }}>
-                {footer}
-              </Box>
-            )}
           </Box>
         )}
       </CardContent>

@@ -75,12 +75,19 @@ const SimpleChipInput: React.FC<SimpleChipInputProps> = ({
                 {tagNames.map((name) => (
                     <Chip
                         key={name}
-                        label={name}
+                        label={
+                            <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+                                {name}
+                            </Box>
+                        }
                         color="primary"
                         onClick={() => handleRemove(name)}
                         onDelete={() => handleRemove(name)}
                         deleteIcon={<CloseIcon />}
-                        sx={{ cursor: "pointer" }}
+                        sx={{
+                            cursor: "pointer",
+                            maxWidth: '100%'
+                        }}
                     />
                 ))}
             </Box>

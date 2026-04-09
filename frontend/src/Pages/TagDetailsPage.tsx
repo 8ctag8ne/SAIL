@@ -5,13 +5,14 @@ import { Tag } from "../types";
 import { useUpdateTag, useDeleteTag } from "../hooks/useTags";
 import PageContainer from "../components/layout/PageContainer/PageContainer";
 import BooksPageComponent from "../components/books/BooksPageComponent/BooksPageComponent";
-import { Card, CardContent, CardMedia, Typography, Box, Button, IconButton } from "@mui/material";
+import { Typography, Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAuth } from "../contexts/AuthContext";
 import BASE_URL from "../config";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
+import BaseEntityDetails from "../components/ui/BaseEntityDetails";
 import EntityModal from "../components/ui/EntityModal/EntityModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
@@ -102,41 +103,29 @@ const TagDetailsPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <Card sx={{ display: "flex", flexDirection: "row", margin: "20px auto", padding: 2 }}>
-        {tag.imageUrl ? (
-          <CardMedia
-            component="img"
-            sx={{ width: 200, height: 200, objectFit: "cover", marginRight: 2 }}
-            image={tag.imageUrl}
-            alt={tag.title || "Tag"}
-          />
-        ) : (
-          <Box
-            sx={{
-              width: 200,
-              height: 200,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: 2,
-              background: "#eee",
-              borderRadius: 1,
-            }}
+      <BaseEntityDetails
+        imageUrl={tag.imageUrl}
+        imagePlaceholderIcon={<LocalOfferIcon sx={{ fontSize: 48, color: "#bdbdbd" }} />}
+        title={
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            gutterBottom
+            sx={{ width: "100%", wordBreak: "break-word" }}
           >
-            <LocalOfferIcon sx={{ fontSize: 48, color: "#bdbdbd" }} />
-          </Box>
-        )}
-        <CardContent sx={{ flex: 1, position: "relative" }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
             {tag.title}
           </Typography>
-          {tag.info && (
-            <Typography variant="body1" color="text.secondary" paragraph>
+        }
+        description={
+          tag.info && (
+            <Typography variant="body1" color="text.secondary" paragraph sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
               {tag.info}
             </Typography>
-          )}
-          {canEditOrDelete && (
-            <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
+          )
+        }
+        actions={
+          canEditOrDelete && (
+            <Box sx={{ display: "flex", gap: 1 }}>
               <IconButton color="primary" onClick={handleEditClick}>
                 <EditIcon />
               </IconButton>
@@ -144,28 +133,28 @@ const TagDetailsPage: React.FC = () => {
                 <DeleteIcon />
               </IconButton>
             </Box>
-          )}
-        </CardContent>
-        <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
-          <TagForm
-            key={isEditModalOpen ? "open" : "closed"}
-            initialData={{
-              title: tag.title ?? "",
-              info: tag.info ?? undefined,
-              imageUrl: tag.imageUrl ?? undefined,
-              books: tag.books,
-            }}
-            onSubmit={handleEditSubmit}
-          />
-        </EntityModal>
-        <ConfirmDialog
-          open={isDeleteConfirmOpen}
-          title="Ви впевнені, що хочете видалити цей тег?"
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setIsDeleteConfirmOpen(false)}
+          )
+        }
+      />
+      <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <TagForm
+          key={isEditModalOpen ? "open" : "closed"}
+          initialData={{
+            title: tag.title ?? "",
+            info: tag.info ?? undefined,
+            imageUrl: tag.imageUrl ?? undefined,
+            books: tag.books,
+          }}
+          onSubmit={handleEditSubmit}
         />
-      </Card>
-      <Typography variant="h5" gutterBottom>
+      </EntityModal>
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Ви впевнені, що хочете видалити цей тег?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
+      <Typography variant="h5" gutterBottom sx={{ wordBreak: "break-word" }}>
         Книги з тегом "{tag.title}":
       </Typography>
       <BooksPageComponent queryParams={{ TagIds: [Number(id)] }} />

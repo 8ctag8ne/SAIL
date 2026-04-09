@@ -1,5 +1,5 @@
 import React from 'react';
-import { Autocomplete, TextField, Chip, createFilterOptions, FilterOptionsState } from '@mui/material';
+import { Autocomplete, TextField, Chip, Box, createFilterOptions, FilterOptionsState } from '@mui/material';
 
 export interface Identifiable {
     id: string | number;
@@ -150,9 +150,16 @@ export default function UniversalCreatableSelector<T extends Identifiable>({
                         <Chip
                             {...getTagProps({ index })}
                             key={index}
-                            label={label}
+                            label={
+                                <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+                                    {label}
+                                </Box>
+                            }
                             variant={isNew ? "outlined" : "filled"}
                             color={isNew ? "default" : "primary"}
+                            sx={{
+                                maxWidth: '100%'
+                            }}
                         />
                     );
                 })

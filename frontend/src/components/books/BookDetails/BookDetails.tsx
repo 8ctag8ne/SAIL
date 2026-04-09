@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import {
-  Card,
-  CardContent,
-  CardMedia,
   Typography,
   Button,
   Box,
   Chip,
   IconButton,
 } from "@mui/material";
+import BaseEntityDetails from "../../ui/BaseEntityDetails";
 import DownloadIcon from "@mui/icons-material/Download";
 import BookIcon from "@mui/icons-material/Book";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
@@ -147,185 +145,188 @@ const BookDetails: React.FC<BookDetailsProps> = ({
 
 
   return (
-    <Card sx={{ display: "flex", flexDirection: "row", margin: "20px auto", padding: 2 }}>
-      <Box sx={{ flex: "0 0 255px", marginRight: 2 }}>
-        {fullImageUrl ? (
-          <CardMedia
-            component="img"
-            sx={{ width: "100%", height: "340px", objectFit: "cover", marginRight: 2, borderRadius: 1, }}
-            image={fullImageUrl}
-            alt={title}
-          />
-        ) : (
-          <Box
+    <>
+      <BaseEntityDetails
+        imageWidth={255}
+        imageHeight={340}
+        imageUrl={fullImageUrl}
+        imagePlaceholderIcon={<MenuBookIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
+        leftColumnAppend={
+          <>
+            {fileUrl && (
+              <Box sx={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<BookIcon />}
+                  href={fileUrl}
+                  target="_blank"
+                  sx={{ width: "100%" }}
+                >
+                  Читати
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<DownloadIcon />}
+                  sx={{ width: "100%" }}
+                  component="a"
+                  href={`${BASE_URL}/api/book/${id}/download`}
+                  download
+                >
+                  Завантажити
+                </Button>
+              </Box>
+            )}
+            <AddBookToListsDialog
+              open={addToListsOpen}
+              onClose={() => setAddToListsOpen(false)}
+              bookId={Number(id)}
+            />
+          </>
+        }
+        title={
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            gutterBottom
             sx={{
               width: "100%",
-              height: "340px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: 2,
-              background: "#eee",
-              borderRadius: 1,
+              wordBreak: "break-word",
             }}
           >
-            <MenuBookIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />
-          </Box>
-        )}
-        {fileUrl && (
-          <Box sx={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<BookIcon />}
-              href={fileUrl}
-              target="_blank"
-              sx={{ width: "100%" }}
-            >
-              Читати
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<DownloadIcon />}
-              sx={{ width: "100%" }}
-              component="a"
-              href={`${BASE_URL}/api/book/${id}/download`}
-              download
-            >
-              Завантажити
-            </Button>
-          </Box>
-        )}
-        <AddBookToListsDialog
-          open={addToListsOpen}
-          onClose={() => setAddToListsOpen(false)}
-          bookId={Number(id)}
-        />
-      </Box>
-      <CardContent sx={{ flex: 1, position: "relative" }}>
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          gutterBottom
-          sx={{
-            wordBreak: "break-word", // Додає перенос слів, якщо дуже довга назва
-            pr: canEditOrDelete ? 10 : 0,
-          }}
-        >
-          {title}
-        </Typography>
-        {authors.length > 0 && (
-          <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>
-            Авторство:{" "}
-            {authors.map((a, idx) => (
-              <React.Fragment key={a.id}>
-                <Box
-                  component="span"
-                  key={a.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAuthorClick(a.id);
-                  }}
+            {title}
+          </Typography>
+        }
+        subtitle={
+          authors.length > 0 && (
+            <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>
+              Авторство:{" "}
+              {authors.map((a, idx) => (
+                <React.Fragment key={a.id}>
+                  <Box
+                    component="span"
+                    key={a.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAuthorClick(a.id);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      color: "primary.main",
+                      transition: "all 0.1s ease-in-out",
+                      "&:hover": {
+                        backgroundColor: "primary.main",
+                        color: "#0d0f12",
+                        textDecoration: "none",
+                      }
+                    }}
+                  >
+                    [ {a.name} ]
+                  </Box>
+                  {idx < authors.length - 1 ? ", " : ""}
+                </React.Fragment>
+              ))}
+            </Typography>
+          )
+        }
+        description={
+          <>
+            {info && (
+              <Box sx={{ position: "relative", mb: 2 }}>
+                <Typography
+                  ref={infoRef}
+                  variant="body1"
+                  color="text.secondary"
+                  paragraph
                   sx={{
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    color: "primary.main",
-                    transition: "all 0.1s ease-in-out",
-                    "&:hover": {
-                      backgroundColor: "primary.main",
-                      color: "#0d0f12",
-                      textDecoration: "none",
-                    }
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    maxHeight: !expanded && showReadMore ? `${MAX_INFO_HEIGHT}px` : "none",
+                    overflow: !expanded && showReadMore ? "hidden" : "visible",
+                    textOverflow: !expanded && showReadMore ? "ellipsis" : "unset",
+                    display: "-webkit-box",
+                    WebkitLineClamp: !expanded && showReadMore ? 7 : "unset",
+                    WebkitBoxOrient: "vertical",
+                    pr: 3,
                   }}
                 >
-                  [ {a.name} ]
-                </Box>
-                {idx < authors.length - 1 ? ", " : ""}
-              </React.Fragment>
+                  {info}
+                  {!expanded && showReadMore && (
+                    <Box component="span" sx={{ color: "text.secondary" }}>...</Box>
+                  )}
+                </Typography>
+              </Box>
+            )}
+            {info && showReadMore && (
+              <Button
+                size="small"
+                sx={{
+                  mb: 2,
+                  px: 1,
+                  minWidth: "unset",
+                  fontSize: 14,
+                  display: "block",
+                }}
+                onClick={() => setExpanded((prev) => !prev)}
+              >
+                {expanded ? "Читати менше" : "Читати більше"}
+              </Button>
+            )}
+          </>
+        }
+        tags={
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", marginBottom: 2 }}>
+            {tags.map((tag) => (
+              <Chip
+                key={tag.id}
+                label={
+                  <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+                    {tag.title}
+                  </Box>
+                }
+                clickable
+                onClick={() => handleTagClick(tag.id)}
+                sx={{
+                  cursor: "pointer",
+                  maxWidth: "100%",
+                }}
+              />
             ))}
-          </Typography>
-        )}
-        {info && (
-          <Box sx={{ position: "relative", mb: 2 }}>
-            <Typography
-              ref={infoRef}
-              variant="body1"
-              color="text.secondary"
-              paragraph
-              sx={{
-                whiteSpace: "pre-line",
-                maxHeight: !expanded && showReadMore ? `${MAX_INFO_HEIGHT}px` : "none",
-                overflow: !expanded && showReadMore ? "hidden" : "visible",
-                textOverflow: !expanded && showReadMore ? "ellipsis" : "unset",
-                display: "-webkit-box",
-                WebkitLineClamp: !expanded && showReadMore ? 7 : "unset",
-                WebkitBoxOrient: "vertical",
-                pr: 3,
-              }}
+          </Box>
+        }
+        footer={
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <IconButton
+              onClick={handleLikeClick}
+              color={liked ? "primary" : "default"}
             >
-              {info}
-              {/* Додаємо ... якщо обрізано */}
-              {!expanded && showReadMore && (
-                <Box component="span" sx={{ color: "text.secondary" }}>...</Box>
-              )}
-            </Typography>
-          </Box>
-        )}
-        {/* Кнопка читати більше/менше під описом */}
-        {info && showReadMore && (
-          <Button
-            size="small"
-            sx={{
-              mb: 2,
-              px: 1,
-              minWidth: "unset",
-              fontSize: 14,
-              display: "block",
-            }}
-            onClick={() => setExpanded((prev) => !prev)}
-          >
-            {expanded ? "Читати менше" : "Читати більше"}
-          </Button>
-        )}
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", marginBottom: 2 }}>
-          {tags.map((tag) => (
-            <Chip
-              key={tag.id}
-              label={tag.title}
-              clickable
-              onClick={() => handleTagClick(tag.id)}
-              sx={{ cursor: "pointer" }}
-            />
-          ))}
-        </Box>
-        <Box sx={{ position: "absolute", bottom: 8, right: 8, display: "flex", gap: 1 }}>
-          <IconButton
-            onClick={handleLikeClick}
-            color={liked ? "primary" : "default"}
-          >
-            {liked ? <ThumbUpIcon /> : <ThumbUpOffAltIcon />}
-            <Typography sx={{ ml: 0.5 }}>{likeCount}</Typography>
-          </IconButton>
-          {user && (<IconButton
-            onClick={() => setAddToListsOpen(true)}
-            color="default"
-            aria-label="add to lists"
-          >
-            <PlaylistAddIcon />
-          </IconButton>)}
-        </Box>
-        {canEditOrDelete && (
-          <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-            <IconButton color="primary" onClick={handleEditClick}>
-              <EditIcon />
+              {liked ? <ThumbUpIcon /> : <ThumbUpOffAltIcon />}
+              <Typography sx={{ ml: 0.5 }}>{likeCount}</Typography>
             </IconButton>
-            <IconButton color="error" onClick={handleDeleteClick}>
-              <DeleteIcon />
-            </IconButton>
+            {user && (<IconButton
+              onClick={() => setAddToListsOpen(true)}
+              color="default"
+              aria-label="add to lists"
+            >
+              <PlaylistAddIcon />
+            </IconButton>)}
           </Box>
-        )}
-      </CardContent>
+        }
+        actions={
+          canEditOrDelete && (
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <IconButton color="primary" onClick={handleEditClick}>
+                <EditIcon />
+              </IconButton>
+              <IconButton color="error" onClick={handleDeleteClick}>
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          )
+        }
+      />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <BookForm
@@ -340,7 +341,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         onConfirm={handleConfirmDelete}
         onCancel={() => setIsDeleteConfirmOpen(false)}
       />
-    </Card>
+    </>
   );
 };
 

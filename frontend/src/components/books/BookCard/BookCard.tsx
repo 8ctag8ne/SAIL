@@ -164,13 +164,20 @@ const BookCard: React.FC<BookCardProps> = ({
         description={info}
         tags={
           tags.map(tag => (
-            <Chip
-              key={tag.id}
-              label={tag.title}
-              clickable
-              onClick={(e) => handleTagClick(e, tag.id)}
-              sx={{ cursor: "pointer" }}
-            />
+              <Chip
+                key={tag.id}
+                label={
+                  <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+                    {tag.title}
+                  </Box>
+                }
+                clickable
+                onClick={(e) => handleTagClick(e, tag.id)}
+                sx={{
+                  cursor: "pointer",
+                  maxWidth: "100%",
+                }}
+              />
           ))
         }
         footer={

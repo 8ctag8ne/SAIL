@@ -79,9 +79,16 @@ export function EntityChipSelect<T extends { id: number | string; name?: string;
                     {selectedItems.map((item) => (
                         <Chip
                             key={item.id}
-                            label={item.title || item.name}
+                            label={
+                                <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+                                    {item.title || item.name}
+                                </Box>
+                            }
                             color="primary"
                             onDelete={() => handleRemove(item.id)}
+                            sx={{
+                                maxWidth: '100%'
+                            }}
                         />
                     ))}
                 </Box>
