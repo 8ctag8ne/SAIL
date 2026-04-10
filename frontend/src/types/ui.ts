@@ -5,11 +5,14 @@ export type PdfPreview = {
     url: string;
 };
 
-export type CheatSheet = {
+export type RagSearchResult = {
     tips: string[];
     books: Book[];
     tags: Tag[];
 };
+
+/** @deprecated use RagSearchResult */
+export type CheatSheet = RagSearchResult;
 
 export type BookAnalysisResult = {
     title: string;

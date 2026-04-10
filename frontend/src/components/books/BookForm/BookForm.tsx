@@ -253,7 +253,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
               height: 240,
               objectFit: "cover",
               borderRadius: 1,
-              background: "#eee",
+              // background: "#eee",
             }}
             image={imagePreview || "https://placehold.co/180x240?text=No+Image"}
             alt="Book cover"
@@ -262,7 +262,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             variant="outlined"
             component="label"
             fullWidth
-            sx={{ mt: 1 }}
+            sx={{ mt: 0.5 }}
           >
             Завантажити фото
             <input
@@ -276,7 +276,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             variant="body2"
             color="text.secondary"
             sx={{
-              mt: 1,
+              mt: 0.5,
               maxWidth: 200,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -291,7 +291,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             variant="outlined"
             component="label"
             fullWidth
-            sx={{ mt: 2 }}
+            sx={{ mt: 0.5 }}
           >
             Завантажити файл
             <input
@@ -305,7 +305,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             variant="body2"
             color="text.secondary"
             sx={{
-              mt: 1,
+              mt: 0.5,
               maxWidth: 200,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -319,7 +319,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             <Button
               variant="outlined"
               fullWidth
-              sx={{ mt: 1 }}
+              sx={{ mt: 0.5 }}
               onClick={handleAnalyzeBook}
               disabled={analyzing}
             >
@@ -330,7 +330,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
             <Button
               variant="outlined"
               fullWidth
-              sx={{ mt: 1 }}
+              sx={{ mt: 0.5 }}
               onClick={handleGenerateCover}
               disabled={generatingCover}
             >

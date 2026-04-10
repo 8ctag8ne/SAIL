@@ -9,8 +9,6 @@ type Props = {
   cheatSheet: CheatSheet;
 };
 
-const MAX_BOOK_CARD_WIDTH = 1100;
-
 const RagSearchView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) => {
   const navigate = useNavigate();
 
@@ -20,12 +18,10 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) =>
       elevation={3}
       sx={{
         width: "100%",
-        maxWidth: 1100,
         mx: "auto",
         my: 3,
         p: { xs: 2, sm: 3 },
         borderRadius: 3,
-        background: "#fafbfc",
       }}
     >
       {/* Поради */}
@@ -41,8 +37,8 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) =>
                 elevation={0}
                 sx={{
                   p: 1.5,
-                  background: "#f5f5f5",
-                  borderLeft: "4px solid #1976d2",
+                  borderLeft: "4px solid",
+                  borderColor: "primary.main",
                   fontSize: "1.05rem",
                   color: "text.primary",
                 }}
@@ -83,18 +79,9 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) =>
           <Typography variant="h6" gutterBottom>
             Книги
           </Typography>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              //   gap: 2,
-              alignItems: "center",
-            }}
-          >
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
             {cheatSheet.books.map(book => (
-              <Box key={book.id} sx={{ width: "100%", maxWidth: MAX_BOOK_CARD_WIDTH }}>
-                <BookCard {...book} />
-              </Box>
+              <BookCard key={book.id} {...book} />
             ))}
           </Box>
         </>

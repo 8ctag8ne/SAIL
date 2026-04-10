@@ -14,7 +14,7 @@ import UserBookListsPage from "./pages/UserBookListsPage";
 import { useSearchParams } from "react-router-dom";
 import BookListPage from "./pages/BookListPage";
 import UsersPage from "./pages/UsersPage";
-import CheatSheetPage from "./pages/CheatSheetPage";
+import RagSearchPage from "./pages/RagSearchPage";
 import { Box } from "@mui/material";
 import { ToastContainer } from "react-fox-toast";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -71,7 +71,7 @@ function App() {
                                 <Route path="/users" element={<UsersPage />} />
                                 <Route path="/users/:id" element={<UserProfileRoute />} />
                                 <Route path="/booklists/:id" element={<BookListPage />} />
-                                <Route path="/cheatsheet" element={<CheatSheetPage />} />
+                                <Route path="/cheatsheet" element={<RagSearchPage />} />
                             </Routes>
                         </Box>
                     </BrowserRouter>

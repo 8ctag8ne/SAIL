@@ -71,7 +71,6 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "#eee",
               borderRadius: 1,
             }}
           >

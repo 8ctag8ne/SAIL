@@ -89,8 +89,8 @@ export type BookDetailsProps = {
     initialIsLiked: boolean;
 };
 
-export type CheatSheetViewProps = {
-    cheatSheetData: {
+export type RagSearchViewProps = {
+    ragSearchData: {
         tips: string[];
         books: Book[];
         tags: Tag[];
