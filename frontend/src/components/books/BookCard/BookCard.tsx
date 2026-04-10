@@ -266,6 +266,7 @@ const BookCard: React.FC<BookCardProps> = ({
             authors: authors,
           }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
     </>

@@ -153,6 +153,7 @@ const TagDetailsPage: React.FC = () => {
             books: tag.books,
           }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
       <ConfirmDialog

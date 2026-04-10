@@ -425,15 +425,15 @@ const Navbar = () => {
       {isAdminOrLibrarian && (
         <>
           <EntityModal open={isAddBookOpen} onClose={() => setIsAddBookOpen(false)}>
-            <BookForm onSubmit={handleAddBookSubmit} />
+            <BookForm onSubmit={handleAddBookSubmit} onClose={() => setIsAddBookOpen(false)} />
           </EntityModal>
 
           <EntityModal open={isAddAuthorOpen} onClose={() => setIsAddAuthorOpen(false)}>
-            <AuthorForm onSubmit={handleAddAuthorSubmit} />
+            <AuthorForm onSubmit={handleAddAuthorSubmit} onClose={() => setIsAddAuthorOpen(false)} />
           </EntityModal>
 
           <EntityModal open={isAddTagOpen} onClose={() => setIsAddTagOpen(false)}>
-            <TagForm key={isAddTagOpen ? "open" : "closed"} onSubmit={handleAddTagSubmit} />
+            <TagForm key={isAddTagOpen ? "open" : "closed"} onSubmit={handleAddTagSubmit} onClose={() => setIsAddTagOpen(false)} />
           </EntityModal>
         </>
       )}

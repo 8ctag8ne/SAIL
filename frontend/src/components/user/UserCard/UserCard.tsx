@@ -145,6 +145,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) => 
             role: user.roles.includes("Admin") ? "Admin" : user.roles.includes("Librarian") ? "Librarian" : "User"
           }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
 

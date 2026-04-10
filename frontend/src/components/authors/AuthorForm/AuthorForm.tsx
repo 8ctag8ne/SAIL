@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, DialogTitle } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 
 type AuthorFormProps = {
@@ -9,9 +10,10 @@ type AuthorFormProps = {
     image?: string | null;
   };
   onSubmit: (data: { name: string; info?: string; image: File | null }) => Promise<void>;
+  onClose?: () => void;
 };
 
-const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
+const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit, onClose }) => {
   const [form, setForm] = useState({
     name: initialData?.name || "",
     info: initialData?.info || "",
@@ -106,9 +108,27 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
         </Box>
         {/* Права частина: форма */}
         <Box sx={{ flex: 1 }}>
-          <Typography variant="h5" gutterBottom>
-            {initialData ? "Редагувати автора" : "Додати автора"}
-          </Typography>
+          <DialogTitle
+            sx={{
+              p: 0,
+              mb: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold">
+              {initialData ? "Редагувати автора" : "Додати автора"}
+            </Typography>
+            {onClose && (
+              <IconButton
+                onClick={onClose}
+                sx={{ color: "text.secondary", mr: -1 }}
+              >
+                <CloseIcon />
+              </IconButton>
+            )}
+          </DialogTitle>
           <form onSubmit={handleSubmit}>
             <TextField
               label="Ім'я"

@@ -98,6 +98,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
         <AuthorForm
           initialData={{ name: author.name ?? "", info: author.info ?? undefined, image: author.imageUrl ?? undefined }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
 

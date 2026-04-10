@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, DialogTitle } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { SimpleBook } from "../../../types";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import EntityListSelector from "../../ui/EntityListSelector";
@@ -13,9 +14,10 @@ type TagFormProps = {
     books?: SimpleBook[];
   };
   onSubmit: (data: { title: string; info?: string; image: File | null; bookIds: number[] }) => Promise<void>;
+  onClose?: () => void;
 };
 
-const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
+const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onClose }) => {
   const [form, setForm] = useState({
     title: initialData?.title || "",
     info: initialData?.info || "",
@@ -137,9 +139,27 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
         </Box>
         {/* Права частина: форма */}
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <Typography variant="h5" gutterBottom>
-            {initialData ? "Редагувати тег" : "Додати тег"}
-          </Typography>
+          <DialogTitle
+            sx={{
+              p: 0,
+              mb: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold">
+              {initialData ? "Редагувати тег" : "Додати тег"}
+            </Typography>
+            {onClose && (
+              <IconButton
+                onClick={onClose}
+                sx={{ color: "text.secondary", mr: -1 }}
+              >
+                <CloseIcon />
+              </IconButton>
+            )}
+          </DialogTitle>
           <form onSubmit={handleSubmit} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <TextField
               label="Назва"

@@ -341,6 +341,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         <BookForm
           initialData={{ title, info: info ?? "", imageUrl, fileUrl, tags, authors }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
 

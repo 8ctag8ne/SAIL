@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, DialogTitle } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import UniversalCreatableSelector from "../../ui/UniversalCreatableSelector";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { SimpleAuthor, SimpleTag } from "../../../types";
@@ -19,9 +20,10 @@ type BookFormProps = {
     authors?: SimpleAuthor[]; // ОНОВЛЕНО
   };
   onSubmit: (formData: FormData) => Promise<void>;
+  onClose?: () => void;
 };
 
-const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
+const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) => {
   const [form, setForm] = useState({
     title: initialData?.title || "",
     info: initialData?.info || "",
@@ -340,9 +342,27 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit }) => {
         </Box>
         {/* Права частина: форма */}
         <Box sx={{ flex: 1, width: "100%" }}>
-          <Typography variant="h5" gutterBottom>
-            {initialData ? "Редагувати книгу" : "Створити книгу"}
-          </Typography>
+          <DialogTitle
+            sx={{
+              p: 0,
+              mb: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold">
+              {initialData ? "Редагувати книгу" : "Створити книгу"}
+            </Typography>
+            {onClose && (
+              <IconButton
+                onClick={onClose}
+                sx={{ color: "text.secondary", mr: -1 }}
+              >
+                <CloseIcon />
+              </IconButton>
+            )}
+          </DialogTitle>
           <form onSubmit={handleSubmit}>
             <TextField
               label="Назва"

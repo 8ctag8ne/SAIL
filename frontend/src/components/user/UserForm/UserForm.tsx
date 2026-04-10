@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, TextField, Button, Typography, Paper, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Box, TextField, Button, Typography, Paper, FormControl, InputLabel, Select, MenuItem, IconButton, DialogTitle } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 
@@ -14,9 +15,10 @@ type UserFormProps = {
         role: string;
     };
     onSubmit: (data: { userName: string; email: string; about: string; phoneNumber: string; role: string }) => Promise<void>;
+    onClose?: () => void;
 };
 
-const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit }) => {
+const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onClose }) => {
     const { user: currentUser } = useAuth();
 
     const [form, setForm] = useState({
@@ -63,7 +65,25 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit }) => {
                     maxWidth: 500,
                 }}
             >
-                <Typography variant="h5" gutterBottom>Редагувати користувача</Typography>
+                <DialogTitle
+                    sx={{
+                        p: 0,
+                        mb: 2,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                    }}
+                >
+                    <Typography variant="h6" fontWeight="bold">Редагувати користувача</Typography>
+                    {onClose && (
+                        <IconButton
+                            onClick={onClose}
+                            sx={{ color: "text.secondary", mr: -1 }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    )}
+                </DialogTitle>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <TextField label="Ім'я" name="userName" value={form.userName} onChange={handleChange} required fullWidth />
                     <TextField label="Email" name="email" value={form.email} onChange={handleChange} required fullWidth type="email" />

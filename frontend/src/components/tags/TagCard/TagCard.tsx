@@ -122,6 +122,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
               books: fullTag.books,
             }}
             onSubmit={handleEditSubmit}
+            onClose={() => setIsEditModalOpen(false)}
           />
         ) : null}
       </EntityModal>
