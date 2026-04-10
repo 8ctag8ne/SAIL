@@ -65,49 +65,12 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit, onClose 
       <Paper
         elevation={3}
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 4,
           padding: 4,
           width: "100%",
           maxWidth: 700,
         }}
       >
-        {/* Ліва частина: фото */}
-        <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-          <CardMedia
-            component="img"
-            sx={{
-              width: 180,
-              height: 180,
-              objectFit: "cover",
-              borderRadius: 1,
-              background: "#eee",
-            }}
-            image={imagePreview || "https://placehold.co/180x180?text=No+Image"}
-            alt="Author photo"
-          />
-          <Button
-            variant="outlined"
-            component="label"
-            fullWidth
-            sx={{ mt: 1 }}
-          >
-            Завантажити фото
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-          </Button>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {imagePreview && !form.image && initialData?.image && "Current image"}
-            {form.image && form.image.name}
-          </Typography>
-        </Box>
-        {/* Права частина: форма */}
-        <Box sx={{ flex: 1 }}>
+        <form onSubmit={handleSubmit}>
           <DialogTitle
             sx={{
               p: 0,
@@ -129,36 +92,80 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit, onClose 
               </IconButton>
             )}
           </DialogTitle>
-          <form onSubmit={handleSubmit}>
-            <TextField
-              label="Ім'я"
-              fullWidth
-              margin="normal"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-            <TextField
-              label="Інформація"
-              fullWidth
-              margin="normal"
-              multiline
-              rows={4}
-              value={form.info}
-              onChange={(e) => setForm({ ...form, info: e.target.value })}
-            />
-            <Button
-              type="submit"
-              variant="outlined"
-              color="primary"
-              fullWidth
-              disabled={isSubmitting}
-              sx={{ marginTop: 2, height: 48 }}
-            >
-              {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити автора" : "Додати автора")}
-            </Button>
-          </form>
-        </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 4,
+            }}
+          >
+            {/* Ліва частина: фото */}
+            <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", gap: 2 }}>
+              <CardMedia
+                component="img"
+                sx={{
+                  width: "100%",
+                  aspectRatio: "1/1",
+                  objectFit: "cover",
+                  borderRadius: 1,
+                  background: "#eee",
+                }}
+                image={imagePreview || "https://placehold.co/180x180?text=No+Image"}
+                alt="Author photo"
+              />
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                sx={{ mt: 1 }}
+              >
+                Завантажити фото
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </Button>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {imagePreview && !form.image && initialData?.image && "Current image"}
+                {form.image && form.image.name}
+              </Typography>
+            </Box>
+            {/* Права частина: форма */}
+            <Box sx={{ flex: 1, overflow: "hidden" }}>
+              <TextField
+                label="Ім'я"
+                fullWidth
+                margin="none"
+                sx={{ mb: 2 }}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+              <TextField
+                label="Інформація"
+                fullWidth
+                margin="normal"
+                multiline
+                rows={4}
+                value={form.info}
+                onChange={(e) => setForm({ ...form, info: e.target.value })}
+              />
+              <Button
+                type="submit"
+                variant="outlined"
+                color="primary"
+                fullWidth
+                disabled={isSubmitting}
+                sx={{ marginTop: 2, height: 48 }}
+              >
+                {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити автора" : "Додати автора")}
+              </Button>
+            </Box>
+          </Box>
+        </form>
       </Paper>
     </Box>
   );
