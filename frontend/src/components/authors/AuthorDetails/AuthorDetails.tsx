@@ -12,6 +12,7 @@ import { useUpdateAuthor } from "../../../hooks/useAuthors";
 import { toast } from "react-fox-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import BaseEntityDetails from "../../ui/BaseEntityDetails";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 
 type AuthorDetailsProps = {
@@ -51,6 +52,22 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
     }
   };
 
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: handleEditClick,
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: onDelete,
+      isDestructive: true,
+    });
+  }
+
   return (
     <>
       <BaseEntityDetails
@@ -73,18 +90,7 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
             </Typography>
           )
         }
-        actions={
-          canEditOrDelete && (
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <IconButton color="primary" onClick={handleEditClick}>
-                <EditIcon />
-              </IconButton>
-              <IconButton color="error" onClick={onDelete}>
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          )
-        }
+        actions={<EntityActionMenu actions={menuActions} />}
       />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>

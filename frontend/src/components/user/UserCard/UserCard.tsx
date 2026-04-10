@@ -10,9 +10,12 @@ import { useAuth } from "../../../contexts/AuthContext";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import UserForm from "../UserForm/UserForm";
 import { useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import { toast } from "react-fox-toast";
-import { editUser, setUserRole } from "../../../api/Account";
+import { editUser, setUserRole, deleteUser } from "../../../api/Account";
 import { useQueryClient } from "@tanstack/react-query";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 const getRoleIcon = (roles: string[]) => {
   if (roles.includes("Admin")) return <AdminPanelSettingsIcon color="error" sx={{ fontSize: 32 }} />;
@@ -29,14 +32,20 @@ const getHighestRole = (roles: string[]): string => {
 type Props = {
   user: User;
   showEdit?: boolean;
+  onDeleted?: () => void;
+  onUpdated?: () => void;
 };
 
-const UserCard: React.FC<Props> = ({ user, showEdit }) => {
+const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.roles.includes("Admin");
 
+  const isOwner = currentUser?.id === user.id;
+  const canEditOrDelete = showEdit && (isAdmin || isOwner);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const handleEditSubmit = async (data: { userName: string; email: string; about: string; phoneNumber: string; role: string }) => {
@@ -54,6 +63,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
         isCloseBtn: true,
       });
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      onUpdated?.();
       setIsEditModalOpen(false);
     } catch (error) {
       toast.error("Не вдалося оновити дані.", {
@@ -61,6 +71,38 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
       });
     }
   };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteUser(user.id);
+      toast.success("Користувача видалено успішно!", {
+        isCloseBtn: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setIsDeleteConfirmOpen(false);
+      onDeleted?.();
+    } catch (error) {
+      toast.error("Не вдалося видалити користувача.", {
+        isCloseBtn: true,
+      });
+    }
+  };
+
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: () => setIsEditModalOpen(true),
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: () => setIsDeleteConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
 
   return (
     <Card
@@ -75,18 +117,21 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
           <Typography variant="body2" color="text.secondary">
             Роль: <b>{getHighestRole(user.roles)}</b>
           </Typography>
+          {user.about && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {user.about}
+            </Typography>
+          )}
+          {user.phoneNumber && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Телефон: {user.phoneNumber}
+            </Typography>
+          )}
         </Box>
-        {showEdit && isAdmin && (
-          <IconButton
-            color="primary"
-            sx={{ ml: "auto" }}
-            onClick={e => {
-              e.stopPropagation();
-              setIsEditModalOpen(true);
-            }}
-          >
-            <EditIcon />
-          </IconButton>
+        {menuActions.length > 0 && (
+          <Box sx={{ ml: "auto" }}>
+            <EntityActionMenu actions={menuActions} />
+          </Box>
         )}
       </CardContent>
 
@@ -102,6 +147,13 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
           onSubmit={handleEditSubmit}
         />
       </EntityModal>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Ви впевнені, що хочете видалити цього користувача?"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
     </Card>
   );
 };

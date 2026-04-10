@@ -13,6 +13,7 @@ import BASE_URL from "../config";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { toast } from "react-fox-toast";
 import BaseEntityDetails from "../components/ui/BaseEntityDetails";
+import EntityActionMenu, { ActionItem } from "../components/ui/EntityActionMenu";
 import EntityModal from "../components/ui/EntityModal/EntityModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
@@ -101,6 +102,22 @@ const TagDetailsPage: React.FC = () => {
     return <Typography>Тег не знайдений.</Typography>;
   }
 
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: handleEditClick,
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: handleDelete,
+      isDestructive: true,
+    });
+  }
+
   return (
     <PageContainer>
       <BaseEntityDetails
@@ -123,18 +140,7 @@ const TagDetailsPage: React.FC = () => {
             </Typography>
           )
         }
-        actions={
-          canEditOrDelete && (
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <IconButton color="primary" onClick={handleEditClick}>
-                <EditIcon />
-              </IconButton>
-              <IconButton color="error" onClick={handleDelete}>
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          )
-        }
+        actions={<EntityActionMenu actions={menuActions} />}
       />
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <TagForm

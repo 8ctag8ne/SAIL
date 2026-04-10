@@ -11,6 +11,7 @@ import ConfirmDialog from "../../ui/ConfirmDialog";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookListForm from "./BookListForm";
 import { toast } from "react-fox-toast";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 type BookListCardProps = {
   list: BookList;
@@ -53,6 +54,22 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
     }
   };
 
+  const menuActions: ActionItem[] = [];
+
+  if (isOwner) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: () => setEditing(true),
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: () => setIsDeleteConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
+
   return (
     <>
       <Card
@@ -72,25 +89,9 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
               {list.title}
             </Typography>
             {list.isPrivate && <LockIcon fontSize="small" color="action" />}
-            {isOwner && (
+            {menuActions.length > 0 && (
               <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setEditing(true);
-                  }}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={handleDeleteClick}
-                >
-                  <DeleteIcon />
-                </IconButton>
+                <EntityActionMenu actions={menuActions} />
               </Box>
             )}
           </Box>

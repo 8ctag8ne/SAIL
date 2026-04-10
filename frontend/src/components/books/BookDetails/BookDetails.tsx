@@ -23,6 +23,7 @@ import BookForm from "../BookForm/BookForm";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useLocation } from "react-router-dom";
@@ -143,6 +144,32 @@ const BookDetails: React.FC<BookDetailsProps> = ({
 
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
 
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: handleEditClick,
+    });
+  }
+
+  if (user) {
+    menuActions.push({
+      label: "Додати до списку",
+      icon: <PlaylistAddIcon />,
+      onClick: () => setAddToListsOpen(true),
+    });
+  }
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: handleDeleteClick,
+      isDestructive: true,
+    });
+  }
 
   return (
     <>
@@ -305,27 +332,9 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               {liked ? <ThumbUpIcon /> : <ThumbUpOffAltIcon />}
               <Typography sx={{ ml: 0.5 }}>{likeCount}</Typography>
             </IconButton>
-            {user && (<IconButton
-              onClick={() => setAddToListsOpen(true)}
-              color="default"
-              aria-label="add to lists"
-            >
-              <PlaylistAddIcon />
-            </IconButton>)}
           </Box>
         }
-        actions={
-          canEditOrDelete && (
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <IconButton color="primary" onClick={handleEditClick}>
-                <EditIcon />
-              </IconButton>
-              <IconButton color="error" onClick={handleDeleteClick}>
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-          )
-        }
+        actions={<EntityActionMenu actions={menuActions} />}
       />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>

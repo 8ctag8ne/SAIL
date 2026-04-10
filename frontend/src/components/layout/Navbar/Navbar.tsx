@@ -168,7 +168,7 @@ const Navbar = () => {
           Теги
         </Button>
         <Button color="inherit" component={Link} to="/cheatsheet" startIcon={<AutoAwesomeIcon />} sx={navActionSx}>
-          Чит - лист
+          Знання
         </Button>
         {isAdmin && (
           <Button color="inherit" component={Link} to="/users" startIcon={<PeopleIcon />} sx={navActionSx}>

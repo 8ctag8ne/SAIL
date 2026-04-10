@@ -16,6 +16,7 @@ import TagForm from "../TagForm/TagForm";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 type TagCardProps = {
   tag: Tag;
@@ -73,6 +74,22 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
 
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
 
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: () => setIsEditModalOpen(true),
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: () => setIsDeleteConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
+
   return (
     <>
       <BaseEntityCard
@@ -86,18 +103,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
             Книги: {tag.booksCount}
           </Typography>
         }
-        actions={
-          canEditOrDelete ? (
-            <>
-              <IconButton color="primary" onClick={handleEditClick}>
-                <EditIcon />
-              </IconButton>
-              <IconButton color="error" onClick={handleDeleteClick}>
-                <DeleteIcon />
-              </IconButton>
-            </>
-          ) : undefined
-        }
+        actions={<EntityActionMenu actions={menuActions} />}
       />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>

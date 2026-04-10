@@ -13,6 +13,7 @@ import ConfirmDialog from "../../ui/ConfirmDialog";
 import AuthorForm from "../AuthorForm/AuthorForm";
 import { useQueryClient } from "@tanstack/react-query";
 import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
   const navigate = useNavigate();
@@ -65,6 +66,22 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
 
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
 
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: () => setIsEditModalOpen(true),
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: () => setIsDeleteConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
+
   return (
     <>
       <BaseEntityCard
@@ -73,18 +90,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
         imagePlaceholderIcon={<PersonIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
         title={author.name}
         description={author.info}
-        actions={
-          canEditOrDelete ? (
-            <>
-              <IconButton color="primary" onClick={handleEditClick}>
-                <EditIcon />
-              </IconButton>
-              <IconButton color="error" onClick={handleDeleteClick}>
-                <DeleteIcon />
-              </IconButton>
-            </>
-          ) : undefined
-        }
+        actions={<EntityActionMenu actions={menuActions} />}
       />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>

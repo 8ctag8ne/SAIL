@@ -5,6 +5,7 @@ export interface BaseEntityCardProps {
   className?: string; // Allow global CSS classes
   minHeight?: number | string;
   imageUrl?: string | null;
+  imageAspectRatio?: string;
   imagePlaceholderIcon: React.ReactNode;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -21,6 +22,7 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
   className,
   minHeight,
   imageUrl,
+  imageAspectRatio,
   imagePlaceholderIcon,
   title,
   subtitle,
@@ -55,7 +57,8 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           alt="Entity Image"
           sx={{
             width: { xs: "100%", sm: 150 },
-            height: { xs: 200, sm: "auto" },
+            height: "auto",
+            aspectRatio: imageAspectRatio || "2/3",
             objectFit: "cover",
             flexShrink: 0,
             marginRight: { xs: 0, sm: 2 },
@@ -66,7 +69,8 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
         <Box
           sx={{
             width: { xs: "100%", sm: 150 },
-            height: { xs: 200, sm: "auto" },
+            height: "auto",
+            aspectRatio: imageAspectRatio || "2/3",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

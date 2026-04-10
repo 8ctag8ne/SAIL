@@ -13,8 +13,11 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../BookForm/BookForm";
 import { updateBook } from "../../../api/BookApi";
 import { useQueryClient } from "@tanstack/react-query";
-import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book } from "@mui/icons-material";
+import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book, Download as DownloadIcon, PlaylistAdd as PlaylistAddIcon } from "@mui/icons-material";
 import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
+import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
+import BASE_URL from "../../../config";
 
 type BookCardProps = {
   id: number;
@@ -24,13 +27,14 @@ type BookCardProps = {
   tags: SimpleTag[];
   likesCount?: number;
   isLiked?: boolean;
+  fileUrl?: string;
   authors?: SimpleAuthor[];
 };
 
 const MAX_INFO_HEIGHT = 120;
 
 const BookCard: React.FC<BookCardProps> = ({
-  id, title, imageUrl, info, tags,
+  id, title, imageUrl, info, tags, fileUrl,
   likesCount = 0, isLiked = false, authors = [],
 }) => {
   const navigate = useNavigate();
@@ -46,6 +50,7 @@ const BookCard: React.FC<BookCardProps> = ({
   const handleNavigate = () => navigate(`/books/${id}`);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [addToListsOpen, setAddToListsOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { mutateAsync: toggleLikeMutation } = useToggleLike();
@@ -125,6 +130,50 @@ const BookCard: React.FC<BookCardProps> = ({
     navigate(`/authors/${authorId}`);
   };
 
+  const handleDownloadClick = () => {
+    const link = document.createElement("a");
+    link.href = `${BASE_URL}/api/book/${id}/download`;
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const menuActions: ActionItem[] = [];
+  
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <Edit />,
+      onClick: () => setIsEditModalOpen(true),
+    });
+  }
+
+  if (user) {
+    menuActions.push({
+      label: "Додати до списку",
+      icon: <PlaylistAddIcon />,
+      onClick: () => setAddToListsOpen(true),
+    });
+  }
+
+  if (fileUrl) {
+    menuActions.push({
+      label: "Завантажити",
+      icon: <DownloadIcon />,
+      onClick: handleDownloadClick,
+    });
+  }
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Видалити",
+      icon: <Delete />,
+      onClick: () => setConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
+
   return (
     <>
       <BaseEntityCard
@@ -188,19 +237,16 @@ const BookCard: React.FC<BookCardProps> = ({
             </IconButton>
           ) : undefined
         }
-        actions={
-          canEditOrDelete ? (
-            <>
-              <IconButton color="primary" onClick={handleEditClick}>
-                <Edit />
-              </IconButton>
-              <IconButton color="error" onClick={handleDeleteClick}>
-                <Delete />
-              </IconButton>
-            </>
-          ) : undefined
-        }
+        actions={<EntityActionMenu actions={menuActions} />}
       />
+
+      {user && (
+        <AddBookToListsDialog
+          open={addToListsOpen}
+          onClose={() => setAddToListsOpen(false)}
+          bookId={id}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmOpen}
