@@ -108,6 +108,11 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onClose }) => 
             justifyContent: "space-between",
             alignItems: "center",
             flexShrink: 0, // Забороняємо шапці стискатися
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "background.paper",
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
           }}
         >
           <Typography variant="h6" fontWeight="bold">

@@ -226,200 +226,195 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
   };
 
   return (
-    <Box
+    <Paper
+      elevation={3}
       sx={{
-        width: "900px",
+        width: 900,
         maxWidth: "100%",
+        height: { xs: "100dvh", md: "90vh" },
+        maxHeight: "90vh",
         display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
+        flexDirection: "column",
+        overflow: "hidden",
+        borderRadius: { xs: 0, md: 2 },
       }}
     >
-      <Paper
-        elevation={3}
-        sx={{
-          padding: 4,
-          width: "100%",
-          maxWidth: 900,
-        }}
-      >
-        <form onSubmit={handleSubmit}>
-          <DialogTitle
-            sx={{
-              p: 0,
-              mb: 2,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography variant="h6" fontWeight="bold">
-              {initialData ? "Редагувати книгу" : "Створити книгу"}
-            </Typography>
-            {onClose && (
-              <IconButton
-                onClick={onClose}
-                sx={{ color: "text.secondary", mr: -1 }}
-              >
-                <CloseIcon />
-              </IconButton>
-            )}
-          </DialogTitle>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <DialogTitle
+          sx={{
+            p: 3,
+            pb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "background.paper",
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            flexShrink: 0,
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold">
+            {initialData ? "Редагувати книгу" : "Створити книгу"}
+          </Typography>
+          {onClose && (
+            <IconButton
+              onClick={onClose}
+              sx={{ color: "text.secondary", mr: -1 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          )}
+        </DialogTitle>
 
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              gap: 4,
-            }}
-          >
-            {/* Ліва частина: фото та файл */}
-            <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", gap: 2 }}>
-              <CardMedia
-                component="img"
-                sx={{
-                  width: "100%",
-                  aspectRatio: "1/1.414",
-                  objectFit: "cover",
-                  borderRadius: 1,
-                }}
-                image={imagePreview || "https://placehold.co/180x240?text=No+Image"}
-                alt="Book cover"
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 4,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
+          {/* Ліва частина: фото та файл */}
+          <Box sx={{ width: { xs: "100%", md: 220 }, flexShrink: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+            <CardMedia
+              component="img"
+              sx={{
+                width: "100%",
+                aspectRatio: "1/1.414",
+                objectFit: "cover",
+                borderRadius: 1,
+              }}
+              image={imagePreview || "https://placehold.co/180x240?text=No+Image"}
+              alt="Book cover"
+            />
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+            >
+              Завантажити фото
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageChange}
               />
+            </Button>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                maxWidth: 200,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                textAlign: "center",
+              }}
+            >
+              {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
+              {form.image && form.image.name}
+            </Typography>
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+            >
+              Завантажити файл
+              <input
+                type="file"
+                hidden
+                accept=".pdf,.epub"
+                onChange={handleFileChange}
+              />
+            </Button>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                maxWidth: 200,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                textAlign: "center",
+              }}
+            >
+              {fileName && `Файл: ${fileName}`}
+            </Typography>
+            {form.file && form.file.type === "application/pdf" && (
               <Button
                 variant="outlined"
-                component="label"
                 fullWidth
-                sx={{ mt: 0.5 }}
+                type="button"
+                onClick={handleAnalyzeBook}
+                disabled={analyzing}
               >
-                Завантажити фото
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
+                {analyzing ? <LoadingIndicator minHeight={20} /> : "Аналізувати книгу"}
               </Button>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  mt: 0.5,
-                  maxWidth: 200,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  textAlign: "center",
-                }}
-              >
-                {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
-                {form.image && form.image.name}
-              </Typography>
+            )}
+            {form.file && form.file.type === "application/pdf" && (
               <Button
                 variant="outlined"
-                component="label"
                 fullWidth
-                sx={{ mt: 0.5 }}
+                type="button"
+                onClick={handleGenerateCover}
+                disabled={generatingCover}
               >
-                Завантажити файл
-                <input
-                  type="file"
-                  hidden
-                  accept=".pdf,.epub"
-                  onChange={handleFileChange}
-                />
+                {generatingCover ? <LoadingIndicator minHeight={20} /> : "Звичайна обкладинка"}
               </Button>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  mt: 0.5,
-                  maxWidth: 200,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  textAlign: "center",
-                }}
-              >
-                {fileName && `Файл: ${fileName}`}
-              </Typography>
-              {form.file && form.file.type === "application/pdf" && (
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  type="button"
-                  sx={{ mt: 0.5 }}
-                  onClick={handleAnalyzeBook}
-                  disabled={analyzing}
-                >
-                  {analyzing ? <LoadingIndicator minHeight={20} /> : "Аналізувати книгу"}
-                </Button>
-              )}
-              {form.file && form.file.type === "application/pdf" && (
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  type="button"
-                  sx={{ mt: 0.5 }}
-                  onClick={handleGenerateCover}
-                  disabled={generatingCover}
-                >
-                  {generatingCover ? <LoadingIndicator minHeight={20} /> : "Звичайна обкладинка"}
-                </Button>
-              )}
-            </Box>
-            {/* Права частина: форма */}
-            <Box sx={{ flex: 1, width: "100%", overflow: "hidden" }}>
-              <TextField
-                label="Назва"
-                fullWidth
-                margin="none"
-                sx={{ mb: 2 }}
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-              />
-              <TextField
-                label="Опис"
-                fullWidth
-                margin="normal"
-                multiline
-                rows={4}
-                value={form.info}
-                onChange={(e) => setForm({ ...form, info: e.target.value })}
-              />
-              <UniversalCreatableSelector
-                label="Автори"
-                options={allAuthors}
-                selectedExisting={form.authors || []}
-                selectedNew={newAuthorNames ?? []}
-                onExistingChange={(authors) => setForm((prev) => ({ ...prev, authors: authors as SimpleAuthor[] }))}
-                onNewChange={setNewAuthorNames}
-                isLoading={authorsLoading}
-              />
-              <UniversalCreatableSelector
-                label="Теги"
-                options={allTags}
-                selectedExisting={form.tags || []}
-                selectedNew={suggestedTagNames ?? []}
-                onExistingChange={(tags) => setForm((prev) => ({ ...prev, tags: tags as SimpleTag[] }))}
-                onNewChange={setSuggestedTagNames}
-                isLoading={tagsLoading}
-              />
-              <Button
-                type="submit"
-                variant="outlined"
-                color="primary"
-                fullWidth
-                disabled={isSubmitting}
-                sx={{ marginTop: 2, height: 48 }}
-              >
-                {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити книгу" : "Додати книгу")}
-              </Button>
-            </Box>
+            )}
           </Box>
-        </form>
-      </Paper>
-    </Box>
+          {/* Права частина: форма */}
+          <Box sx={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Назва"
+              fullWidth
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
+            <TextField
+              label="Опис"
+              fullWidth
+              multiline
+              rows={4}
+              value={form.info}
+              onChange={(e) => setForm({ ...form, info: e.target.value })}
+            />
+            <UniversalCreatableSelector
+              label="Автори"
+              options={allAuthors}
+              selectedExisting={form.authors || []}
+              selectedNew={newAuthorNames ?? []}
+              onExistingChange={(authors) => setForm((prev) => ({ ...prev, authors: authors as SimpleAuthor[] }))}
+              onNewChange={setNewAuthorNames}
+              isLoading={authorsLoading}
+            />
+            <UniversalCreatableSelector
+              label="Теги"
+              options={allTags}
+              selectedExisting={form.tags || []}
+              selectedNew={suggestedTagNames ?? []}
+              onExistingChange={(tags) => setForm((prev) => ({ ...prev, tags: tags as SimpleTag[] }))}
+              onNewChange={setSuggestedTagNames}
+              isLoading={tagsLoading}
+            />
+            <Button
+              type="submit"
+              variant="outlined"
+              color="primary"
+              fullWidth
+              disabled={isSubmitting}
+              sx={{ height: 48, flexShrink: 0, mt: 1 }}
+            >
+              {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити книгу" : "Додати книгу")}
+            </Button>
+          </Box>
+        </Box>
+      </form>
+    </Paper>
   );
 };
 

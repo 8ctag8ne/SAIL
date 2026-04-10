@@ -47,73 +47,85 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onClose }) =
     };
 
     return (
-        <Box
-            sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "flex-start",
-            }}
+    <Paper
+      elevation={3}
+      sx={{
+        width: 500,
+        maxWidth: "100%",
+        height: { xs: "100dvh", md: "auto" },
+        maxHeight: "90vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        borderRadius: { xs: 0, md: 2 },
+      }}
+    >
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <DialogTitle
+          sx={{
+            p: 3,
+            pb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "background.paper",
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            flexShrink: 0,
+          }}
         >
-            <Paper
-                elevation={3}
-                sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                    padding: 4,
-                    width: "100%",
-                    maxWidth: 500,
-                }}
+          <Typography variant="h6" fontWeight="bold">Редагувати користувача</Typography>
+          {onClose && (
+            <IconButton
+              onClick={onClose}
+              sx={{ color: "text.secondary", mr: -1 }}
             >
-                <DialogTitle
-                    sx={{
-                        p: 0,
-                        mb: 2,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                    }}
-                >
-                    <Typography variant="h6" fontWeight="bold">Редагувати користувача</Typography>
-                    {onClose && (
-                        <IconButton
-                            onClick={onClose}
-                            sx={{ color: "text.secondary", mr: -1 }}
-                        >
-                            <CloseIcon />
-                        </IconButton>
-                    )}
-                </DialogTitle>
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <TextField label="Ім'я" name="userName" value={form.userName} onChange={handleChange} required fullWidth />
-                    <TextField label="Email" name="email" value={form.email} onChange={handleChange} required fullWidth type="email" />
-                    <TextField label="Інформація" name="about" value={form.about} onChange={handleChange} multiline minRows={3} fullWidth />
-                    <TextField label="Номер телефону" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} fullWidth />
+              <CloseIcon />
+            </IconButton>
+          )}
+        </DialogTitle>
 
-                    {currentUser?.roles.includes("Admin") && (
-                        <FormControl fullWidth>
-                            <InputLabel>Роль</InputLabel>
-                            <Select value={role} label="Роль" onChange={e => setRole(e.target.value)}>
-                                {ROLES.map(r => (
-                                    <MenuItem key={r} value={r}>{r}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    )}
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
+          <TextField label="Ім'я" name="userName" value={form.userName} onChange={handleChange} required fullWidth />
+          <TextField label="Email" name="email" value={form.email} onChange={handleChange} required fullWidth type="email" />
+          <TextField label="Інформація" name="about" value={form.about} onChange={handleChange} multiline minRows={3} fullWidth />
+          <TextField label="Номер телефону" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} fullWidth />
 
-                    <Button
-                        type="submit"
-                        variant="outlined"
-                        color="primary"
-                        fullWidth
-                        disabled={isSubmitting}
-                        sx={{ marginTop: 2, height: 48 }}
-                    >
-                        {isSubmitting ? <LoadingIndicator minHeight={24} /> : "Зберегти"}
-                    </Button>
-                </form>
-            </Paper>
+          {currentUser?.roles.includes("Admin") && (
+            <FormControl fullWidth>
+              <InputLabel>Роль</InputLabel>
+              <Select value={role} label="Роль" onChange={e => setRole(e.target.value)}>
+                {ROLES.map(r => (
+                  <MenuItem key={r} value={r}>{r}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          <Button
+            type="submit"
+            variant="outlined"
+            color="primary"
+            fullWidth
+            disabled={isSubmitting}
+            sx={{ height: 48, flexShrink: 0, mt: 1 }}
+          >
+            {isSubmitting ? <LoadingIndicator minHeight={24} /> : "Зберегти"}
+          </Button>
         </Box>
+      </form>
+    </Paper>
     );
 };
 
