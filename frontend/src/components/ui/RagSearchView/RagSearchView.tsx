@@ -11,12 +11,12 @@ type Props = {
 
 const MAX_BOOK_CARD_WIDTH = 1100;
 
-const CheatSheetView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) => {
+const RagSearchView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) => {
   const navigate = useNavigate();
 
   return (
     <Paper
-    ref={ref}
+      ref={ref}
       elevation={3}
       sx={{
         width: "100%",
@@ -87,7 +87,7 @@ const CheatSheetView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) =
             sx={{
               display: "flex",
               flexDirection: "column",
-            //   gap: 2,
+              //   gap: 2,
               alignItems: "center",
             }}
           >
@@ -112,4 +112,4 @@ const CheatSheetView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) =
   );
 });
 
-export default CheatSheetView;
+export default RagSearchView;

@@ -87,6 +87,7 @@ const AuthorCard: React.FC<AuthorCardProps> = ({ author }) => {
       <BaseEntityCard
         onClick={() => navigate(`/authors/${author.id}`)}
         imageUrl={author.imageUrl}
+        imageAspectRatio="1/1"
         imagePlaceholderIcon={<PersonIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
         title={author.name}
         description={author.info}

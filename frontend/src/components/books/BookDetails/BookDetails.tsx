@@ -175,7 +175,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
     <>
       <BaseEntityDetails
         imageWidth={255}
-        imageHeight={340}
+        imageAspectRatio="1/1.414"
         imageUrl={fullImageUrl}
         imagePlaceholderIcon={<MenuBookIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
         leftColumnAppend={

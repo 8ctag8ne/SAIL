@@ -58,9 +58,10 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           sx={{
             width: { xs: "100%", sm: 150 },
             height: "auto",
-            aspectRatio: imageAspectRatio || "2/3",
+            aspectRatio: imageAspectRatio || "1/1.414",
             objectFit: "cover",
             flexShrink: 0,
+            alignSelf: "flex-start",
             marginRight: { xs: 0, sm: 2 },
             marginBottom: { xs: 2, sm: 0 },
           }}
@@ -70,11 +71,12 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           sx={{
             width: { xs: "100%", sm: 150 },
             height: "auto",
-            aspectRatio: imageAspectRatio || "2/3",
+            aspectRatio: imageAspectRatio || "1/1.414",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            alignSelf: "flex-start",
             marginRight: { xs: 0, sm: 2 },
             marginBottom: { xs: 2, sm: 0 },
           }}

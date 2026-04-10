@@ -122,6 +122,7 @@ const TagDetailsPage: React.FC = () => {
     <PageContainer>
       <BaseEntityDetails
         imageUrl={tag.imageUrl}
+        imageAspectRatio="1/1"
         imagePlaceholderIcon={<LocalOfferIcon sx={{ fontSize: 48, color: "#bdbdbd" }} />}
         title={
           <Typography

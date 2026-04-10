@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, Card, CardContent, Button, TextField, IconButton } from "@mui/material";
+import { Box, Typography, Card, CardContent, Button, TextField } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddCommentIcon from "@mui/icons-material/AddComment";
@@ -8,6 +8,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { addComment, updateComment, deleteComment } from "../../../api/CommentApi";
 import { useNavigate } from "react-router-dom";
 import ConfirmDialog from "../../ui/ConfirmDialog";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 type CommentSectionProps = {
     comments: Comment[];
@@ -161,24 +162,25 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                             )}
                         </CardContent>
                         {canEditOrDelete(comment) && editingId !== comment.id && (
-                            <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-                                <IconButton
-                                    color="primary"
-                                    onClick={() => {
-                                        setEditingId(comment.id);
-                                        setEditingContent(comment.content);
-                                    }}
-                                    size="small"
-                                >
-                                    <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                    color="error"
-                                    onClick={() => setDeleteDialogId(comment.id)}
-                                    size="small"
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
+                            <Box sx={{ position: "absolute", top: 4, right: 4 }}>
+                                <EntityActionMenu
+                                    actions={[
+                                        {
+                                            label: "Редагувати",
+                                            icon: <EditIcon />,
+                                            onClick: () => {
+                                                setEditingId(comment.id);
+                                                setEditingContent(comment.content);
+                                            },
+                                        },
+                                        {
+                                            label: "Видалити",
+                                            icon: <DeleteIcon />,
+                                            onClick: () => setDeleteDialogId(comment.id),
+                                            isDestructive: true,
+                                        },
+                                    ] as ActionItem[]}
+                                />
                             </Box>
                         )}
                     </Card>

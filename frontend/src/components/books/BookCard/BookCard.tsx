@@ -179,6 +179,7 @@ const BookCard: React.FC<BookCardProps> = ({
       <BaseEntityCard
         onClick={handleNavigate}
         imageUrl={fullImageUrl}
+        imageAspectRatio="1/1.414"
         imagePlaceholderIcon={<MenuBook sx={{ fontSize: 64, color: "#bdbdbd" }} />}
         title={title}
         subtitle={

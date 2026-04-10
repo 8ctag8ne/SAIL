@@ -95,6 +95,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
       <BaseEntityCard
         onClick={() => navigate(`/tags/${tag.id}`)}
         imageUrl={tag.imageUrl}
+        imageAspectRatio="1/1"
         imagePlaceholderIcon={<LocalOfferIcon sx={{ fontSize: 48, color: "#bdbdbd" }} />}
         title={tag.title}
         description={tag.info}

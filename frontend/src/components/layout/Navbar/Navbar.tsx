@@ -280,7 +280,7 @@ const Navbar = () => {
             <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
               <AutoAwesomeIcon />
             </ListItemIcon>
-            <ListItemText primary="Чит-лист" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
+            <ListItemText primary="Знання" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
           </ListItemButton>
         </ListItem>
         {isAdmin && (

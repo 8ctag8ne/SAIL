@@ -70,7 +70,7 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions }) => {
           },
         }}
       >
-        <Box sx={{ py: 1 }}>
+        <Box sx={{ py: 0 }}>
           <List>
             {actions.map((action, index) => (
               <ListItem disablePadding key={index}>

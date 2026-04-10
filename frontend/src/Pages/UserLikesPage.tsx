@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { getUserById } from "../api/Account";
 import { useLikedBooks } from "../hooks/useLikedBooks";
-import { getBookListsForUser } from "../api/BookListApi";
-import { User, BookList } from "../types";
+import { User } from "../types";
 import PageContainer from "../components/layout/PageContainer/PageContainer";
 import BookCard from "../components/books/BookCard/BookCard";
 import { Box, Typography, Tabs, Tab } from "@mui/material";
@@ -19,14 +18,12 @@ const UserLikesPage: React.FC = () => {
   const [profile, setProfile] = useState<User | null>(null);
   const { data: likedBooks = [] } = useLikedBooks(id);
   const [, setSearchParams] = useSearchParams();
-  const [bookLists, setBookLists] = useState<BookList[]>([]);
 
   const isOwnProfile = user && profile && user.id === profile.id;
 
   useEffect(() => {
     if (id) {
       getUserById(id).then((data) => setProfile(data as User));
-      getBookListsForUser(id).then(setBookLists);
     }
   }, [id]);
 

@@ -6,6 +6,7 @@ export interface BaseEntityDetailsProps {
   imagePlaceholderIcon: React.ReactNode;
   imageWidth?: number | string;
   imageHeight?: number | string;
+  imageAspectRatio?: string;
   leftColumnAppend?: React.ReactNode;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -19,7 +20,8 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
   imageUrl,
   imagePlaceholderIcon,
   imageWidth = 200,
-  imageHeight = 200,
+  imageHeight,
+  imageAspectRatio,
   leftColumnAppend,
   title,
   subtitle,
@@ -42,6 +44,7 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
         sx={{
           width: { xs: "100%", md: imageWidth },
           flexShrink: 0,
+          alignSelf: "flex-start",
           mr: { xs: 0, md: 3 },
           mb: { xs: 2, md: 0 },
         }}
@@ -51,7 +54,8 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
             component="img"
             sx={{
               width: "100%",
-              height: imageHeight,
+              height: imageHeight ?? "auto",
+              aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
               objectFit: "cover",
               borderRadius: 1,
             }}
@@ -62,7 +66,8 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
           <Box
             sx={{
               width: "100%",
-              height: imageHeight,
+              height: imageHeight ?? "auto",
+              aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

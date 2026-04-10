@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box } from "@mui/material";
 import SearchBar from "../components/search/SearchBar/SearchBar";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
-import CheatSheetView from "../components/ui/CheatSheetView/CheatSheetView";
+import CheatSheetView from "../components/ui/RagSearchView/RagSearchView";
 import { getCheatSheet } from "../api/FileApi";
 import { CheatSheet } from "../types";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";

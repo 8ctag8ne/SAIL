@@ -72,6 +72,7 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
     <>
       <BaseEntityDetails
         imageUrl={author.imageUrl}
+        imageAspectRatio="1/1"
         imagePlaceholderIcon={<PersonIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
         title={
           <Typography
