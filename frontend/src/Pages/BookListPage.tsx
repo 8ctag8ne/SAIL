@@ -8,6 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
 import BookListCard from "../components/books/BookList/BookListCard";
+import { toast } from "react-fox-toast";
 
 const BookListPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +16,7 @@ const BookListPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const isOwner = user && bookList && (user.id === bookList.userId || user.roles.includes("Admin"));
+  const isOwner = user && bookList && (user.id === bookList.userId);
 
   const [removeBookConfirmId, setRemoveBookConfirmId] = useState<number | null>(null);
 
@@ -39,7 +40,10 @@ const BookListPage: React.FC = () => {
     if (!bookList || removeBookConfirmId === null) return;
     try {
       await removeBookFromList(removeBookConfirmId, bookList.id);
+      toast.success("Книгу успішно вилучено!", { isCloseBtn: true });
       fetchList();
+    } catch (error) {
+      toast.error("Не вдалося вилучити книгу.", { isCloseBtn: true });
     } finally {
       setRemoveBookConfirmId(null);
     }
@@ -64,37 +68,7 @@ const BookListPage: React.FC = () => {
         ) : (
           bookList.books.map(book => (
             <Box key={book.id} sx={{ position: "relative", mb: 2 }}>
-              <BookCard tags={[]} {...book} />
-              {isOwner && (
-                <Box
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveBookClick(book.id);
-                  }}
-                  sx={{
-                    position: "absolute",
-                    bottom: 16,
-                    right: 16,
-                    cursor: "pointer",
-                    color: "error.main",
-                    fontFamily: "monospace",
-                    fontSize: "0.85rem",
-                    fontWeight: "bold",
-                    letterSpacing: "0.05em",
-                    zIndex: 10,
-                    bgcolor: "background.paper",
-                    px: 1,
-                    marginY: -1,
-                    textTransform: "uppercase",
-                    "&:hover": {
-                      textDecoration: "underline",
-                      color: "error.light",
-                    }
-                  }}
-                >
-                  [ ВИЛУЧИТИ ]
-                </Box>
-              )}
+              <BookCard tags={[]} {...book} onRemoveFromList={isOwner ? () => handleRemoveBookClick(book.id) : undefined} />
             </Box>
           ))
         )}

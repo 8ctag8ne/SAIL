@@ -13,7 +13,7 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../BookForm/BookForm";
 import { updateBook } from "../../../api/BookApi";
 import { useQueryClient } from "@tanstack/react-query";
-import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book, Download as DownloadIcon, PlaylistAdd as PlaylistAddIcon } from "@mui/icons-material";
+import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book, Download as DownloadIcon, PlaylistAdd as PlaylistAddIcon, RemoveCircleOutline as RemoveCircleOutlineIcon } from "@mui/icons-material";
 import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
 import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
@@ -29,6 +29,7 @@ type BookCardProps = {
   isLiked?: boolean;
   fileUrl?: string;
   authors?: SimpleAuthor[];
+  onRemoveFromList?: () => void;
 };
 
 const MAX_INFO_HEIGHT = 120;
@@ -36,6 +37,7 @@ const MAX_INFO_HEIGHT = 120;
 const BookCard: React.FC<BookCardProps> = ({
   id, title, imageUrl, info, tags, fileUrl,
   likesCount = 0, isLiked = false, authors = [],
+  onRemoveFromList
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -170,6 +172,15 @@ const BookCard: React.FC<BookCardProps> = ({
       label: "Видалити",
       icon: <Delete />,
       onClick: () => setConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
+
+  if (onRemoveFromList) {
+    menuActions.push({
+      label: "Вилучити зі списку",
+      icon: <RemoveCircleOutlineIcon />,
+      onClick: onRemoveFromList,
       isDestructive: true,
     });
   }

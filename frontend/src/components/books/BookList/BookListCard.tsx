@@ -22,7 +22,7 @@ type BookListCardProps = {
 const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isOwner = user?.id === list.userId || user?.roles.includes("Admin");
+  const isOwner = user?.id === list.userId
 
   const [editing, setEditing] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -38,8 +38,9 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (e: React.MouseEvent) => {
     try {
+      e.stopPropagation();
       await deleteBookList(list.id);
       toast.success("Список успішно видалений!", {
         isCloseBtn: true,

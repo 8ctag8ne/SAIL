@@ -92,7 +92,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                     <Button
                         variant="outlined"
                         color="primary"
-                        startIcon={<AddCommentIcon />}
                         onClick={handleAddComment}
                         disabled={!newComment.trim()}
                     >
@@ -193,7 +192,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({
             <ConfirmDialog
                 open={!!deleteDialogId}
                 title="Ви впевнені, що хочете видалити цей коментар?"
-                onConfirm={() => deleteDialogId && handleDeleteComment(deleteDialogId)}
+                onConfirm={async () => {
+                    if (!deleteDialogId) return;
+                    await handleDeleteComment(deleteDialogId);
+                }}
                 onCancel={() => setDeleteDialogId(null)}
             />
         </Box>

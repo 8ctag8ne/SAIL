@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
+import { Card, CardContent, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
@@ -21,12 +21,6 @@ const getRoleIcon = (roles: string[]) => {
   if (roles.includes("Admin")) return <AdminPanelSettingsIcon color="error" sx={{ fontSize: 32 }} />;
   if (roles.includes("Librarian")) return <LibraryBooksIcon color="primary" sx={{ fontSize: 32 }} />;
   return <PersonIcon color="action" sx={{ fontSize: 32 }} />;
-};
-
-const getHighestRole = (roles: string[]): string => {
-  if (roles.includes("Admin")) return "Адміністратор";
-  if (roles.includes("Librarian")) return "Бібліотекар";
-  return "Користувач";
 };
 
 type Props = {
@@ -114,19 +108,6 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) => 
         <Box>
           <Typography variant="h6">{user.userName}</Typography>
           <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Роль: <b>{getHighestRole(user.roles)}</b>
-          </Typography>
-          {user.about && (
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {user.about}
-            </Typography>
-          )}
-          {user.phoneNumber && (
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              Телефон: {user.phoneNumber}
-            </Typography>
-          )}
         </Box>
         {menuActions.length > 0 && (
           <Box sx={{ ml: "auto" }}>

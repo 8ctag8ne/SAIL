@@ -40,7 +40,7 @@ const UsersPage: React.FC = () => {
           sx={{
             display: "flex",
             flexWrap: "wrap",
-            gap: 3,
+            gap: 1,
             justifyContent: "center",
           }}
         >
