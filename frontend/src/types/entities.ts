@@ -71,3 +71,20 @@ export type BookList = {
     isPrivate?: boolean | null;
     books: SimpleBook[];
 };
+
+export interface RagSource {
+    id: string; // Guid з бекенду
+    bookId: number;
+    title: string; // Назва книги
+    pageStart: number;
+    pageEnd: number;
+    snippet: string; // Уривок тексту (Text з чанка)
+}
+
+export interface RagResponse {
+    query: string;
+    answer: string;
+    sources: RagSource[];
+    relatedTags: { id: number; title: string }[];
+    suggestedQuestions: string[];
+}

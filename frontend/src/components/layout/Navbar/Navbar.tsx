@@ -167,7 +167,7 @@ const Navbar = () => {
         <Button color="inherit" component={Link} to="/tags" sx={navActionSx}>
           Теги
         </Button>
-        <Button color="inherit" component={Link} to="/cheatsheet" startIcon={<AutoAwesomeIcon />} sx={navActionSx}>
+        <Button color="inherit" component={Link} to="/rag-search" startIcon={<AutoAwesomeIcon />} sx={navActionSx}>
           Знання
         </Button>
         {isAdmin && (
@@ -276,7 +276,7 @@ const Navbar = () => {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding sx={{ mb: 0.5 }}>
-          <ListItemButton component={Link} to="/cheatsheet" onClick={closeDrawer} sx={mobileMenuItemSx}>
+          <ListItemButton component={Link} to="/rag-search" onClick={closeDrawer} sx={mobileMenuItemSx}>
             <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
               <AutoAwesomeIcon />
             </ListItemIcon>

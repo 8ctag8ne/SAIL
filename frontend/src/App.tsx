@@ -61,7 +61,7 @@ function App() {
                                 <Route path="/users" element={<UsersPage />} />
                                 <Route path="/users/:id" element={<UserProfilePage />} />
                                 <Route path="/booklists/:id" element={<BookListPage />} />
-                                <Route path="/cheatsheet" element={<RagSearchPage />} />
+                                <Route path="/rag-search" element={<RagSearchPage />} />
                             </Routes>
                         </Box>
                     </BrowserRouter>

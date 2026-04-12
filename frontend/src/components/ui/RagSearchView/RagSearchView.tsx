@@ -1,101 +1,175 @@
-import React from "react";
-import { CheatSheet } from "../../../types";
-import { Box, Typography, Chip, Divider, Paper, Stack } from "@mui/material";
-import BookCard from "../../books/BookCard/BookCard";
+import React, { forwardRef } from "react";
+import { RagResponse } from "../../../types";
+import { Box, Typography, Chip, Paper, Stack, Button } from "@mui/material";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import SearchIcon from "@mui/icons-material/Search";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import { useNavigate } from "react-router-dom";
-import { forwardRef } from "react";
 
 type Props = {
-  cheatSheet: CheatSheet;
+  ragResponse: RagResponse;
+  onSearch?: (query: string) => void;
 };
 
-const RagSearchView = forwardRef<HTMLDivElement, Props>(({ cheatSheet }, ref) => {
+const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch }, ref) => {
   const navigate = useNavigate();
 
   return (
-    <Paper
+    <Box
       ref={ref}
-      elevation={3}
       sx={{
         width: "100%",
         mx: "auto",
         my: 3,
-        p: { xs: 2, sm: 3 },
-        borderRadius: 3,
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
       }}
     >
-      {/* Поради */}
-      {cheatSheet.tips.length > 0 && (
-        <>
-          <Typography variant="h6" gutterBottom>
-            Поради
-          </Typography>
-          <Stack spacing={1.5} sx={{ mb: 2 }}>
-            {cheatSheet.tips.map((tip, idx) => (
+      {/* Джерела (Sources) */}
+      {ragResponse.sources.length > 0 && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+            <MenuBookIcon color="primary" />
+            <Typography variant="h6">Джерела</Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              overflowX: "auto",
+              gap: 2,
+              pb: 1,
+              minHeight: 0,
+              "&::-webkit-scrollbar": { height: 6 },
+              "&::-webkit-scrollbar-thumb": { backgroundColor: "action.hover", borderRadius: 3 },
+            }}
+          >
+            {ragResponse.sources.map((source) => (
               <Paper
-                key={idx}
-                elevation={0}
+                key={source.id}
+                elevation={1}
+                onClick={() => navigate(`/books/${source.bookId}`)}
                 sx={{
+                  width: 250,
+                  flexShrink: 0,
                   p: 1.5,
-                  borderLeft: "4px solid",
-                  borderColor: "primary.main",
-                  fontSize: "1.05rem",
-                  color: "text.primary",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                  "&:hover": { bgcolor: "action.hover" },
                 }}
               >
-                {tip}
+                <Typography variant="subtitle2" sx={{ fontWeight: "bold", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  {source.title}
+                </Typography>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      bgcolor: "rgba(0, 122, 255, 0.1)", // Light background
+                      color: "primary.main",
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      fontWeight: "bold",
+                      display: "inline-block",
+                    }}
+                  >
+                    Стор. {source.pageStart}{source.pageStart !== source.pageEnd ? `-${source.pageEnd}` : ''}
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    fontStyle: "italic",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  "{source.snippet}"
+                </Typography>
               </Paper>
             ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* Відповідь (Generated Answer) */}
+      {ragResponse.answer && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+            <AutoAwesomeIcon color="primary" />
+            <Typography variant="h6">Відповідь</Typography>
+          </Box>
+          <Box
+            sx={{
+              p: 2,
+              borderLeft: "4px solid",
+              borderColor: "primary.main",
+              bgcolor: "background.paper",
+              borderRadius: "0 8px 8px 0",
+            }}
+          >
+            <Typography sx={{ whiteSpace: "pre-wrap" }}>
+              {ragResponse.answer}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
+      {/* Пов'язані теми та запитання */}
+      {(ragResponse.relatedTags?.length > 0 || ragResponse.suggestedQuestions?.length > 0) && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+            <LightbulbIcon color="primary" />
+            <Typography variant="h6">Дізнатися більше</Typography>
+          </Box>
+          <Stack spacing={2}>
+            {/* Block 1: Tags */}
+            {ragResponse.relatedTags?.length > 0 && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {ragResponse.relatedTags.map((tag) => (
+                  <Chip
+                    key={tag.id}
+                    label={tag.title}
+                    onClick={() => navigate(`/tags/${tag.id}`)}
+                    clickable
+                  />
+                ))}
+              </Box>
+            )}
+
+            {/* Block 2: Suggested Questions */}
+            {ragResponse.suggestedQuestions?.length > 0 && (
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1 }}>
+                {ragResponse.relatedTags?.length > 0 && (
+                  <Typography variant="caption" color="text.secondary">
+                    Можливі запитання:
+                  </Typography>
+                )}
+                {ragResponse.suggestedQuestions.map((question, idx) => (
+                  <Button
+                    key={idx}
+                    startIcon={<SearchIcon />}
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => onSearch && onSearch(question)}
+                    sx={{ borderRadius: 0, textTransform: "none", justifyContent: "flex-start", textAlign: "left" }}
+                  >
+                    {question}
+                  </Button>
+                ))}
+              </Box>
+            )}
           </Stack>
-          <Divider sx={{ my: 2 }} />
-        </>
+        </Box>
       )}
-
-      {/* Теги */}
-      {cheatSheet.tags.length > 0 && (
-        <>
-          <Typography variant="h6" gutterBottom>
-            Теги
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-            {cheatSheet.tags.map(tag => (
-              <Chip
-                key={tag.id}
-                label={tag.title}
-                clickable
-                color="primary"
-                onClick={() => navigate(`/tags/${tag.id}`)}
-                sx={{ fontSize: "1rem" }}
-              />
-            ))}
-          </Box>
-          <Divider sx={{ my: 2 }} />
-        </>
-      )}
-
-      {/* Книги */}
-      {cheatSheet.books.length > 0 && (
-        <>
-          <Typography variant="h6" gutterBottom>
-            Книги
-          </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column" }}>
-            {cheatSheet.books.map(book => (
-              <BookCard key={book.id} {...book} />
-            ))}
-          </Box>
-        </>
-      )}
-
-      {/* Якщо нічого не знайдено */}
-      {cheatSheet.tips.length === 0 &&
-        cheatSheet.books.length === 0 &&
-        cheatSheet.tags.length === 0 && (
-          <Typography color="text.secondary" sx={{ mt: 2 }}>
-            Нічого не знайдено.
-          </Typography>
-        )}
-    </Paper>
+    </Box>
   );
 });
 
