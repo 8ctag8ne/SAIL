@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Box, Accordion, AccordionSummary, AccordionDetails, Typography, Switch, Slider, FormGroup, FormControlLabel, Stack, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import SearchBar from "../components/search/SearchBar/SearchBar";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
@@ -17,25 +18,40 @@ const mockRagSearch = async (query: string): Promise<RagResponse> => {
 };
 
 const RagSearchPage: React.FC = () => {
-  const [query, setQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQuery = searchParams.get("q") || "";
+  const [query, setQuery] = useState(urlQuery);
   const [ragResult, setRagResult] = useState<RagResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const ragResultRef = React.useRef<HTMLDivElement>(null);
 
-  const handleSearch = async (q: string) => {
-    setQuery(q);
-    if (!q.trim()) {
-      setRagResult(null);
-      return;
-    }
+  const fetchRagData = async (searchString: string) => {
     setLoading(true);
     try {
-      const result = await mockRagSearch(q);
+      const result = await mockRagSearch(searchString);
       setRagResult(result);
     } catch {
       setRagResult(null);
     }
     setLoading(false);
+  };
+
+  useEffect(() => {
+    setQuery(urlQuery); // Sync the SearchBar text with the URL
+    if (urlQuery.trim()) {
+      fetchRagData(urlQuery);
+    } else {
+      setRagResult(null); // Clear results if URL is empty
+    }
+  }, [urlQuery]);
+
+  const handleSearchSubmit = (newQuery: string) => {
+    if (!newQuery.trim()) {
+      searchParams.delete("q");
+      setSearchParams(searchParams);
+    } else {
+      setSearchParams({ q: newQuery });
+    }
   };
 
   return (
@@ -49,7 +65,8 @@ const RagSearchPage: React.FC = () => {
     >
       <SearchBar
         placeholder="Введіть фразу для пошуку по знаннях..."
-        onSearch={handleSearch}
+        onSearch={handleSearchSubmit}
+        onChange={(e) => setQuery(e.target.value)}
         value={query}
         icon={<AutoAwesomeIcon />}
       />
@@ -94,7 +111,7 @@ const RagSearchPage: React.FC = () => {
       )}
 
       {!loading && ragResult && (
-        <RagSearchView ref={ragResultRef} ragResponse={ragResult} onSearch={handleSearch} />
+        <RagSearchView ref={ragResultRef} ragResponse={ragResult} onSearch={handleSearchSubmit} />
       )}
     </Box>
   );
