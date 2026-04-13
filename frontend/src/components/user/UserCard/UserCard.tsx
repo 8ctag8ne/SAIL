@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
+import { Card, CardContent, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
@@ -10,9 +10,12 @@ import { useAuth } from "../../../contexts/AuthContext";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import UserForm from "../UserForm/UserForm";
 import { useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import { toast } from "react-fox-toast";
-import { editUser, setUserRole } from "../../../api/Account";
+import { editUser, setUserRole, deleteUser } from "../../../api/Account";
 import { useQueryClient } from "@tanstack/react-query";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 const getRoleIcon = (roles: string[]) => {
   if (roles.includes("Admin")) return <AdminPanelSettingsIcon color="error" sx={{ fontSize: 32 }} />;
@@ -20,23 +23,23 @@ const getRoleIcon = (roles: string[]) => {
   return <PersonIcon color="action" sx={{ fontSize: 32 }} />;
 };
 
-const getHighestRole = (roles: string[]): string => {
-  if (roles.includes("Admin")) return "Адміністратор";
-  if (roles.includes("Librarian")) return "Бібліотекар";
-  return "Користувач";
-};
-
 type Props = {
   user: User;
   showEdit?: boolean;
+  onDeleted?: () => void;
+  onUpdated?: () => void;
 };
 
-const UserCard: React.FC<Props> = ({ user, showEdit }) => {
+const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.roles.includes("Admin");
 
+  const isOwner = currentUser?.id === user.id;
+  const canEditOrDelete = showEdit && (isAdmin || isOwner);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const handleEditSubmit = async (data: { userName: string; email: string; about: string; phoneNumber: string; role: string }) => {
@@ -54,6 +57,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
         isCloseBtn: true,
       });
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      onUpdated?.();
       setIsEditModalOpen(false);
     } catch (error) {
       toast.error("Не вдалося оновити дані.", {
@@ -61,6 +65,38 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
       });
     }
   };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteUser(user.id);
+      toast.success("Користувача видалено успішно!", {
+        isCloseBtn: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setIsDeleteConfirmOpen(false);
+      onDeleted?.();
+    } catch (error) {
+      toast.error("Не вдалося видалити користувача.", {
+        isCloseBtn: true,
+      });
+    }
+  };
+
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: () => setIsEditModalOpen(true),
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: () => setIsDeleteConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
 
   return (
     <Card
@@ -72,21 +108,11 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
         <Box>
           <Typography variant="h6">{user.userName}</Typography>
           <Typography variant="body2" color="text.secondary">{user.email}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Роль: <b>{getHighestRole(user.roles)}</b>
-          </Typography>
         </Box>
-        {showEdit && isAdmin && (
-          <IconButton
-            color="primary"
-            sx={{ ml: "auto" }}
-            onClick={e => {
-              e.stopPropagation();
-              setIsEditModalOpen(true);
-            }}
-          >
-            <EditIcon />
-          </IconButton>
+        {menuActions.length > 0 && (
+          <Box sx={{ ml: "auto" }}>
+            <EntityActionMenu actions={menuActions} />
+          </Box>
         )}
       </CardContent>
 
@@ -100,8 +126,16 @@ const UserCard: React.FC<Props> = ({ user, showEdit }) => {
             role: user.roles.includes("Admin") ? "Admin" : user.roles.includes("Librarian") ? "Librarian" : "User"
           }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Ви впевнені, що хочете видалити цього користувача?"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
     </Card>
   );
 };

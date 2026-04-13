@@ -75,7 +75,7 @@ const AuthorDetailsPage: React.FC = () => {
         onCancel={() => setConfirmOpen(false)}
       />
 
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="h5" gutterBottom sx={{ wordBreak: "break-word" }}>
         Книги від автора {author.name}:
       </Typography>
       <BooksPageComponent queryParams={{ AuthorIds: [id] }} />

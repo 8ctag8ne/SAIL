@@ -167,8 +167,8 @@ const Navbar = () => {
         <Button color="inherit" component={Link} to="/tags" sx={navActionSx}>
           Теги
         </Button>
-        <Button color="inherit" component={Link} to="/cheatsheet" startIcon={<AutoAwesomeIcon />} sx={navActionSx}>
-          Чит - лист
+        <Button color="inherit" component={Link} to="/rag-search" startIcon={<AutoAwesomeIcon />} sx={navActionSx}>
+          Знання
         </Button>
         {isAdmin && (
           <Button color="inherit" component={Link} to="/users" startIcon={<PeopleIcon />} sx={navActionSx}>
@@ -276,11 +276,11 @@ const Navbar = () => {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding sx={{ mb: 0.5 }}>
-          <ListItemButton component={Link} to="/cheatsheet" onClick={closeDrawer} sx={mobileMenuItemSx}>
+          <ListItemButton component={Link} to="/rag-search" onClick={closeDrawer} sx={mobileMenuItemSx}>
             <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
               <AutoAwesomeIcon />
             </ListItemIcon>
-            <ListItemText primary="Чит-лист" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
+            <ListItemText primary="Знання" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
           </ListItemButton>
         </ListItem>
         {isAdmin && (
@@ -425,15 +425,15 @@ const Navbar = () => {
       {isAdminOrLibrarian && (
         <>
           <EntityModal open={isAddBookOpen} onClose={() => setIsAddBookOpen(false)}>
-            <BookForm onSubmit={handleAddBookSubmit} />
+            <BookForm onSubmit={handleAddBookSubmit} onClose={() => setIsAddBookOpen(false)} />
           </EntityModal>
 
           <EntityModal open={isAddAuthorOpen} onClose={() => setIsAddAuthorOpen(false)}>
-            <AuthorForm onSubmit={handleAddAuthorSubmit} />
+            <AuthorForm onSubmit={handleAddAuthorSubmit} onClose={() => setIsAddAuthorOpen(false)} />
           </EntityModal>
 
           <EntityModal open={isAddTagOpen} onClose={() => setIsAddTagOpen(false)}>
-            <TagForm key={isAddTagOpen ? "open" : "closed"} onSubmit={handleAddTagSubmit} />
+            <TagForm key={isAddTagOpen ? "open" : "closed"} onSubmit={handleAddTagSubmit} onClose={() => setIsAddTagOpen(false)} />
           </EntityModal>
         </>
       )}

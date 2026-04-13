@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, TextField, Button, Switch, FormControlLabel, IconButton } from "@mui/material";
+import { Box, Typography, TextField, Button, Switch, FormControlLabel, IconButton, DialogTitle } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { BookList, BookListCreate } from "../../../types";
 import { toast } from "react-fox-toast";
@@ -41,110 +41,125 @@ const BookListForm: React.FC<BookListFormProps> = ({ initialData, onSubmit, onCl
     };
 
     return (
-        <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{
-                bgcolor: "background.paper",
-                p: 3,
-                border: "1px solid #2d2f33",
-                borderRadius: 0,
-                position: "relative",
-            }}
-            onClick={(e) => e.stopPropagation()}
+    <Box
+      sx={{
+        width: 500,
+        maxWidth: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.paper",
+        border: "1px solid #2d2f33",
+        borderRadius: 0,
+        overflow: "hidden",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <DialogTitle
+          sx={{
+            p: 3,
+            pb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "background.paper",
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            flexShrink: 0,
+          }}
         >
-            {onClose && (
-                <IconButton
-                    onClick={onClose}
-                    sx={{ position: "absolute", top: 8, right: 8 }}
-                    size="small"
-                >
-                    <CloseIcon />
-                </IconButton>
-            )}
+          <Typography variant="h6" fontWeight="bold" sx={{ fontFamily: "JetBrains Mono" }}>
+            {initialData ? "Редагування списку" : "Створити список"}
+          </Typography>
+          {onClose && (
+            <IconButton
+              onClick={onClose}
+              sx={{ color: "text.secondary", mr: -1 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          )}
+        </DialogTitle>
 
-            <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold", fontFamily: "JetBrains Mono" }}>
-                {initialData ? "Редагування списку" : "Створити список"}
-            </Typography>
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
+          <TextField
+            label="Назва списку"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            fullWidth
+            required
+            variant="filled"
+            sx={{
+              "& .MuiInputBase-root": {
+                borderRadius: 0,
+                fontFamily: "JetBrains Mono",
+              },
+            }}
+            autoFocus
+          />
 
-            <TextField
-                label="Назва списку"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                fullWidth
-                required
-                variant="filled"
-                sx={{
-                    mb: 2,
-                    "& .MuiInputBase-root": {
-                        borderRadius: 0,
-                        fontFamily: "JetBrains Mono",
-                    },
-                }}
-                autoFocus
-            />
+          <TextField
+            label="Опис списку"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            multiline
+            minRows={3}
+            maxRows={6}
+            variant="filled"
+            sx={{
+              "& .MuiInputBase-root": {
+                borderRadius: 0,
+                fontFamily: "JetBrains Mono",
+              },
+            }}
+          />
 
-            <TextField
-                label="Опис списку"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                fullWidth
-                multiline
-                minRows={3}
-                maxRows={6}
-                variant="filled"
-                sx={{
-                    mb: 2,
-                    "& .MuiInputBase-root": {
-                        borderRadius: 0,
-                        fontFamily: "JetBrains Mono",
-                    },
-                }}
-            />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isPrivate}
+                onChange={(e) => setIsPrivate(e.target.checked)}
+                color="primary"
+              />
+            }
+            label={
+              <Typography sx={{ fontFamily: "JetBrains Mono" }}>
+                Приватний список
+              </Typography>
+            }
+          />
 
-            <FormControlLabel
-                control={
-                    <Switch
-                        checked={isPrivate}
-                        onChange={(e) => setIsPrivate(e.target.checked)}
-                        color="primary"
-                    />
-                }
-                label={
-                    <Typography sx={{ fontFamily: "JetBrains Mono" }}>
-                        Приватний список
-                    </Typography>
-                }
-                sx={{ mb: 3 }}
-            />
-
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                {onClose && (
-                    <Button
-                        variant="outlined"
-                        onClick={onClose}
-                        sx={{
-                            borderRadius: 0,
-                            fontFamily: "JetBrains Mono",
-                        }}
-                    >
-                        Скасувати
-                    </Button>
-                )}
-                <Button
-                    type="submit"
-                    variant="outlined"
-                    disabled={!title.trim() || isSubmitting}
-                    sx={{
-                        borderRadius: 0,
-                        fontFamily: "JetBrains Mono",
-                    }}
-                >
-                    {initialData ? "Зберегти" : "Створити"}
-                </Button>
-            </Box>
+          <Button
+            type="submit"
+            variant="outlined"
+            fullWidth
+            disabled={!title.trim() || isSubmitting}
+            sx={{
+              borderRadius: 0,
+              fontFamily: "JetBrains Mono",
+              height: 48,
+              flexShrink: 0,
+              mt: 1
+            }}
+          >
+            {initialData ? "Зберегти" : "Створити"}
+          </Button>
         </Box>
-    );
+      </form>
+    </Box>
+  );
 };
 
 export default BookListForm;

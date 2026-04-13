@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardMedia, Typography, Box, Button, IconButton } from "@mui/material";
+import { Typography, Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,8 @@ import AuthorForm from "../AuthorForm/AuthorForm";
 import { useUpdateAuthor } from "../../../hooks/useAuthors";
 import { toast } from "react-fox-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import BaseEntityDetails from "../../ui/BaseEntityDetails";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 
 type AuthorDetailsProps = {
@@ -50,59 +52,56 @@ const AuthorDetails: React.FC<AuthorDetailsProps> = ({ author, onDelete }) => {
     }
   };
 
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: handleEditClick,
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: onDelete,
+      isDestructive: true,
+    });
+  }
+
   return (
-    <Card sx={{ display: "flex", flexDirection: "row", margin: "20px auto", padding: 2 }}>
-      {author.imageUrl ? (
-        <CardMedia
-          component="img"
-          sx={{ width: 200, height: 200, objectFit: "cover", marginRight: 2, borderRadius: 1, }}
-          image={author.imageUrl}
-          alt={author.name || "Author"}
-        />
-      ) : (
-        <Box
-          sx={{
-            width: 200,
-            height: 200,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 2,
-            background: "#eee",
-            borderRadius: 1,
-          }}
-        >
-          <PersonIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />
-        </Box>
-      )}
-      <CardContent sx={{ flex: 1, position: "relative" }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          {author.name}
-        </Typography>
-        {author.info && (
-          <Typography variant="body1" color="text.secondary" paragraph>
-            {author.info}
+    <>
+      <BaseEntityDetails
+        imageUrl={author.imageUrl}
+        imageAspectRatio="1/1"
+        imagePlaceholderIcon={<PersonIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
+        title={
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            gutterBottom
+            sx={{ width: "100%", wordBreak: "break-word" }}
+          >
+            {author.name}
           </Typography>
-        )}
-        {canEditOrDelete && (
-          <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-            <IconButton color="primary" onClick={handleEditClick}>
-              <EditIcon />
-            </IconButton>
-            <IconButton color="error" onClick={onDelete}>
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        )}
-      </CardContent>
+        }
+        description={
+          author.info && (
+            <Typography variant="body1" color="text.secondary" paragraph sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+              {author.info}
+            </Typography>
+          )
+        }
+        actions={<EntityActionMenu actions={menuActions} />}
+      />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <AuthorForm
           initialData={{ name: author.name ?? "", info: author.info ?? undefined, image: author.imageUrl ?? undefined }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
-    </Card>
+    </>
   );
 };
 

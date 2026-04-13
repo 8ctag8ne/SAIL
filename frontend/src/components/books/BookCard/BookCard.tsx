@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Card, CardContent, CardMedia, Typography, Box,
+  Typography, Box,
   IconButton, Chip
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -13,7 +13,11 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../BookForm/BookForm";
 import { updateBook } from "../../../api/BookApi";
 import { useQueryClient } from "@tanstack/react-query";
-import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book } from "@mui/icons-material";
+import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book, Download as DownloadIcon, PlaylistAdd as PlaylistAddIcon, RemoveCircleOutline as RemoveCircleOutlineIcon } from "@mui/icons-material";
+import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
+import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
+import BASE_URL from "../../../config";
 
 type BookCardProps = {
   id: number;
@@ -23,14 +27,17 @@ type BookCardProps = {
   tags: SimpleTag[];
   likesCount?: number;
   isLiked?: boolean;
+  fileUrl?: string;
   authors?: SimpleAuthor[];
+  onRemoveFromList?: () => void;
 };
 
 const MAX_INFO_HEIGHT = 120;
 
 const BookCard: React.FC<BookCardProps> = ({
-  id, title, imageUrl, info, tags,
+  id, title, imageUrl, info, tags, fileUrl,
   likesCount = 0, isLiked = false, authors = [],
+  onRemoveFromList
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,6 +52,7 @@ const BookCard: React.FC<BookCardProps> = ({
   const handleNavigate = () => navigate(`/books/${id}`);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [addToListsOpen, setAddToListsOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { mutateAsync: toggleLikeMutation } = useToggleLike();
@@ -124,138 +132,140 @@ const BookCard: React.FC<BookCardProps> = ({
     navigate(`/authors/${authorId}`);
   };
 
+  const handleDownloadClick = () => {
+    const link = document.createElement("a");
+    link.href = `${BASE_URL}/api/book/${id}/download`;
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const menuActions: ActionItem[] = [];
+  
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <Edit />,
+      onClick: () => setIsEditModalOpen(true),
+    });
+  }
+
+  if (user) {
+    menuActions.push({
+      label: "Додати до списку",
+      icon: <PlaylistAddIcon />,
+      onClick: () => setAddToListsOpen(true),
+    });
+  }
+
+  if (fileUrl) {
+    menuActions.push({
+      label: "Завантажити",
+      icon: <DownloadIcon />,
+      onClick: handleDownloadClick,
+    });
+  }
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Видалити",
+      icon: <Delete />,
+      onClick: () => setConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
+
+  if (onRemoveFromList) {
+    menuActions.push({
+      label: "Вилучити зі списку",
+      icon: <RemoveCircleOutlineIcon />,
+      onClick: onRemoveFromList,
+      isDestructive: true,
+    });
+  }
+
   return (
-    <Card
-      className="MuiCard-interactive"
-      onClick={handleNavigate}
-      sx={{
-        display: "flex", flexDirection: "row", alignItems: "center",
-        padding: 2, marginY: 2, marginX: "auto",
-        position: "relative", overflow: "hidden",
-      }}
-    >
+    <>
+      <BaseEntityCard
+        onClick={handleNavigate}
+        imageUrl={fullImageUrl}
+        imageAspectRatio="1/1.414"
+        imagePlaceholderIcon={<MenuBook sx={{ fontSize: 64, color: "#bdbdbd" }} />}
+        title={title}
+        subtitle={
+          authors.length > 0 ? (
+            <Typography variant="subtitle2" color="primary">
+              Авторство:{" "}
+              {authors.map((a, idx) => (
+                <React.Fragment key={a.id}>
+                  <Box
+                    component="span"
+                    onClick={(e) => handleAuthorClick(e, a.id)}
+                    sx={{
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      color: "primary.main",
+                      transition: "all 0.1s ease-in-out",
+                      "&:hover": {
+                        backgroundColor: "primary.main",
+                        color: "#0d0f12",
+                        textDecoration: "none",
+                      }
+                    }}
+                  >
+                    [ {a.name} ]
+                  </Box>
+                  {idx < authors.length - 1 ? ", " : ""}
+                </React.Fragment>
+              ))}
+            </Typography>
+          ) : undefined
+        }
+        description={info}
+        tags={
+          tags.map(tag => (
+              <Chip
+                key={tag.id}
+                label={
+                  <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+                    {tag.title}
+                  </Box>
+                }
+                clickable
+                onClick={(e) => handleTagClick(e, tag.id)}
+                sx={{
+                  cursor: "pointer",
+                  maxWidth: "100%",
+                }}
+              />
+          ))
+        }
+        footer={
+          likesCount !== undefined ? (
+            <IconButton onClick={handleLikeToggle} color={liked ? "primary" : "default"}>
+              {liked ? <ThumbUp /> : <ThumbUpOffAlt />}
+              <Typography sx={{ ml: 0.5 }}>{likeCount}</Typography>
+            </IconButton>
+          ) : undefined
+        }
+        actions={<EntityActionMenu actions={menuActions} />}
+      />
+
+      {user && (
+        <AddBookToListsDialog
+          open={addToListsOpen}
+          onClose={() => setAddToListsOpen(false)}
+          bookId={id}
+        />
+      )}
+
       <ConfirmDialog
         open={confirmOpen}
         title="Ви впевнені, що хочете видалити цю книгу?"
         onConfirm={handleConfirmDelete}
         onCancel={() => setConfirmOpen(false)}
       />
-      {fullImageUrl ? (
-        <CardMedia
-          component="img"
-          image={fullImageUrl}
-          alt={title}
-          sx={{ width: 150, height: 200, objectFit: "cover", marginRight: 2, borderRadius: 1 }}
-        />
-      ) : (
-        <Box sx={{
-          width: 150, height: 200, background: "#eee", marginRight: 2,
-          display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1
-        }}>
-          <MenuBook sx={{ fontSize: 64, color: "#bdbdbd" }} />
-        </Box>
-      )}
-
-      <CardContent sx={{
-        flex: 1,
-        position: "relative",
-        paddingBottom: "56px",
-        minHeight: 200, // ← або інше значення
-        overflow: "hidden"
-      }}>
-        <Typography variant="h5" fontWeight="bold" gutterBottom
-          sx={{
-            maxWidth: { xs: "70%", sm: "80%", md: "85%" },
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
-          }}>
-          {title}
-        </Typography>
-
-        {authors.length > 0 && (
-          <Typography variant="subtitle2" color="primary">
-            Авторство:{" "}
-            {authors.map((a, idx) => (
-              <React.Fragment key={a.id}>
-                <Box
-                  component="span"
-                  onClick={(e) => handleAuthorClick(e, a.id)}
-                  sx={{
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    color: "primary.main",
-                    transition: "all 0.1s ease-in-out",
-                    "&:hover": {
-                      backgroundColor: "primary.main",
-                      color: "#0d0f12",
-                      textDecoration: "none",
-                    }
-                  }}
-                >
-                  [ {a.name} ]
-                </Box>
-                {idx < authors.length - 1 ? ", " : ""}
-              </React.Fragment>
-            ))}
-          </Typography>
-        )}
-
-        {info && (
-          <Box sx={{
-            maxHeight: MAX_INFO_HEIGHT, overflow: "hidden",
-            position: "relative", maxWidth: "95%", mb: 1,
-          }}>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              paragraph
-              sx={{
-                whiteSpace: "pre-line",
-                wordBreak: "break-word", // ← важливо!
-                maxWidth: "100%"         // ← обмеження ширини
-              }}
-            >
-              {info}
-            </Typography>
-            <Box sx={{
-              position: "absolute", left: 0, right: 0, bottom: 0, height: 32,
-              background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 100%)",
-              pointerEvents: "none", display: info.split("\n").length > 6 ? "block" : "none"
-            }} />
-          </Box>
-        )}
-
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", width: "95%", mt: 1 }}>
-          {tags.map(tag => (
-            <Chip
-              key={tag.id}
-              label={tag.title}
-              clickable
-              onClick={(e) => handleTagClick(e, tag.id)}
-              sx={{ cursor: "pointer" }}
-            />
-          ))}
-        </Box>
-
-        {likesCount !== undefined && (
-          <Box sx={{ position: "absolute", bottom: 8, right: 8 }}>
-            <IconButton onClick={handleLikeToggle} color={liked ? "primary" : "default"}>
-              {liked ? <ThumbUp /> : <ThumbUpOffAlt />}
-              <Typography sx={{ ml: 0.5 }}>{likeCount}</Typography>
-            </IconButton>
-          </Box>
-        )}
-
-        {canEditOrDelete && (
-          <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-            <IconButton color="primary" onClick={handleEditClick}>
-              <Edit />
-            </IconButton>
-            <IconButton color="error" onClick={handleDeleteClick}>
-              <Delete />
-            </IconButton>
-          </Box>
-        )}
-      </CardContent>
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <BookForm
@@ -267,9 +277,10 @@ const BookCard: React.FC<BookCardProps> = ({
             authors: authors,
           }}
           onSubmit={handleEditSubmit}
+          onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
-    </Card>
+    </>
   );
 };
 

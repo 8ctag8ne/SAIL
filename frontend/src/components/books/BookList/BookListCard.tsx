@@ -11,6 +11,7 @@ import ConfirmDialog from "../../ui/ConfirmDialog";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookListForm from "./BookListForm";
 import { toast } from "react-fox-toast";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 type BookListCardProps = {
   list: BookList;
@@ -21,7 +22,7 @@ type BookListCardProps = {
 const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isOwner = user?.id === list.userId || user?.roles.includes("Admin");
+  const isOwner = user?.id === list.userId
 
   const [editing, setEditing] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -37,8 +38,9 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (e: React.MouseEvent) => {
     try {
+      e.stopPropagation();
       await deleteBookList(list.id);
       toast.success("Список успішно видалений!", {
         isCloseBtn: true,
@@ -52,6 +54,22 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
       setIsDeleteConfirmOpen(false);
     }
   };
+
+  const menuActions: ActionItem[] = [];
+
+  if (isOwner) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: () => setEditing(true),
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: () => setIsDeleteConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
 
   return (
     <>
@@ -72,25 +90,9 @@ const BookListCard: React.FC<BookListCardProps> = ({ list, onDeleted, onUpdated 
               {list.title}
             </Typography>
             {list.isPrivate && <LockIcon fontSize="small" color="action" />}
-            {isOwner && (
+            {menuActions.length > 0 && (
               <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setEditing(true);
-                  }}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={handleDeleteClick}
-                >
-                  <DeleteIcon />
-                </IconButton>
+                <EntityActionMenu actions={menuActions} />
               </Box>
             )}
           </Box>

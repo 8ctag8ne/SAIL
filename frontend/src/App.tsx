@@ -9,12 +9,11 @@ import AuthorDetailsPage from "./pages/AuthorDetailsPage";
 import AuthorListPage from "./pages/AuthorListPage";
 import TagListPage from "./pages/TagListPage";
 import TagDetailsPage from "./pages/TagDetailsPage";
-import UserLikesPage from "./pages/UserLikesPage";
-import UserBookListsPage from "./pages/UserBookListsPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import { useSearchParams } from "react-router-dom";
 import BookListPage from "./pages/BookListPage";
 import UsersPage from "./pages/UsersPage";
-import CheatSheetPage from "./pages/CheatSheetPage";
+import RagSearchPage from "./pages/RagSearchPage";
 import { Box } from "@mui/material";
 import { ToastContainer } from "react-fox-toast";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -31,15 +30,6 @@ const queryClient = new QueryClient({
         },
     },
 });
-
-
-const UserProfileRoute = () => {
-    const [searchParams] = useSearchParams();
-    const tab = searchParams.get("tab");
-    if (tab === "lists") return <UserBookListsPage />;
-    return <UserLikesPage />;
-};
-
 function App() {
     return (
         <ThemeProvider theme={theme}>
@@ -69,9 +59,9 @@ function App() {
                                 <Route path="/tags" element={<TagListPage />} />
                                 <Route path="/tags/:id" element={<TagDetailsPage />} />
                                 <Route path="/users" element={<UsersPage />} />
-                                <Route path="/users/:id" element={<UserProfileRoute />} />
+                                <Route path="/users/:id" element={<UserProfilePage />} />
                                 <Route path="/booklists/:id" element={<BookListPage />} />
-                                <Route path="/cheatsheet" element={<CheatSheetPage />} />
+                                <Route path="/rag-search" element={<RagSearchPage />} />
                             </Routes>
                         </Box>
                     </BrowserRouter>

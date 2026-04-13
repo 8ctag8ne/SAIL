@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, CardMedia, Typography, Box, IconButton } from "@mui/material";
+import { Typography, Box, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,8 @@ import ConfirmDialog from "../../ui/ConfirmDialog";
 import TagForm from "../TagForm/TagForm";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
+import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
 type TagCardProps = {
   tag: Tag;
@@ -72,64 +74,38 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
 
   const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
 
+  const menuActions: ActionItem[] = [];
+
+  if (canEditOrDelete) {
+    menuActions.push({
+      label: "Редагувати",
+      icon: <EditIcon />,
+      onClick: () => setIsEditModalOpen(true),
+    });
+    menuActions.push({
+      label: "Видалити",
+      icon: <DeleteIcon />,
+      onClick: () => setIsDeleteConfirmOpen(true),
+      isDestructive: true,
+    });
+  }
+
   return (
-    <Card
-      className="MuiCard-interactive"
-      onClick={() => navigate(`/tags/${tag.id}`)}
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 2,
-        marginY: 2,
-      }}
-    >
-      {tag.imageUrl ? (
-        <CardMedia
-          component="img"
-          sx={{ width: 120, height: 120, objectFit: "cover", marginRight: 2 }}
-          image={tag.imageUrl}
-          alt={tag.title || "Tag"}
-        />
-      ) : (
-        <Box
-          sx={{
-            width: 120,
-            height: 120,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 2,
-            background: "#eee",
-            borderRadius: 1,
-          }}
-        >
-          <LocalOfferIcon sx={{ fontSize: 48, color: "#bdbdbd" }} />
-        </Box>
-      )}
-      <CardContent sx={{ flex: 1, position: "relative" }}>
-        <Typography variant="h6" fontWeight="bold" gutterBottom>
-          {tag.title}
-        </Typography>
-        {tag.info && (
-          <Typography variant="body2" color="text.secondary" paragraph>
-            {tag.info}
+    <>
+      <BaseEntityCard
+        onClick={() => navigate(`/tags/${tag.id}`)}
+        imageUrl={tag.imageUrl}
+        imageAspectRatio="1/1"
+        imagePlaceholderIcon={<LocalOfferIcon sx={{ fontSize: 48, color: "#bdbdbd" }} />}
+        title={tag.title}
+        description={tag.info}
+        footer={
+          <Typography variant="caption" color="text.secondary">
+            Книги: {tag.booksCount}
           </Typography>
-        )}
-        <Typography variant="caption" color="text.secondary">
-          Книги: {tag.booksCount}
-        </Typography>
-        {canEditOrDelete && (
-          <Box sx={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 1 }}>
-            <IconButton color="primary" onClick={handleEditClick}>
-              <EditIcon />
-            </IconButton>
-            <IconButton color="error" onClick={handleDeleteClick}>
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        )}
-      </CardContent>
+        }
+        actions={<EntityActionMenu actions={menuActions} />}
+      />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         {isLoadingFullTag ? (
@@ -146,6 +122,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
               books: fullTag.books,
             }}
             onSubmit={handleEditSubmit}
+            onClose={() => setIsEditModalOpen(false)}
           />
         ) : null}
       </EntityModal>
@@ -156,7 +133,7 @@ const TagCard: React.FC<TagCardProps> = ({ tag }) => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setIsDeleteConfirmOpen(false)}
       />
-    </Card>
+    </>
   );
 };
 

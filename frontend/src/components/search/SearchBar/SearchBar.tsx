@@ -1,4 +1,4 @@
-import React, { useState, ReactNode } from "react";
+import React, { useState, ReactNode, useEffect } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { Box, TextField, Button, IconButton } from "@mui/material";
@@ -6,6 +6,7 @@ import { Box, TextField, Button, IconButton } from "@mui/material";
 type SearchBarProps = {
   placeholder?: string;
   onSearch: (query: string) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   value?: string;
   icon?: ReactNode;
   onFilterToggle?: () => void;
@@ -19,12 +20,20 @@ const SearchBar: React.FC<SearchBarProps> = ({
   icon,
   onFilterToggle,
   isFilterActive = false,
+  ...props
 }) => {
   const [query, setQuery] = useState<string>(value);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
+    if (props.onChange) {
+      props.onChange(e);
+    }
   };
+
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
 
   const handleSearchClick = () => {
     onSearch(query);

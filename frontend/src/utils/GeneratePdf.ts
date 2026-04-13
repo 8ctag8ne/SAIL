@@ -1,12 +1,12 @@
 import jsPDF from "jspdf";
-import { CheatSheet } from "../types";
+import { RagSearchResult } from "../types";
 
 // Шляхи до шрифтів у папці public/fonts
 const robotoRegular = "/fonts/Roboto-Regular.ttf";
 const robotoBold = "/fonts/Roboto-Bold.ttf";
 const robotoItalic = "/fonts/Roboto-Italic.ttf";
 
-export const generatePDF = (cheatSheet: CheatSheet) => {
+export const generatePDF = (result: RagSearchResult) => {
   const doc = new jsPDF();
 
   // Додаємо шрифти
@@ -20,18 +20,18 @@ export const generatePDF = (cheatSheet: CheatSheet) => {
   // Заголовок (товстий шрифт)
   doc.setFont("Roboto", "bold");
   doc.setFontSize(18);
-  doc.text("CheatSheet", 10, y);
+  doc.text("Знання", 10, y);
   y += 10;
 
   // Поради
-  if (cheatSheet.tips.length > 0) {
+  if (result.tips.length > 0) {
     doc.setFont("Roboto", "bold"); // Товстий для заголовка
     doc.setFontSize(14);
     doc.text("Поради:", 10, y);
     y += 10;
     doc.setFont("Roboto", "normal"); // Звичайний для тексту
     doc.setFontSize(12);
-    cheatSheet.tips.forEach((tip) => {
+    result.tips.forEach((tip) => {
       const lines = doc.splitTextToSize(`- ${tip}`, maxWidth);
       doc.text(lines, 10, y);
       y += lines.length * 7;
@@ -40,14 +40,14 @@ export const generatePDF = (cheatSheet: CheatSheet) => {
   }
 
   // Теги з посиланнями
-  if (cheatSheet.tags.length > 0) {
+  if (result.tags.length > 0) {
     doc.setFont("Roboto", "bold"); // Товстий для заголовка
     doc.setFontSize(14);
     doc.text("Теги:", 10, y);
     y += 10;
     doc.setFont("Roboto", "italic"); // Нахилений для тегів
     doc.setFontSize(12);
-    cheatSheet.tags.forEach((tag) => {
+    result.tags.forEach((tag) => {
       const tagText = `- ${tag.title}`;
       const tagUrl = `http://localhost:3000/tags/${tag.id}`;
       const lines = doc.splitTextToSize(tagText, maxWidth);
@@ -60,13 +60,13 @@ export const generatePDF = (cheatSheet: CheatSheet) => {
   }
 
   // Книги з посиланнями
-  if (cheatSheet.books.length > 0) {
+  if (result.books.length > 0) {
     doc.setFont("Roboto", "bold"); // Товстий для заголовка
     doc.setFontSize(14);
     doc.text("Книги:", 10, y);
     y += 10;
     doc.setFontSize(12);
-    cheatSheet.books.forEach((book) => {
+    result.books.forEach((book) => {
       const authors = book.authors.map((a) => a.name).join(", ");
       
       // Назва книги (нахилений шрифт, посилання)
@@ -95,5 +95,5 @@ export const generatePDF = (cheatSheet: CheatSheet) => {
     });
   }
 
-  doc.save("cheatsheet.pdf");
+  doc.save("ragsearch.pdf");
 };

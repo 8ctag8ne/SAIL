@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, DialogTitle } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 
 type AuthorFormProps = {
@@ -9,9 +10,10 @@ type AuthorFormProps = {
     image?: string | null;
   };
   onSubmit: (data: { name: string; info?: string; image: File | null }) => Promise<void>;
+  onClose?: () => void;
 };
 
-const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
+const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit, onClose }) => {
   const [form, setForm] = useState({
     name: initialData?.name || "",
     info: initialData?.info || "",
@@ -53,67 +55,95 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
   };
 
   return (
-    <Box
+    <Paper
+      elevation={3}
       sx={{
+        width: 700,
+        maxWidth: "100%",
+        height: { xs: "100dvh", md: "auto" },
+        maxHeight: "90vh",
         display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
+        flexDirection: "column",
+        overflow: "hidden",
+        borderRadius: { xs: 0, md: 2 },
       }}
     >
-      <Paper
-        elevation={3}
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 4,
-          padding: 4,
-          width: "100%",
-          maxWidth: 700,
-        }}
-      >
-        {/* Ліва частина: фото */}
-        <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-          <CardMedia
-            component="img"
-            sx={{
-              width: 180,
-              height: 180,
-              objectFit: "cover",
-              borderRadius: 1,
-              background: "#eee",
-            }}
-            image={imagePreview || "https://placehold.co/180x180?text=No+Image"}
-            alt="Author photo"
-          />
-          <Button
-            variant="outlined"
-            component="label"
-            fullWidth
-            sx={{ mt: 1 }}
-          >
-            Завантажити фото
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-          </Button>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {imagePreview && !form.image && initialData?.image && "Current image"}
-            {form.image && form.image.name}
-          </Typography>
-        </Box>
-        {/* Права частина: форма */}
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h5" gutterBottom>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <DialogTitle
+          sx={{
+            p: 3,
+            pb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "background.paper",
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+            flexShrink: 0,
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold">
             {initialData ? "Редагувати автора" : "Додати автора"}
           </Typography>
-          <form onSubmit={handleSubmit}>
+          {onClose && (
+            <IconButton
+              onClick={onClose}
+              sx={{ color: "text.secondary", mr: -1 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          )}
+        </DialogTitle>
+
+        <Box
+          sx={{
+            p: 3,
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 4,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
+          {/* Ліва частина: фото */}
+          <Box sx={{ width: { xs: "100%", md: 220 }, flexShrink: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+            <CardMedia
+              component="img"
+              sx={{
+                width: "100%",
+                aspectRatio: "1/1",
+                objectFit: "cover",
+                borderRadius: 1,
+                background: "#eee",
+              }}
+              image={imagePreview || "https://placehold.co/180x180?text=No+Image"}
+              alt="Author photo"
+            />
+            <Button
+              variant="outlined"
+              component="label"
+              fullWidth
+            >
+              Завантажити фото
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </Button>
+            <Typography variant="body2" color="text.secondary">
+              {imagePreview && !form.image && initialData?.image && "Current image"}
+              {form.image && form.image.name}
+            </Typography>
+          </Box>
+          {/* Права частина: форма */}
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               label="Ім'я"
               fullWidth
-              margin="normal"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -121,7 +151,6 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
             <TextField
               label="Інформація"
               fullWidth
-              margin="normal"
               multiline
               rows={4}
               value={form.info}
@@ -133,14 +162,14 @@ const AuthorForm: React.FC<AuthorFormProps> = ({ initialData, onSubmit }) => {
               color="primary"
               fullWidth
               disabled={isSubmitting}
-              sx={{ marginTop: 2, height: 48 }}
+              sx={{ height: 48, flexShrink: 0, mt: 1 }}
             >
               {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити автора" : "Додати автора")}
             </Button>
-          </form>
+          </Box>
         </Box>
-      </Paper>
-    </Box>
+      </form>
+    </Paper>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, CardMedia } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, DialogTitle } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { SimpleBook } from "../../../types";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import EntityListSelector from "../../ui/EntityListSelector";
@@ -13,9 +14,10 @@ type TagFormProps = {
     books?: SimpleBook[];
   };
   onSubmit: (data: { title: string; info?: string; image: File | null; bookIds: number[] }) => Promise<void>;
+  onClose?: () => void;
 };
 
-const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
+const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onClose }) => {
   const [form, setForm] = useState({
     title: initialData?.title || "",
     info: initialData?.info || "",
@@ -82,69 +84,88 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
   );
 
   return (
-    <Box
+    <Paper
+      elevation={3}
       sx={{
+        width: 800,
+        maxWidth: "100%",
+        height: { xs: "100dvh", md: 700 }, // Жорсткі межі висоти
+        maxHeight: "100vh",
         display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
+        flexDirection: "column",
+        overflow: "hidden", // Блокуємо зовнішній скрол модалки
+        borderRadius: { xs: 0, md: 2 },
       }}
     >
-      <Paper
-        elevation={3}
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 4,
-          padding: 4,
-          width: 800,
-          maxWidth: "100%",
-          height: 700,
-          maxHeight: "100%",
-        }}
-      >
-        {/* Ліва частина: фото */}
-        <Box sx={{ width: { xs: "100%", md: 220 }, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-          <CardMedia
-            component="img"
-            sx={{
-              width: 180,
-              height: 180,
-              objectFit: "cover",
-              borderRadius: 1,
-              background: "#eee",
-            }}
-            image={imagePreview || "https://placehold.co/180x180?text=No+Image"}
-            alt="Tag image"
-          />
-          <Button
-            variant="outlined"
-            component="label"
-            fullWidth
-            sx={{ mt: 1 }}
-          >
-            Завантажити фото
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-          </Button>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
-            {form.image && form.image.name}
-          </Typography>
-        </Box>
-        {/* Права частина: форма */}
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <Typography variant="h5" gutterBottom>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+
+        {/* ШАПКА: Жорстко зафіксована зверху */}
+        <DialogTitle
+          sx={{
+            p: 3,
+            pb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexShrink: 0, // Забороняємо шапці стискатися
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backgroundColor: "background.paper",
+            borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold">
             {initialData ? "Редагувати тег" : "Додати тег"}
           </Typography>
-          <form onSubmit={handleSubmit} style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {onClose && (
+            <IconButton onClick={onClose} sx={{ color: "text.secondary", mr: -1 }}>
+              <CloseIcon />
+            </IconButton>
+          )}
+        </DialogTitle>
+
+        {/* ТІЛО ФОРМИ: ЄДИНЕ місце, де є скролбар */}
+        <Box
+          sx={{
+            p: 3,
+            pt: 0,
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 4,
+            flex: 1, // Займає весь вільний простір під шапкою
+            overflowY: "auto", // Дозволяє скролити всі колонки одночасно
+          }}
+        >
+          {/* Ліва частина: фото */}
+          <Box sx={{ width: { xs: "100%", md: 220 }, flexShrink: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+            <CardMedia
+              component="img"
+              sx={{
+                width: "100%",
+                aspectRatio: "1/1",
+                objectFit: "cover",
+                borderRadius: 1,
+                background: "#eee",
+              }}
+              image={imagePreview || "https://placehold.co/180x180?text=No+Image"}
+              alt="Tag image"
+            />
+            <Button variant="outlined" component="label" fullWidth>
+              Завантажити фото
+              <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            </Button>
+            <Typography variant="body2" color="text.secondary">
+              {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
+              {form.image && form.image.name}
+            </Typography>
+          </Box>
+
+          {/* Права частина: форма */}
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               label="Назва"
               fullWidth
-              margin="normal"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
@@ -152,17 +173,14 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
             <TextField
               label="Інформація"
               fullWidth
-              margin="normal"
               multiline
               rows={3}
               value={form.info}
               onChange={(e) => setForm({ ...form, info: e.target.value })}
             />
 
-            <Box sx={{ mt: 2, flex: 1 }}>
-              {/* <Typography variant="subtitle2" gutterBottom>
-                Виберіть книги для тегу
-              </Typography> */}
+            {/* Селектор: без зайвих маніпуляцій з minHeight/overflow */}
+            <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
               <EntityListSelector
                 items={filteredBooks}
                 loading={isLoadingBooks}
@@ -180,20 +198,21 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit }) => {
               />
             </Box>
 
+            {/* Кнопка: просто лежить внизу правої колонки */}
             <Button
               type="submit"
               variant="outlined"
               color="primary"
               fullWidth
               disabled={isSubmitting}
-              sx={{ marginTop: 2, height: 48 }}
+              sx={{ height: 48, flexShrink: 0, mt: 1 }}
             >
               {isSubmitting ? <LoadingIndicator minHeight={24} /> : (initialData ? "Оновити тег" : "Додати тег")}
             </Button>
-          </form>
+          </Box>
         </Box>
-      </Paper>
-    </Box>
+      </form>
+    </Paper>
   );
 };
 
