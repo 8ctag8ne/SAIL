@@ -116,6 +116,10 @@ Summary:"""
 }}"""
 
         try:
+            print("=" * 50)
+            print(f"DEBUG - КІЛЬКІСТЬ ТЕГІВ ДЛЯ LLM: {len(existing_tags)}")
+            print(f"DEBUG - ТЕГИ: {existing_tags}")
+            print("=" * 50)
             response = await self.client.chat.completions.create(
                 model="qwen/qwen-2.5-72b-instruct",
                 messages=[
