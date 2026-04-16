@@ -111,5 +111,21 @@ namespace MilLib.Controllers
             var responseData = await response.Content.ReadAsStringAsync();
             return Content(responseData, "application/json");
         }
+
+        [HttpGet("debug-tags")]
+        public async Task<IActionResult> DebugAiTags()
+        {
+            var client = _httpClientFactory.CreateClient("AiService");
+            var response = await client.GetAsync("debug/db-tags");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorData = await response.Content.ReadAsStringAsync();
+                return StatusCode((int)response.StatusCode, errorData);
+            }
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            return Content(responseData, "application/json");
+        }
     }
 }

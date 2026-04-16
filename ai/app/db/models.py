@@ -26,7 +26,7 @@ class DocumentChunk(Base):
     page_number = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     
-    embedding = Column(Vector(4096), nullable=True)
+    embedding = Column(Vector(2048), nullable=True)
 
 class Tag(Base):
     __tablename__ = "tags"

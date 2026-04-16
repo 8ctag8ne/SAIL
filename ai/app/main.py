@@ -146,3 +146,25 @@ async def get_metadata_status(task_id: str):
         metadata=task_data.get("metadata"),
         error=task_data.get("error")
     )
+
+@app.get("/debug/db-tags")
+async def debug_db_tags(db: AsyncSession = Depends(get_db)):
+    """Перевірка доступу ai-service до бази даних Supabase"""
+    try:
+        # Спробуємо витягнути теги
+        result = await db.execute(select(Tag.title))
+        tags = result.scalars().all()
+        
+        return {
+            "status": "success",
+            "connection": "OK",
+            "tags_count": len(tags),
+            "tags_sample": tags[:5] # Показуємо перші 5 тегів
+        }
+    except Exception as e:
+        # Якщо є помилка підключення (наприклад, SSL чи таймаут), ми її тут побачимо
+        return {
+            "status": "error",
+            "error_type": type(e).__name__,
+            "message": str(e)
+        }
