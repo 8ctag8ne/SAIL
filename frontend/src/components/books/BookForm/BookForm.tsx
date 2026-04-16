@@ -131,25 +131,48 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
                 }));
 
                 // Автори
-                const authorRaw = metadata.author ? metadata.author.trim() : "";
-                const authorStr = authorRaw || "Невідомо";
+                let authorsArray: string[] = [];
                 
-                const existingAuthor = allAuthors.find(a => a.name.toLowerCase() === authorStr.toLowerCase());
+                if (Array.isArray(metadata.author)) {
+                  authorsArray = metadata.author.map((a: any) => typeof a === "string" ? a.trim() : "");
+                } else if (typeof metadata.author === "string" && metadata.author.trim()) {
+                  // Fallback for when the model occasionally returns a single string instead of an array
+                  authorsArray = [metadata.author.trim()];
+                }
                 
-                if (existingAuthor) {
+                // Якщо масив порожній (або був null), встановлюємо значення "Невідомо"
+                const activeAuthors = authorsArray.filter(a => a.length > 0);
+                if (activeAuthors.length === 0) {
+                  activeAuthors.push("Невідомо");
+                }
+                
+                const matchedAuthors: SimpleAuthor[] = [];
+                const newAuthorTexts: string[] = [];
+
+                activeAuthors.forEach((authorStr) => {
+                  const existingAuthor = allAuthors.find(a => a.name.toLowerCase() === authorStr.toLowerCase());
+                  if (existingAuthor) {
+                    matchedAuthors.push(existingAuthor);
+                  } else {
+                    newAuthorTexts.push(authorStr);
+                  }
+                });
+
+                if (matchedAuthors.length > 0) {
                   setForm(prev => {
-                    const alreadyHas = prev.authors.some(a => a.id === existingAuthor.id);
+                    const existingIds = new Set(prev.authors.map(a => a.id));
+                    const distinctMatched = matchedAuthors.filter(a => !existingIds.has(a.id));
                     return {
                       ...prev,
-                      authors: alreadyHas ? prev.authors : [...prev.authors, existingAuthor]
+                      authors: [...prev.authors, ...distinctMatched]
                     };
                   });
-                } else {
+                }
+
+                if (newAuthorTexts.length > 0) {
                   setNewAuthorNames(prev => {
-                    if (!prev.includes(authorStr)) {
-                      return [...prev, authorStr];
-                    }
-                    return prev;
+                    const combined = [...prev, ...newAuthorTexts];
+                    return Array.from(new Set(combined));
                   });
                 }
 
