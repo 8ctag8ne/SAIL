@@ -1,14 +1,17 @@
-# models/schemas.py
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, Dict, Any
+
+class MetadataTaskResponse(BaseModel):
+    task_id: str
+    status: str
+    metadata: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
 
 # Базові схеми для відповідей (Read)
 class TagResponse(BaseModel):
     id: int
     title: str
-    info: Optional[str] = None    
-    # Цей рядок каже Pydantic: "Не лякайся, якщо тобі дадуть об'єкт SQLAlchemy, 
-    # просто читай його властивості (my_tag.title)"
+    info: Optional[str] = None
     model_config = ConfigDict(from_attributes=True) 
 
 class DocumentChunkResponse(BaseModel):
@@ -16,7 +19,8 @@ class DocumentChunkResponse(BaseModel):
     book_id: int
     level: int
     parent_id: Optional[str]
-    page_number: int
+    page_start: int
+    page_end: int
     text: str
     embedding: Optional[list[float]] = []
     model_config = ConfigDict(from_attributes=True)

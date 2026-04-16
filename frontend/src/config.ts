@@ -1,3 +1,4 @@
-const BASE_URL = "https://sail-production-b010.up.railway.app"; 
+//frontend/src/config.ts
+const BASE_URL = process.env.REACT_APP_BASE_URL as string;
 
 export default BASE_URL;

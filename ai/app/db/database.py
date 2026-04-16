@@ -4,7 +4,7 @@ from sqlalchemy.orm import declarative_base
 from app.core.config import settings
 
 # Створюємо движок
-engine = create_async_engine(settings.DATABASE_URL_LOCAL, echo=settings.is_development)
+engine = create_async_engine(settings.DATABASE_URL, echo=settings.is_development)
 
 # Створюємо фабрику сесій
 AsyncSessionLocal = async_sessionmaker(

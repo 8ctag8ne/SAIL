@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+//frontend/src/components/books/BookForm/BookForm.tsx
+import React, { useState, useEffect, useRef } from "react";
 import { Box, Button, TextField, Typography, Paper, CardMedia, IconButton, DialogTitle } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import UniversalCreatableSelector from "../../ui/UniversalCreatableSelector";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { SimpleAuthor, SimpleTag } from "../../../types";
 import BASE_URL from "../../../config";
-import { renderPdfFirstPage, analyzeBookPdf } from "../../../api/FileApi";
+import { renderPdfFirstPage } from "../../../api/FileApi";
+import { startMetadataExtraction, checkMetadataStatus } from "../../../api/AiApi";
 import { toast } from "react-fox-toast";
 import { useTags } from "../../../hooks/useTags";
 import { useAuthors } from "../../../hooks/useAuthors";
@@ -51,10 +53,15 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
   const { data: authorsData, isLoading: authorsLoading } = useAuthors({ PageSize: 1000 });
   const allAuthors = authorsData?.items.map((a) => ({ id: a.id, name: a.name || "" })) || [];
 
+  const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     return () => {
       if (imagePreview && imagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(imagePreview);
+      }
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
       }
     };
   }, [imagePreview]);
@@ -107,49 +114,94 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
     if (form.file?.type === "application/pdf") {
       setAnalyzing(true);
       try {
-        const result = await analyzeBookPdf(form.file);
+        const { task_id } = await startMetadataExtraction(form.file);
 
-        setForm(prev => ({
-          ...prev,
-          title: prev.title || result.title,
-          info: prev.info || result.description,
-          tags: result.existingTags,// Уникаємо дублікатів
-        }));
+        pollingTimerRef.current = setInterval(async () => {
+          try {
+            const { status, metadata, error } = await checkMetadataStatus(task_id);
+            
+            if (status === "completed") {
+              if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+              
+              if (metadata) {
+                setForm(prev => ({
+                  ...prev,
+                  title: prev.title || metadata.title || "",
+                  info: prev.info || metadata.description || "",
+                }));
 
-        // Додаємо авторів тільки якщо є результати
-        if (result.authors?.length) {
-          const newAuthors = result.authors.map(a => ({
-            id: a.id || 0,
-            name: a.name || ""
-          })).filter(a => a.id !== 0);
+                // Автори
+                const authorRaw = metadata.author ? metadata.author.trim() : "";
+                const authorStr = authorRaw || "Невідомо";
+                
+                const existingAuthor = allAuthors.find(a => a.name.toLowerCase() === authorStr.toLowerCase());
+                
+                if (existingAuthor) {
+                  setForm(prev => {
+                    const alreadyHas = prev.authors.some(a => a.id === existingAuthor.id);
+                    return {
+                      ...prev,
+                      authors: alreadyHas ? prev.authors : [...prev.authors, existingAuthor]
+                    };
+                  });
+                } else {
+                  setNewAuthorNames(prev => {
+                    if (!prev.includes(authorStr)) {
+                      return [...prev, authorStr];
+                    }
+                    return prev;
+                  });
+                }
 
-          const newSuggestedAuthors = result.authors
-            .filter(a => a.id === 0 && a.name)
-            .map(a => a.name || "");
+                // Теги
+                if (metadata.tags && Array.isArray(metadata.tags)) {
+                  const matchedTags: SimpleTag[] = [];
+                  const newTags: string[] = [];
+                  
+                  metadata.tags.forEach((tagStr: string) => {
+                    const existingTag = allTags.find(t => t.title.toLowerCase() === tagStr.toLowerCase());
+                    if (existingTag) {
+                      matchedTags.push(existingTag);
+                    } else {
+                      newTags.push(tagStr);
+                    }
+                  });
 
-          setForm(prev => {
-            const existingAuthorIds = new Set(prev.authors.map(a => a.id));
-            const distinctNewAuthors = newAuthors.filter(a => !existingAuthorIds.has(a.id));
-            return {
-              ...prev,
-              authors: [...prev.authors, ...distinctNewAuthors]
-            };
-          });
-
-          setNewAuthorNames(prev => {
-            const combined = [...prev, ...newSuggestedAuthors];
-            return Array.from(new Set(combined));
-          });
-        }
-
-        setSuggestedTagNames(result.suggestedTags ?? []);
-
+                  setForm(prev => {
+                    const existingIds = new Set(prev.tags.map(t => t.id));
+                    const distinctMatched = matchedTags.filter(t => !existingIds.has(t.id));
+                    return {
+                      ...prev,
+                      tags: [...prev.tags, ...distinctMatched]
+                    };
+                  });
+                  
+                  setSuggestedTagNames(prev => {
+                    const combined = [...prev, ...newTags];
+                    return Array.from(new Set(combined));
+                  });
+                }
+              }
+              
+              setAnalyzing(false);
+              toast.success("Аналіз успішно завершено", { isCloseBtn: true });
+            } else if (status === "failed") {
+              if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+              setAnalyzing(false);
+              toast.error(error || "Помилка аналізу на сервері", { isCloseBtn: true });
+            }
+          } catch (err) {
+            if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
+            setAnalyzing(false);
+            console.error("Polling error:", err);
+            toast.error("Помилка при перевірці статусу", { isCloseBtn: true });
+          }
+        }, 3000);
       } catch (error) {
-        console.error("Помилка аналізу:", error);
-        toast.error("Не вдалося проаналізувати файл", {
+        console.error("Start analysis error:", error);
+        toast.error("Не вдалося запустити аналіз", {
           isCloseBtn: true,
         });
-      } finally {
         setAnalyzing(false);
       }
     }
