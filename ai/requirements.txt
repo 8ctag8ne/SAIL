@@ -5,6 +5,7 @@ pydantic
 pydantic-settings
 python-multipart
 regex
+tenacity
 
 # База даних (Entity Framework style)
 sqlalchemy
