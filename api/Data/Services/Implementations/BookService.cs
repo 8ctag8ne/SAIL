@@ -207,7 +207,7 @@ namespace MilLib.Services.Implementations
             };
 
             // Додаємо авторів
-            foreach (var authorId in bookDto.AuthorIds)
+            foreach (var authorId in allAuthorIds)
             {
                 book.Authors.Add(new AuthorBook { AuthorId = authorId, Book = book });
             }
