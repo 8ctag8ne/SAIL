@@ -1,3 +1,4 @@
+//api/Controllers/AiController.cs
 using Microsoft.AspNetCore.Mvc;
 
 namespace MilLib.Controllers
@@ -68,6 +69,44 @@ namespace MilLib.Controllers
             
             if (!response.IsSuccessStatusCode)
                 return NotFound("AI Service not found");
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            return Content(responseData, "application/json");
+        }
+
+        [HttpPost("extract-metadata")]
+        public async Task<IActionResult> ExtractMetadata(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Файл порожній");
+
+            var client = _httpClientFactory.CreateClient("AiService");
+
+            using var content = new MultipartFormDataContent();
+            using var stream = file.OpenReadStream();
+            var streamContent = new StreamContent(stream);
+            
+            content.Add(streamContent, "file", file.FileName);
+
+            var response = await client.PostAsync("convert/extract-metadata", content);
+            
+            if (!response.IsSuccessStatusCode)
+                return StatusCode((int)response.StatusCode, "Помилка комунікації з AI сервісом");
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            
+            return Content(responseData, "application/json");
+        }
+
+        [HttpGet("extract-metadata/status/{taskId}")]
+        public async Task<IActionResult> CheckMetadataStatus(string taskId)
+        {
+            var client = _httpClientFactory.CreateClient("AiService");
+            
+            var response = await client.GetAsync($"convert/extract-metadata/status/{taskId}");
+            
+            if (!response.IsSuccessStatusCode)
+                return NotFound("Задачу не знайдено");
 
             var responseData = await response.Content.ReadAsStringAsync();
             return Content(responseData, "application/json");
