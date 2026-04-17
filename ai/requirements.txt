@@ -16,4 +16,7 @@ pgvector           # Підтримка векторів у SQLAlchemy
 langchain
 langchain-openai   # Використовуємо для OpenRouter
 langchain-opendataloader-pdf
+langchain-text-splitters
 # langchain-community
+
+httpx

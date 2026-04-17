@@ -2,6 +2,7 @@
 import asyncio
 import time
 import uuid
+import httpx
 
 from fastapi import BackgroundTasks, FastAPI, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -9,13 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Dict, List, Optional
 
-from app.db.database import get_db
+from app.db.database import get_db, AsyncSessionLocal
 from app.db.models import Book, Tag, Author
-from app.db.schemas import BookResponse, TagResponse, AuthorResponse, MetadataTaskResponse
+from app.db.schemas import BookResponse, TagResponse, AuthorResponse, MetadataTaskResponse, DocumentChunkResponse
+from app.core.config import settings
 from app.services.md_service import process_document_combined
 from app.services.parser.opendataloader_service import OpenDataLoaderService
 from app.services.parser.heuristic_service import HeuristicService
 from app.services.llm_service import LLMService
+from app.services.chunking_strategies import SimpleChunkingStrategy
+from app.services.rag_service import ChunkingService, RAGService
 
 app = FastAPI(title="AI Knowledge Service")
 
@@ -31,6 +35,18 @@ class TaskResponse(BaseModel):
     markdown: Optional[str] = None
     execution_time_seconds: Optional[float] = None
     error: Optional[str] = None
+
+class ProcessBookTaskResponse(BaseModel):
+    task_id: str
+    status: str
+    error: Optional[str] = None
+
+class RagAskRequest(BaseModel):
+    query: str
+
+class RagAskResponse(BaseModel):
+    answer: str
+    sources: List[DocumentChunkResponse]
 
 async def background_conversion_task(task_id: str, file_bytes: bytes, filename: str):
     """Обгортка для BackgroundTask, яка оновлює статус у словнику"""
@@ -168,3 +184,84 @@ async def debug_db_tags(db: AsyncSession = Depends(get_db)):
             "error_type": type(e).__name__,
             "message": str(e)
         }
+
+async def background_chunking_task(task_id: str, book_id: int, file_bytes: bytes):
+    try:
+        parser = OpenDataLoaderService()
+        heuristic = HeuristicService()
+        llm_service = LLMService()
+        
+        strategy = SimpleChunkingStrategy(llm_service)
+        chunking_service = ChunkingService(strategy)
+        
+        raw_json_data = await parser.parse(file_bytes)
+        print(f"DEBUG: Розпарсено JSON. Кількість сирих елементів: {len(raw_json_data)}")
+        
+        hierarchical_data = heuristic.build_hierarchical_structure(raw_json_data)
+        print(f"DEBUG: Побудовано ієрархію. Кількість вузлів після обробки: {len(hierarchical_data)}")
+        
+        async with AsyncSessionLocal() as db:
+            try:
+                print("DEBUG: Починаємо запис чанків у БД...")
+                await chunking_service.process_and_save_book(db, book_id, hierarchical_data)
+                print("DEBUG: Транзакція успішно зафіксована (commit).")
+            except Exception as db_err:
+                print(f"CRITICAL DB ERROR: {db_err}")
+                raise db_err
+            
+        TASKS_DB[task_id].update({"status": "completed"})
+        print(f"Chunking task {task_id} completed successfully.")
+    except Exception as e:
+        print(f"Chunking task {task_id} failed: {e}")
+        TASKS_DB[task_id].update({
+            "status": "failed",
+            "error": str(e)
+        })
+
+@app.post("/rag/process-book/{book_id}")
+async def process_book_for_rag(book_id: int, background_tasks: BackgroundTasks):
+    task_id = str(uuid.uuid4())
+    TASKS_DB[task_id] = {"status": "processing"}
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            api_response = await client.get(f"{settings.MAIN_API_URL}/api/Book/{book_id}")
+            if api_response.status_code != 200:
+                raise HTTPException(status_code=404, detail="Book not found in Main API")
+            
+            book_data = api_response.json()
+            file_url = book_data.get("fileUrl")
+            
+            if not file_url:
+                raise HTTPException(status_code=400, detail="Book does not have a file")
+                
+            file_response = await client.get(file_url)
+            if file_response.status_code != 200:
+                raise HTTPException(status_code=400, detail="Failed to download book file")
+                
+            file_bytes = file_response.content
+    except httpx.RequestError as e:
+        TASKS_DB[task_id] = {"status": "failed", "error": f"Network error: {str(e)}"}
+        raise HTTPException(status_code=500, detail=f"Error communicating with Main API: {str(e)}")
+        
+    background_tasks.add_task(background_chunking_task, task_id, book_id, file_bytes)
+    return {"task_id": task_id, "status": "processing"}
+
+@app.get("/rag/process-book/status/{task_id}", response_model=ProcessBookTaskResponse)
+async def get_process_book_status(task_id: str):
+    if task_id not in TASKS_DB:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    task_data = TASKS_DB[task_id]
+    return ProcessBookTaskResponse(
+        task_id=task_id,
+        status=task_data["status"],
+        error=task_data.get("error")
+    )
+
+@app.post("/rag/ask", response_model=RagAskResponse)
+async def ask_rag_question(request: RagAskRequest, db: AsyncSession = Depends(get_db)):
+    llm_service = LLMService()
+    rag_service = RAGService(llm_service)
+    answer, sources = await rag_service.ask_question(db, request.query)
+    return RagAskResponse(answer=answer, sources=sources)

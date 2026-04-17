@@ -1,0 +1,30 @@
+namespace MilLib.Models.DTOs.Ai
+{
+    public class ProcessBookTaskResponseDto
+    {
+        public string TaskId { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string? Error { get; set; }
+    }
+
+    public class RagAskRequestDto
+    {
+        public required string Query { get; set; }
+    }
+
+    public class RagAskResponseDto
+    {
+        public string Answer { get; set; } = string.Empty;
+        public List<DocumentChunkResponseDto> Sources { get; set; } = new();
+    }
+
+    public class DocumentChunkResponseDto
+    {
+        public Guid Id { get; set; }
+        public int BookId { get; set; }
+        public int Level { get; set; }
+        public int PageStart { get; set; }
+        public int PageEnd { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+}

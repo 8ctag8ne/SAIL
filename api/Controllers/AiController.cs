@@ -1,5 +1,9 @@
 //api/Controllers/AiController.cs
 using Microsoft.AspNetCore.Mvc;
+using MilLib.Models.DTOs.Ai;
+using System.Text.Json;
+using System.Text;
+
 
 namespace MilLib.Controllers
 {
@@ -122,6 +126,63 @@ namespace MilLib.Controllers
             {
                 var errorData = await response.Content.ReadAsStringAsync();
                 return StatusCode((int)response.StatusCode, errorData);
+            }
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            return Content(responseData, "application/json");
+        }
+
+        [HttpPost("rag/process-book/{bookId}")]
+        public async Task<IActionResult> ProcessBookForRag(int bookId)
+        {
+            var client = _httpClientFactory.CreateClient("AiService");
+            var response = await client.PostAsync($"rag/process-book/{bookId}", null);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return StatusCode((int)response.StatusCode, errorContent);
+            }
+
+            var responseData = await response.Content.ReadAsStringAsync();
+
+            return Content(responseData, "application/json");
+        }
+
+        [HttpGet("rag/process-book/status/{taskId}")]
+        public async Task<IActionResult> GetProcessBookStatus(string taskId)
+        {
+            var client = _httpClientFactory.CreateClient("AiService");
+            var response = await client.GetAsync($"rag/process-book/status/{taskId}");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    return NotFound(new { message = "Task not found" });
+
+                return StatusCode((int)response.StatusCode, "Error fetching status from AI service");
+            }
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            return Content(responseData, "application/json");
+        }
+
+        [HttpPost("rag/ask")]
+        public async Task<IActionResult> AskRagQuestion([FromBody] RagAskRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Query))
+            {
+                return BadRequest("Query cannot be empty.");
+            }   
+
+            var client = _httpClientFactory.CreateClient("AiService");
+            var jsonContent = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+            var response = await client.PostAsync($"rag/ask", jsonContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return StatusCode((int)response.StatusCode, errorContent);
             }
 
             var responseData = await response.Content.ReadAsStringAsync();

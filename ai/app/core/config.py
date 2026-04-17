@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     SUPABASE_SESSION_POOLER: str | None = None
     OPENROUTER_API_KEY: str | None = None
     OLLAMA_API_BASE: str | None = None  
+    MAIN_API_URL: str = "http://localhost:8080"
     
     @property
     def is_development(self) -> bool:

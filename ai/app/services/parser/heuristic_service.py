@@ -67,15 +67,17 @@ class HeuristicService:
         
         for item in json_data:
             item_type = item.get("type")
+            page_num = item.get("page number", 1)
             
             if item_type == "heading":
                 level = item.get("heading level", 1)
                 
                 new_node = {
                     "type": "heading",
-                    "heading level": level,
-                    "content": item.get("content", ""),
-                    "page number": item.get("page number"),
+                    "level": level,
+                    "text": item.get("content", ""),
+                    "page_start": page_num,
+                    "page_end": page_num,
                     "children": []
                 }
                 
@@ -92,6 +94,11 @@ class HeuristicService:
                     else:
                         hierarchy.append(new_node)
                 
+                # Update page_end for all active ancestors
+                for lvl in list(active_headers.keys()):
+                    if lvl < level:
+                        active_headers[lvl]["page_end"] = max(active_headers[lvl].get("page_end", 1), page_num)
+
                 active_headers[level] = new_node
                 
                 # Clear deeper headers
@@ -102,18 +109,32 @@ class HeuristicService:
             else:
                 new_node = {
                     "type": item_type,
-                    "content": item.get("content", ""),
-                    "page number": item.get("page number")
+                    "level": 5,
+                    "text": item.get("content", ""),
+                    "page_start": page_num,
+                    "page_end": page_num,
+                    "children": []
                 }
                 
                 if active_headers:
                     max_active_level = max(active_headers.keys())
                     active_headers[max_active_level].setdefault("children", []).append(new_node)
+                    
+                    # Update page_end for all active ancestors
+                    for lvl in active_headers.keys():
+                        active_headers[lvl]["page_end"] = max(active_headers[lvl].get("page_end", 1), page_num)
                 else:
                     hierarchy.append(new_node)
                     
-        return hierarchy
+        def filter_empty_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+            valid_nodes = []
+            for node in nodes:
+                node["children"] = filter_empty_nodes(node.get("children", []))
+                if node.get("children") or node.get("text", "").strip():
+                    valid_nodes.append(node)
+            return valid_nodes
 
+        return filter_empty_nodes(hierarchy)
     def extract_metadata_context(self, json_data: List[Dict[str, Any]]) -> str:
         if not json_data:
             return ""
@@ -140,10 +161,10 @@ class HeuristicService:
         
         def _traverse(node: Dict[str, Any]):
             node_type = node.get("type")
-            content = node.get("content", "")
+            content = node.get("text", "")
             
             if node_type == "heading":
-                level = node.get("heading level", 1)
+                level = node.get("level", 1)
                 markdown_blocks.append(f"{'#' * level} {content}")
             else:
                 if content:

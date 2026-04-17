@@ -16,6 +16,10 @@ class LLMService:
         )
         self.embedding_model = os.getenv("EMBEDDING_MODEL", "qwen/qwen3-embedding-4b")
         self.summary_model = os.getenv("SUMMARY_MODEL", "qwen/qwen-2.5-7b-instruct")
+        self.chat_model = os.getenv("CHAT_MODEL", "qwen/qwen-2.5-72b-instruct")
+        
+        # Обмежуємо кількість одночасних запитів до API
+        self.semaphore = asyncio.Semaphore(5)
 
     @retry(
         stop=stop_after_attempt(5),
@@ -26,13 +30,14 @@ class LLMService:
         if not text.strip():
             return []
         
-        model = os.getenv("EMBEDDING_MODEL", "qwen/qwen3-embedding-4b")
+        model = self.embedding_model
         
-        response = await self.client.embeddings.create(
-            input=text,
-            model=model
-        )
-        return response.data[0].embedding
+        async with self.semaphore:
+            response = await self.client.embeddings.create(
+                input=text,
+                model=model
+            )
+            return response.data[0].embedding[:2048]
 
     @retry(
         stop=stop_after_attempt(5),
@@ -52,19 +57,20 @@ Keep the summary concise and focused on the main thematic concepts.
 
 Summary:"""
 
-        model = os.getenv("SUMMARY_MODEL", "qwen/qwen2.5-7b-instruct") # fallback to 0.6b or 7b
+        model = self.summary_model
 
         try:
-            response = await self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant that summarizes hierarchical document nodes."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=500
-            )
-            return response.choices[0].message.content.strip()
+            async with self.semaphore:
+                response = await self.client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that summarizes hierarchical document nodes."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.1,
+                    max_tokens=500
+                )
+                return response.choices[0].message.content.strip()
         except Exception as e:
             raise e
 
@@ -121,15 +127,17 @@ Summary:"""
             print(f"DEBUG - КІЛЬКІСТЬ ТЕГІВ ДЛЯ LLM: {len(existing_tags)}")
             print(f"DEBUG - ТЕГИ: {existing_tags}")
             print("=" * 50)
-            response = await self.client.chat.completions.create(
-                model="qwen/qwen-2.5-72b-instruct",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.0,
-                max_tokens=2000
-            )
+            
+            async with self.semaphore:
+                response = await self.client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.0,
+                    max_tokens=2000
+                )
             
             raw_content = response.choices[0].message.content.strip()
             # Очищення від markdown блоків
@@ -143,3 +151,38 @@ Summary:"""
                 "description": "",
                 "tags": []
             }
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type((openai.RateLimitError, openai.APITimeoutError, openai.APIConnectionError))
+    )
+    async def generate_rag_answer(self, query: str, context: str) -> str:
+        system_prompt = (
+            "Ти військовий експерт. Дай відповідь на запит користувача, спираючись ВИКЛЮЧНО на наданий контекст. "
+            "Не вигадуй фактів."
+        )
+        
+        user_prompt = f"""Контекст:
+{context}
+
+Запит користувача:
+{query}
+
+Відповідь:"""
+
+        try:
+            async with self.semaphore:
+                response = await self.client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.1,
+                    max_tokens=2000
+                )
+                return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"Error in generate_rag_answer: {e}")
+            return "Сталася помилка при генерації відповіді."

@@ -12,7 +12,7 @@ class Book(Base):
     title = Column(String, nullable=False)
     info = Column(Text, nullable=True)
     
-    embedding = Column(Vector(4096), nullable=True) 
+    embedding = Column(Vector(2048), nullable=True) 
 
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"
@@ -23,7 +23,8 @@ class DocumentChunk(Base):
     level = Column(Integer, nullable=False)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("document_chunks.id"), nullable=True)
     
-    page_number = Column(Integer, nullable=False)
+    page_start = Column(Integer, nullable=False)
+    page_end = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     
     embedding = Column(Vector(2048), nullable=True)
