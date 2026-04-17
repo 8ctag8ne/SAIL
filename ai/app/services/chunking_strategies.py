@@ -24,6 +24,7 @@ class SimpleChunkingStrategy(BaseChunkingStrategy):
         
         # Перетворюємо побудоване дерево в єдиний markdown документ
         markdown_text = heuristic.convert_to_markdown(parsed_data)
+        markdown_text = markdown_text.replace('\x00', '')
         
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
