@@ -10,12 +10,14 @@ namespace MilLib.Models.DTOs.Ai
     public class RagAskRequestDto
     {
         public required string Query { get; set; }
+        public double? Temperature { get; set; }
     }
 
     public class RagAskResponseDto
     {
         public string Answer { get; set; } = string.Empty;
         public List<DocumentChunkResponseDto> Sources { get; set; } = new();
+        public List<string> SuggestedQuestions { get; set; } = new List<string>();
     }
 
     public class DocumentChunkResponseDto
@@ -26,5 +28,6 @@ namespace MilLib.Models.DTOs.Ai
         public int PageStart { get; set; }
         public int PageEnd { get; set; }
         public string Text { get; set; } = string.Empty;
+        public double SimilarityScore { get; set; }
     }
 }

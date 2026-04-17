@@ -14,13 +14,17 @@ interface ConfirmDialogProps {
     title: string;
     onConfirm: (e: React.MouseEvent) => Promise<void> | void;
     onCancel: () => void;
+    confirmColor?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
+    confirmText?: string;
 }
 
 const ConfirmDialog = ({
     open,
     title,
     onConfirm,
-    onCancel
+    onCancel,
+    confirmColor = "error",
+    confirmText = "Підтвердити"
 }: ConfirmDialogProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -72,7 +76,7 @@ const ConfirmDialog = ({
 
                 <Button
                     onClick={handleConfirm}
-                    color="error"
+                    color={confirmColor}
                     disabled={isSubmitting}
                     fullWidth={isMobile}
                     sx={{
@@ -82,7 +86,7 @@ const ConfirmDialog = ({
                     {isSubmitting ? (
                         <LoadingIndicator minHeight={24} />
                     ) : (
-                        "Підтвердити"
+                        confirmText
                     )}
                 </Button>
             </DialogActions>

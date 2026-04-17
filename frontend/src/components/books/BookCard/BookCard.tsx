@@ -13,10 +13,11 @@ import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../BookForm/BookForm";
 import { updateBook } from "../../../api/BookApi";
 import { useQueryClient } from "@tanstack/react-query";
-import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book, Download as DownloadIcon, PlaylistAdd as PlaylistAddIcon, RemoveCircleOutline as RemoveCircleOutlineIcon } from "@mui/icons-material";
+import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book, Download as DownloadIcon, PlaylistAdd as PlaylistAddIcon, RemoveCircleOutline as RemoveCircleOutlineIcon, AutoAwesome as AutoAwesomeIcon } from "@mui/icons-material";
 import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
 import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
+import RagIndexDialog from "../BookDetails/RagIndexDialog";
 import BASE_URL from "../../../config";
 
 type BookCardProps = {
@@ -46,7 +47,8 @@ const BookCard: React.FC<BookCardProps> = ({
   const [liked, setLiked] = useState(isLiked);
   const [likeCount, setLikeCount] = useState(likesCount);
 
-  const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
+  const isAdmin = user?.roles.includes("Admin");
+  const canEditOrDelete = isAdmin || user?.roles.includes("Librarian");
   const fullImageUrl = imageUrl ? imageUrl : null;
 
   const handleNavigate = () => navigate(`/books/${id}`);
@@ -54,6 +56,7 @@ const BookCard: React.FC<BookCardProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [addToListsOpen, setAddToListsOpen] = useState(false);
   const queryClient = useQueryClient();
+  const [isRagIndexOpen, setIsRagIndexOpen] = useState(false);
 
   const { mutateAsync: toggleLikeMutation } = useToggleLike();
   const { mutateAsync: updateBookMutation } = useUpdateBook();
@@ -167,6 +170,17 @@ const BookCard: React.FC<BookCardProps> = ({
     });
   }
 
+  if (isAdmin) {
+    menuActions.push({
+      label: "Згенерувати RAG-індекс (AI)",
+      icon: <AutoAwesomeIcon />,
+      onClick: (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setIsRagIndexOpen(true);
+      },
+    });
+  }
+
   if (canEditOrDelete) {
     menuActions.push({
       label: "Видалити",
@@ -265,6 +279,12 @@ const BookCard: React.FC<BookCardProps> = ({
         title="Ви впевнені, що хочете видалити цю книгу?"
         onConfirm={handleConfirmDelete}
         onCancel={() => setConfirmOpen(false)}
+      />
+
+      <RagIndexDialog
+        open={isRagIndexOpen}
+        bookId={id}
+        onClose={() => setIsRagIndexOpen(false)}
       />
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>

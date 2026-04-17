@@ -72,19 +72,26 @@ export type BookList = {
     books: SimpleBook[];
 };
 
+export interface RagRequest {
+    query: string;
+    temperature?: number;
+}
+
 export interface RagSource {
-    id: string; // Guid з бекенду
+    id: string;
     bookId: number;
-    title: string; // Назва книги
+    level: number;
+    parentId: string | null;
     pageStart: number;
     pageEnd: number;
-    snippet: string; // Уривок тексту (Text з чанка)
+    text: string;
+    similarityScore: number;
 }
 
 export interface RagResponse {
     query: string;
     answer: string;
     sources: RagSource[];
-    relatedTags: { id: number; title: string }[];
-    suggestedQuestions: string[];
+    relatedTags?: { id: number; title: string }[];
+    suggestedQuestions?: string[];
 }

@@ -26,6 +26,7 @@ class DocumentChunk(Base):
     page_start = Column(Integer, nullable=False)
     page_end = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
+    # similarity_score = Column(float, nullable=True)
     
     embedding = Column(Vector(2048), nullable=True)
 

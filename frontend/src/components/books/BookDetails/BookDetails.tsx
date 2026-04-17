@@ -26,6 +26,8 @@ import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import RagIndexDialog from "./RagIndexDialog";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-fox-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -66,6 +68,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isRagIndexOpen, setIsRagIndexOpen] = useState(false);
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
@@ -142,7 +145,8 @@ const BookDetails: React.FC<BookDetailsProps> = ({
     }
   };
 
-  const canEditOrDelete = user?.roles.includes("Admin") || user?.roles.includes("Librarian");
+  const isAdmin = user?.roles.includes("Admin");
+  const canEditOrDelete = isAdmin || user?.roles.includes("Librarian");
 
   const menuActions: ActionItem[] = [];
 
@@ -159,6 +163,14 @@ const BookDetails: React.FC<BookDetailsProps> = ({
       label: "Додати до списку",
       icon: <PlaylistAddIcon />,
       onClick: () => setAddToListsOpen(true),
+    });
+  }
+
+  if (isAdmin) {
+    menuActions.push({
+      label: "Згенерувати RAG-індекс (AI)",
+      icon: <AutoAwesomeIcon />,
+      onClick: () => setIsRagIndexOpen(true),
     });
   }
 
@@ -350,6 +362,12 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         title="Ви впевнені, що хочете видалити цю книгу?"
         onConfirm={handleConfirmDelete}
         onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
+
+      <RagIndexDialog
+        open={isRagIndexOpen}
+        bookId={Number(id)}
+        onClose={() => setIsRagIndexOpen(false)}
       />
     </>
   );

@@ -157,32 +157,50 @@ Summary:"""
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((openai.RateLimitError, openai.APITimeoutError, openai.APIConnectionError))
     )
-    async def generate_rag_answer(self, query: str, context: str) -> str:
-        system_prompt = (
-            "Ти військовий експерт. Дай відповідь на запит користувача, спираючись ВИКЛЮЧНО на наданий контекст. "
-            "Не вигадуй фактів."
-        )
-        
-        user_prompt = f"""Контекст:
-{context}
-
-Запит користувача:
-{query}
-
-Відповідь:"""
-
-        try:
-            async with self.semaphore:
+    async def generate_rag_answer(self, query: str, context: str, temperature: float = 0.7) -> str:
+        async with self.semaphore:
+            try:
                 response = await self.client.chat.completions.create(
                     model=self.chat_model,
                     messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
+                        {"role": "system", "content": "Ти професійний військовий аналітик. Твоє завдання - дати чітку відповідь на запит.\n\nПРАВИЛА:\n1. МОВА: Відповідай ТІЛЬКИ тією ж мовою, якою написано запит користувача (наприклад, якщо запит українською - відповідай українською, якщо англійською - англійською).\n2. ДОСТОВІРНІСТЬ: Спирайся ВИКЛЮЧНО на наданий контекст. Не вигадуй фактів. Якщо в контексті немає відповіді, скажи про це прямо."},
+                        {"role": "user", "content": f"Контекст:\n{context}\n\nЗапит: {query}"}
                     ],
-                    temperature=0.1,
-                    max_tokens=2000
+                    temperature=temperature
                 )
-                return response.choices[0].message.content.strip()
-        except Exception as e:
-            print(f"Error in generate_rag_answer: {e}")
-            return "Сталася помилка при генерації відповіді."
+                
+                # Безпечна перевірка наявності відповіді
+                if not response or not response.choices:
+                    print(f"DEBUG: OpenRouter повернув порожню відповідь або помилку: {response}")
+                    return "Виникла помилка при генерації відповіді (порожня відповідь від API)."
+                    
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"DEBUG LLM Error: {str(e)}")
+                return f"Виникла помилка при зверненні до ШІ: {str(e)}"
+
+    async def generate_suggested_questions(self, query: str, context: str) -> list[str]:
+        async with self.semaphore:
+            try:
+                response = await self.client.chat.completions.create(
+                    model="qwen/qwen-2.5-72b-instruct",
+                    messages=[
+                        {"role": "system", "content": "Ти помічник. Твоє завдання - згенерувати 3 логічні наступні запитання на основі контексту та попереднього запиту користувача. \nПРАВИЛА:\n1. Пиши тією ж мовою, що й запит.\n2. Поверни ТІЛЬКИ валідний JSON-масив рядків (наприклад: [\"Питання 1?\", \"Питання 2?\"]). Ніякого додаткового тексту чи форматування Markdown."},
+                        {"role": "user", "content": f"Контекст:\n{context}\n\nПопередній запит: {query}"}
+                    ],
+                    temperature=0.7
+                )
+                
+                content = response.choices[0].message.content.strip()
+                # Очищення від можливих markdown-блоків (наприклад, ```json ... ```)
+                if content.startswith("```"):
+                    content = content.split("\n", 1)[1].rsplit("\n", 1)[0]
+                
+                questions = json.loads(content)
+                if isinstance(questions, list):
+                    return questions[:3]
+                return []
+            except Exception as e:
+                print(f"DEBUG: Помилка генерації питань: {e}")
+                return []

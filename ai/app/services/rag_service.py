@@ -38,34 +38,39 @@ class RAGService:
         if not query_embedding:
             return []
             
-        # Пошук за косинусною відстанню pgvector
+        distance_expr = DocumentChunk.embedding.cosine_distance(query_embedding)
         result = await db.execute(
-            select(DocumentChunk)
-            .order_by(DocumentChunk.embedding.cosine_distance(query_embedding))
+            select(DocumentChunk, distance_expr)
+            .order_by(distance_expr)
             .limit(top_k)
         )
-        found_chunks = result.scalars().all()
         
         final_chunks = []
-        for chunk in found_chunks:
-            if chunk not in final_chunks:
+        seen_ids = set()
+        
+        for chunk, distance in result.all():
+            if chunk.id not in seen_ids:
+                chunk.similarity_score = round(1.0 - float(distance), 4) 
                 final_chunks.append(chunk)
-            # Якщо є батьківський чанк, додаємо його також для ширшого контексту
-            if chunk.parent_id:
+                seen_ids.add(chunk.id)
+                
+            if chunk.parent_id and chunk.parent_id not in seen_ids:
                 parent_result = await db.execute(
                     select(DocumentChunk).where(DocumentChunk.id == chunk.parent_id)
                 )
                 parent_chunk = parent_result.scalar_one_or_none()
-                if parent_chunk and parent_chunk not in final_chunks:
+                if parent_chunk:
+                    parent_chunk.similarity_score = chunk.similarity_score 
                     final_chunks.append(parent_chunk)
+                    seen_ids.add(parent_chunk.id)
                     
         return final_chunks
         
-    async def ask_question(self, db: AsyncSession, query: str) -> Tuple[str, List[DocumentChunk]]:
+    async def ask_question(self, db: AsyncSession, query: str, temperature: float = 0.7) -> Tuple[str, List[DocumentChunk], List[str]]:
         chunks = await self.retrieve_chunks(db, query)
         
         if not chunks:
-            return "На жаль, інформації за вашим запитом не знайдено.", []
+            return "На жаль, інформації за вашим запитом не знайдено.", [], []
             
         context_parts = []
         
@@ -74,6 +79,9 @@ class RAGService:
             context_parts.append(f"[Сторінки: {pages}]: {chunk.text}")
                 
         context = "\n\n".join(context_parts)
-        answer = await self.llm_service.generate_rag_answer(query, context)
+        answer_task = self.llm_service.generate_rag_answer(query, context, temperature)
+        questions_task = self.llm_service.generate_suggested_questions(query, context)
         
-        return answer, chunks
+        answer, suggested_questions = await asyncio.gather(answer_task, questions_task)
+        
+        return answer, chunks, suggested_questions

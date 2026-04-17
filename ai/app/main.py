@@ -43,10 +43,12 @@ class ProcessBookTaskResponse(BaseModel):
 
 class RagAskRequest(BaseModel):
     query: str
+    temperature: Optional[float] = 0.7
 
 class RagAskResponse(BaseModel):
     answer: str
     sources: List[DocumentChunkResponse]
+    suggested_questions: List[str] = []
 
 async def background_conversion_task(task_id: str, file_bytes: bytes, filename: str):
     """Обгортка для BackgroundTask, яка оновлює статус у словнику"""
@@ -259,9 +261,27 @@ async def get_process_book_status(task_id: str):
         error=task_data.get("error")
     )
 
-@app.post("/rag/ask", response_model=RagAskResponse)
+@app.post("/rag/ask")
 async def ask_rag_question(request: RagAskRequest, db: AsyncSession = Depends(get_db)):
     llm_service = LLMService()
     rag_service = RAGService(llm_service)
-    answer, sources = await rag_service.ask_question(db, request.query)
-    return RagAskResponse(answer=answer, sources=sources)
+    answer, sources, suggested_questions = await rag_service.ask_question(db, request.query, request.temperature)
+    
+    formatted_sources = []
+    for chunk in sources:
+        formatted_sources.append({
+            "id": str(chunk.id),
+            "bookId": chunk.book_id,
+            "level": chunk.level,
+            "parentId": str(chunk.parent_id) if getattr(chunk, "parent_id", None) else None,
+            "pageStart": chunk.page_start,
+            "pageEnd": chunk.page_end,
+            "text": chunk.text,
+            "similarityScore": getattr(chunk, "similarity_score", 0.0)
+        })
+        
+    return {
+        "answer": answer if answer else "Не вдалося згенерувати відповідь.", 
+        "sources": formatted_sources,
+        "suggestedQuestions": suggested_questions
+    }

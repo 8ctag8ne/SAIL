@@ -61,25 +61,38 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
                   "&:hover": { bgcolor: "action.hover" },
                 }}
               >
-                <Typography variant="subtitle2" sx={{ fontWeight: "bold", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {source.title}
-                </Typography>
-                <Box>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      bgcolor: "rgba(0, 122, 255, 0.1)", // Light background
-                      color: "primary.main",
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: 1,
-                      fontWeight: "bold",
-                      display: "inline-block",
-                    }}
-                  >
-                    Стор. {source.pageStart}{source.pageStart !== source.pageEnd ? `-${source.pageEnd}` : ''}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: "bold", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    Книга #{source.bookId}
                   </Typography>
+                  {source.similarityScore !== undefined && (
+                    <Chip
+                      label={`${Math.round(source.similarityScore * 100)}%`}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: "0.7rem", flexShrink: 0 }}
+                    />
+                  )}
                 </Box>
+                {source.pageStart > 0 && source.pageEnd > 0 && (
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        bgcolor: "rgba(0, 122, 255, 0.1)", // Light background
+                        color: "primary.main",
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                        fontWeight: "bold",
+                        display: "inline-block",
+                      }}
+                    >
+                      Стор. {source.pageStart}{source.pageStart !== source.pageEnd ? `-${source.pageEnd}` : ''}
+                    </Typography>
+                  </Box>
+                )}
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -91,7 +104,7 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
                     overflow: "hidden",
                   }}
                 >
-                  "{source.snippet}"
+                  "{source.text}"
                 </Typography>
               </Paper>
             ))}
@@ -123,7 +136,7 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
       )}
 
       {/* Пов'язані теми та запитання */}
-      {(ragResponse.relatedTags?.length > 0 || ragResponse.suggestedQuestions?.length > 0) && (
+      {((ragResponse.relatedTags && ragResponse.relatedTags.length > 0) || (ragResponse.suggestedQuestions && ragResponse.suggestedQuestions.length > 0)) && (
         <Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
             <LightbulbIcon color="primary" />
@@ -131,9 +144,9 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
           </Box>
           <Stack spacing={2}>
             {/* Block 1: Tags */}
-            {ragResponse.relatedTags?.length > 0 && (
+            {ragResponse.relatedTags && ragResponse.relatedTags.length > 0 && (
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {ragResponse.relatedTags.map((tag) => (
+                {ragResponse.relatedTags?.map((tag) => (
                   <Chip
                     key={tag.id}
                     label={tag.title}
@@ -145,14 +158,14 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
             )}
 
             {/* Block 2: Suggested Questions */}
-            {ragResponse.suggestedQuestions?.length > 0 && (
+            {ragResponse.suggestedQuestions && ragResponse.suggestedQuestions.length > 0 && (
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1 }}>
-                {ragResponse.relatedTags?.length > 0 && (
+                {ragResponse.relatedTags && ragResponse.relatedTags.length > 0 && (
                   <Typography variant="caption" color="text.secondary">
                     Можливі запитання:
                   </Typography>
                 )}
-                {ragResponse.suggestedQuestions.map((question, idx) => (
+                {ragResponse.suggestedQuestions?.map((question, idx) => (
                   <Button
                     key={idx}
                     startIcon={<SearchIcon />}

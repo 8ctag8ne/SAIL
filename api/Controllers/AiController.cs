@@ -176,7 +176,9 @@ namespace MilLib.Controllers
             }   
 
             var client = _httpClientFactory.CreateClient("AiService");
-            var jsonContent = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+            var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            var jsonContent = new StringContent(JsonSerializer.Serialize(request, jsonOptions), Encoding.UTF8, "application/json");
+            
             var response = await client.PostAsync($"rag/ask", jsonContent);
 
             if (!response.IsSuccessStatusCode)

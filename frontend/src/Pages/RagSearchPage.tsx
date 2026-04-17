@@ -7,15 +7,9 @@ import RagSearchView from "../components/ui/RagSearchView/RagSearchView";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TuneIcon from "@mui/icons-material/Tune";
 import { RagResponse } from "../types";
-import mockRagData from "../mock/ragSearch.json";
+import { askRagQuestion } from "../api/AiApi";
 
-const mockRagSearch = async (query: string): Promise<RagResponse> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockRagData as RagResponse);
-    }, 1500);
-  });
-};
+const ragCache = new Map<string, RagResponse>();
 
 const RagSearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,23 +17,36 @@ const RagSearchPage: React.FC = () => {
   const [query, setQuery] = useState(urlQuery);
   const [ragResult, setRagResult] = useState<RagResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [temperature, setTemperature] = useState<number>(0.7);
   const ragResultRef = React.useRef<HTMLDivElement>(null);
 
-  const fetchRagData = async (searchString: string) => {
-    setLoading(true);
-    try {
-      const result = await mockRagSearch(searchString);
-      setRagResult(result);
-    } catch {
-      setRagResult(null);
+  const fetchRagData = async (searchString: string, tempParam: number) => {
+    const cacheKey = `${searchString}_${tempParam}`;
+    if (ragCache.has(cacheKey)) {
+        setRagResult(ragCache.get(cacheKey) as RagResponse);
+        setError(null);
+        return;
     }
-    setLoading(false);
+
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await askRagQuestion(searchString, tempParam);
+      ragCache.set(cacheKey, result);
+      setRagResult(result);
+    } catch (err: any) {
+      setError(err.response?.data || err.message || "Сталася помилка при пошуку");
+      setRagResult(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     setQuery(urlQuery); // Sync the SearchBar text with the URL
     if (urlQuery.trim()) {
-      fetchRagData(urlQuery);
+      fetchRagData(urlQuery, temperature);
     } else {
       setRagResult(null); // Clear results if URL is empty
     }
@@ -77,14 +84,12 @@ const RagSearchPage: React.FC = () => {
         </AccordionSummary>
         <AccordionDetails sx={{ px: 1 }}>
           <Stack spacing={3} sx={{ mt: 1 }}>
-            <FormControlLabel
-              control={<Switch color="primary" />}
-              label="Глибокий пошук (Reranker) - підвищує точність, але працює довше"
-            />
+
             <Box>
               <Typography gutterBottom>Креативність (Температура)</Typography>
               <Slider
-                defaultValue={0.3}
+                value={temperature}
+                onChange={(_, newValue) => setTemperature(newValue as number)}
                 step={0.1}
                 marks
                 min={0}
@@ -92,14 +97,14 @@ const RagSearchPage: React.FC = () => {
                 valueLabelDisplay="auto"
               />
             </Box>
-            <FormControl fullWidth size="small">
+            {/* <FormControl fullWidth size="small">
               <InputLabel>Мова відповіді</InputLabel>
               <Select label="Мова відповіді" defaultValue="Автоматично">
                 <MenuItem value="Українська">Українська</MenuItem>
                 <MenuItem value="English">English</MenuItem>
                 <MenuItem value="Автоматично">Автоматично</MenuItem>
               </Select>
-            </FormControl>
+            </FormControl> */}
           </Stack>
         </AccordionDetails>
       </Accordion>
@@ -110,7 +115,13 @@ const RagSearchPage: React.FC = () => {
         </Box>
       )}
 
-      {!loading && ragResult && (
+      {error && (
+        <Box sx={{ mt: 4 }}>
+          <Typography color="error" textAlign="center">{error}</Typography>
+        </Box>
+      )}
+
+      {!loading && !error && ragResult && (
         <RagSearchView ref={ragResultRef} ragResponse={ragResult} onSearch={handleSearchSubmit} />
       )}
     </Box>
