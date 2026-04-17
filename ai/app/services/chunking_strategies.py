@@ -37,21 +37,31 @@ class SimpleChunkingStrategy(BaseChunkingStrategy):
         if not chunks_texts:
             return []
             
-        embeddings = await asyncio.gather(*[self.llm_service.generate_embedding(t) for t in chunks_texts])
-        
         all_chunks = []
-        for t, emb in zip(chunks_texts, embeddings):
-            chunk = DocumentChunk(
-                id=uuid.uuid4(),
-                book_id=book_id,
-                level=0,
-                page_start=0,
-                page_end=0,
-                text=t,
-                embedding=emb,
-                parent_id=None
-            )
-            all_chunks.append(chunk)
+        batch_size = 10
+        
+        for i in range(0, len(chunks_texts), batch_size):
+            batch_texts = chunks_texts[i:i + batch_size]
+            
+            # Паралельна обробка тільки ДЛЯ ОДНІЄЇ ПАРТІЇ
+            embeddings = await asyncio.gather(*[self.llm_service.generate_embedding(t) for t in batch_texts])
+            
+            # Формування об'єктів DocumentChunk і додавання до all_chunks
+            for t, emb in zip(batch_texts, embeddings):
+                chunk = DocumentChunk(
+                    id=uuid.uuid4(),
+                    book_id=book_id,
+                    level=0,
+                    page_start=0,
+                    page_end=0,
+                    text=t,
+                    embedding=emb,
+                    parent_id=None
+                )
+                all_chunks.append(chunk)
+                
+            # Невелика пауза, щоб дати CPU/Network "подихати"
+            # await asyncio.sleep(0.5)
             
         return all_chunks
 
