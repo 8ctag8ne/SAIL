@@ -61,7 +61,7 @@ class SimpleChunkingStrategy(BaseChunkingStrategy):
                 all_chunks.append(chunk)
                 
             # Невелика пауза, щоб дати CPU/Network "подихати"
-            # await asyncio.sleep(0.5)
+            await asyncio.sleep(0.5)
             
         return all_chunks
 
