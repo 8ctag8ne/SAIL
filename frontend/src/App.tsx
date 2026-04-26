@@ -44,7 +44,7 @@ const GlobalJoyride = () => {
     const location = useLocation();
 
     useEffect(() => {
-        if (run && activeTour === "user_save_books" && stepIndex === 0) {
+        if (run && (activeTour === "user_save_books" || activeTour === "lib_rag_index") && stepIndex === 0) {
             if (location.pathname !== "/") {
                 navigate("/");
             }

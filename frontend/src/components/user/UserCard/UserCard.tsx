@@ -28,9 +28,10 @@ type Props = {
   showEdit?: boolean;
   onDeleted?: () => void;
   onUpdated?: () => void;
+  isFirst?: boolean;
 };
 
-const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) => {
+const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFirst }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.roles.includes("Admin");
@@ -111,7 +112,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) => 
         </Box>
         {menuActions.length > 0 && (
           <Box sx={{ ml: "auto" }}>
-            <EntityActionMenu actions={menuActions} />
+            <EntityActionMenu actions={menuActions} menuClassName={isFirst ? "tour-user-card-menu" : undefined} />
           </Box>
         )}
       </CardContent>

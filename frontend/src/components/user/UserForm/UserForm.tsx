@@ -3,6 +3,7 @@ import { Box, TextField, Button, Typography, Paper, FormControl, InputLabel, Sel
 import CloseIcon from "@mui/icons-material/Close";
 import { useAuth } from "../../../contexts/AuthContext";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
+import { useTour } from "../../../contexts/TourContext";
 
 const ROLES = ["User", "Librarian", "Admin"];
 
@@ -30,7 +31,17 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onClose }) =
     const [role, setRole] = useState<string>(initialData.role || "User");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const { activeTour, stepIndex, setStepIndex } = useTour();
 
+    useEffect(() => {
+      if (activeTour === 'admin_users') {
+        const isMobileTour = window.innerWidth < 1200;
+        const targetStep = isMobileTour ? 3 : 2; // the 'Редагувати' step
+        if (stepIndex === targetStep) {
+          setTimeout(() => setStepIndex(targetStep + 1), 300);
+        }
+      }
+    }, [activeTour, stepIndex, setStepIndex]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -97,13 +108,17 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, onSubmit, onClose }) =
             overflowY: "auto",
           }}
         >
-          <TextField label="Ім'я" name="userName" value={form.userName} onChange={handleChange} required fullWidth />
-          <TextField label="Email" name="email" value={form.email} onChange={handleChange} required fullWidth type="email" />
-          <TextField label="Інформація" name="about" value={form.about} onChange={handleChange} multiline minRows={3} fullWidth />
-          <TextField label="Номер телефону" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} fullWidth />
+          <Box className="tour-user-name-email" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField label="Ім'я" name="userName" value={form.userName} onChange={handleChange} required fullWidth />
+            <TextField label="Email" name="email" value={form.email} onChange={handleChange} required fullWidth type="email" />
+          </Box>
+          <Box className="tour-user-info-phone" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField label="Інформація" name="about" value={form.about} onChange={handleChange} multiline minRows={3} fullWidth />
+            <TextField label="Номер телефону" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} fullWidth />
+          </Box>
 
           {currentUser?.roles.includes("Admin") && (
-            <FormControl fullWidth>
+            <FormControl fullWidth className="tour-user-role-select">
               <InputLabel>Роль</InputLabel>
               <Select value={role} label="Роль" onChange={e => setRole(e.target.value)}>
                 {ROLES.map(r => (

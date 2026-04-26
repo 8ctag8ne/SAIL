@@ -11,7 +11,7 @@ const HelpPage = () => {
   const navigate = useNavigate();
 
   const handleStartTour = (tourName: string) => {
-    if (tourName === "guest_navigation") {
+    if (tourName === "guest_navigation" || tourName === "lib_rag_index") {
       navigate("/");
       setTimeout(() => startTour(tourName), 200);
     } else if (tourName === "user_rag") {
@@ -71,7 +71,7 @@ const HelpPage = () => {
             <Button variant="outlined" onClick={() => handleStartTour("lib_create_book")} sx={{ borderRadius: 0, borderColor: "#2d2f33", color: "text.primary" }}>
               Гайд: Створення книги з автогенерацією метаданих
             </Button>
-            <Button variant="outlined" onClick={() => handleStartTour("lib_optional_index")} sx={{ borderRadius: 0, borderColor: "#2d2f33", color: "text.primary" }}>
+            <Button variant="outlined" onClick={() => handleStartTour("lib_rag_index")} sx={{ borderRadius: 0, borderColor: "#2d2f33", color: "text.primary" }}>
               Гайд: Опціональна індексація
             </Button>
           </Box>

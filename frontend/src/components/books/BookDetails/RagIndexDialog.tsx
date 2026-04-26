@@ -59,6 +59,7 @@ const RagIndexDialog: React.FC<RagIndexDialogProps> = ({ open, bookId, onClose }
 
   return (
     <ConfirmDialog
+      className="tour-index-confirm-modal"
       open={open}
       title={dialogTitle}
       onConfirm={handleStart}

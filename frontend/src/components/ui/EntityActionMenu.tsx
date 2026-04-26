@@ -22,9 +22,10 @@ export type ActionItem = {
 
 export interface EntityActionMenuProps {
   actions: ActionItem[];
+  menuClassName?: string;
 }
 
-const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions }) => {
+const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassName }) => {
   const [open, setOpen] = useState(false);
   const { activeTour, stepIndex, setStepIndex, setRun } = useTour();
   const [clickedAction, setClickedAction] = useState(false);
@@ -41,6 +42,25 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions }) => {
         setStepIndex(1);
       }
       if (!open && wasOpenRef.current && stepIndex === 1 && !clickedAction) {
+        setRun(false);
+        wasOpenRef.current = false;
+      }
+    } else if (activeTour === 'lib_rag_index') {
+      if (open && stepIndex === 1) {
+        setStepIndex(2);
+      }
+      if (!open && wasOpenRef.current && stepIndex === 2 && !clickedAction) {
+        setRun(false);
+        wasOpenRef.current = false;
+      }
+    } else if (activeTour === 'admin_users') {
+      const isMobileTour = window.innerWidth < 1200;
+      const targetStep = isMobileTour ? 2 : 1;
+      
+      if (open && stepIndex === targetStep) {
+        setStepIndex(targetStep + 1);
+      }
+      if (!open && wasOpenRef.current && stepIndex === targetStep + 1 && !clickedAction) {
         setRun(false);
         wasOpenRef.current = false;
       }
@@ -73,7 +93,7 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions }) => {
 
   return (
     <>
-      <IconButton className="tour-book-card-menu" onClick={handleOpen} size="small" aria-label="More actions">
+      <IconButton className={menuClassName || "tour-book-card-menu"} onClick={handleOpen} size="small" aria-label="More actions">
         <MoreVertIcon />
       </IconButton>
 
@@ -94,9 +114,15 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions }) => {
       >
         <Box sx={{ py: 0 }}>
           <List>
-            {actions.map((action, index) => (
-              <ListItem disablePadding key={index} className={action.label === 'Додати до списку' ? 'tour-add-to-list-option' : undefined}>
-                <ListItemButton
+            {actions.map((action, index) => {
+              let className = undefined;
+              if (action.label === 'Додати до списку') className = 'tour-add-to-list-option';
+              if (action.label === 'Згенерувати RAG-індекс (AI)') className = 'tour-index-option';
+              if (action.label === 'Редагувати') className = 'tour-user-action-edit';
+              
+              return (
+                <ListItem disablePadding key={index} className={className}>
+                  <ListItemButton
                   onClick={(e) => handleActionClick(e, action.onClick)}
                   sx={{
                     px: 3,
@@ -114,7 +140,8 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions }) => {
                   />
                 </ListItemButton>
               </ListItem>
-            ))}
+              );
+            })}
           </List>
         </Box>
       </Dialog>

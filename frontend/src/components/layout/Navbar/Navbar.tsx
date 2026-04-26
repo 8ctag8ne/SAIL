@@ -41,6 +41,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import logo from "../../../logo.svg";
+import { useTour } from "../../../contexts/TourContext";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -60,6 +61,28 @@ const Navbar = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+
+  const { run, activeTour, stepIndex, setStepIndex, stopTour } = useTour();
+
+  React.useEffect(() => {
+    if (run && activeTour === "lib_create_book") {
+      if (stepIndex === 0) {
+        if (!isMobile && Boolean(anchorEl)) {
+          setTimeout(() => setStepIndex(1), 300);
+        } else if (isMobile && mobileOpen) {
+          setTimeout(() => setStepIndex(1), 300);
+        }
+      } else if (stepIndex === 1 && isAddBookOpen) {
+        setTimeout(() => setStepIndex(2), 300);
+      } else if (stepIndex > 1 && !isAddBookOpen) {
+        stopTour();
+      }
+    } else if (run && activeTour === "admin_users") {
+      if (isMobile && stepIndex === 0 && mobileOpen) {
+        setTimeout(() => setStepIndex(1), 300);
+      }
+    }
+  }, [run, activeTour, stepIndex, isAddBookOpen, anchorEl, mobileOpen, isMobile, setStepIndex, stopTour]);
 
   const handleLogout = () => {
     logout();
@@ -189,7 +212,7 @@ const Navbar = () => {
           Знання
         </Button>
         {isAdmin && (
-          <Button color="inherit" component={Link} to="/users" startIcon={<PeopleIcon />} sx={navActionSx}>
+          <Button className="tour-nav-users-desktop" color="inherit" component={Link} to="/users" startIcon={<PeopleIcon />} sx={navActionSx}>
             Користувачі
           </Button>
         )}
@@ -197,6 +220,7 @@ const Navbar = () => {
       {isAdminOrLibrarian && (
         <>
           <IconButton
+            className="tour-desktop-add-btn"
             color="inherit"
             onClick={handleAddMenuOpen}
             sx={{ ml: 1, ...navActionSx }}
@@ -216,6 +240,7 @@ const Navbar = () => {
             }}
           >
             <MenuItem
+              className="tour-desktop-menu-book"
               sx={menuItemSx}
               onClick={() => {
                 handleAddMenuClose();
@@ -338,7 +363,7 @@ const Navbar = () => {
         </ListItem>
         {isAdmin && (
           <ListItem disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton component={Link} to="/users" onClick={closeDrawer} sx={mobileMenuItemSx}>
+            <ListItemButton className="tour-nav-users-mobile" component={Link} to="/users" onClick={closeDrawer} sx={mobileMenuItemSx}>
               <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
                 <PeopleIcon />
               </ListItemIcon>
@@ -354,7 +379,7 @@ const Navbar = () => {
               ./ керування
             </Typography>
             <ListItem disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton onClick={() => { closeDrawer(); setIsAddBookOpen(true); }} sx={mobileMenuItemSx}>
+              <ListItemButton className="tour-mobile-add-btn" onClick={() => { closeDrawer(); setIsAddBookOpen(true); }} sx={mobileMenuItemSx}>
                 <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
                   <AddIcon />
                 </ListItemIcon>
@@ -457,6 +482,7 @@ const Navbar = () => {
         <Toolbar>
           {isMobile && (
             <IconButton
+              className="tour-mobile-menu-btn"
               color="inherit"
               aria-label="open drawer"
               edge="start"

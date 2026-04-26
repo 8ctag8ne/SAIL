@@ -1,3 +1,4 @@
+import { Box, Typography } from "@mui/material";
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { Step } from "react-joyride";
 
@@ -106,22 +107,223 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
           },
         ];
         break;
-      case "lib_create_book":
+      case "lib_create_book": {
+        const isMobileTour = window.innerWidth < 1200;
+        const initialSteps: Step[] = isMobileTour
+          ? [
+            {
+              target: ".tour-mobile-menu-btn",
+              content: "Відкрийте бічне меню навігації.",
+              placement: "bottom",
+              skipBeacon: true,
+              styles: { buttonPrimary: { display: "none" } }
+            },
+            {
+              target: ".tour-mobile-add-btn",
+              content: "Натисніть 'Додати книгу', щоб відкрити форму.",
+              placement: "bottom",
+              skipBeacon: true,
+              styles: { buttonPrimary: { display: "none" } }
+            }
+          ]
+          : [
+            {
+              target: ".tour-desktop-add-btn",
+              content: "Натисніть на іконку '+', щоб відкрити меню додавання.",
+              placement: "bottom",
+              skipBeacon: true,
+              styles: { buttonPrimary: { display: "none" } }
+            },
+            {
+              target: ".tour-desktop-menu-book",
+              content: "Оберіть 'Книга', щоб відкрити форму додавання.",
+              placement: "bottom",
+              skipBeacon: true,
+              styles: { buttonPrimary: { display: "none" } }
+            }
+          ];
+
         tourSteps = [
+          ...initialSteps,
           {
-            target: "body",
-            content: "Це гайд: Створення книги з автогенерацією метаданих.",
-            placement: "center",
+            target: ".tour-upload-pdf",
+            content: "Спочатку завантажте PDF-файл документа. Це обов'язковий крок для подальшої роботи.",
+            placement: "bottom",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-cover-actions",
+            content: "Тут ви можете завантажити власну обкладинку (Завантажити фото) або використати фото першої сторінки документа за замовчуванням (Звичайна обкладинка).",
+            placement: "bottom",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-ai-analyze",
+            content: "Кнопка 'Аналізувати книгу' — це магія ШІ! Вона розпарсить документ і автоматично заповнить порожні поля назви, опису, авторів та тегів. Заповнені вручну поля не перезапишуться. Ви завжди зможете відредагувати результат.",
+            placement: "bottom",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-book-basic-info",
+            content: "Поля 'Назва' та 'Опис' відображатимуться на картці книги в бібліотеці.",
+            placement: "top",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-book-multiselects",
+            content: "Мультиселекти для Авторів та Тегів. Ви можете обирати існуючі або вписувати нові і натискати 'Створити'. Нові сутності будуть додані в базу даних лише після фінального збереження книги.",
+            placement: "top",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-submit-book",
+            content: "Після заповнення натисніть 'Додати книгу'. Книга збережеться в базі і буде доступна для перегляду та індексації RAG-системою. Цю кнопку зараз натискати не обов'язково.",
+            placement: "top",
+            skipBeacon: true,
+            locale: { last: "Завершити" }
           },
         ];
         break;
-      case "admin_users":
+      }
+      case "admin_users": {
+        const isMobileTour = window.innerWidth < 1200;
+        const initialSteps: Step[] = isMobileTour
+          ? [
+            {
+              target: ".tour-mobile-menu-btn",
+              content: "Спочатку відкрийте бічне меню навігації.",
+              placement: "bottom",
+              skipBeacon: true,
+              styles: { buttonPrimary: { display: "none" } }
+            },
+            {
+              target: ".tour-nav-users-mobile",
+              content: "Тепер перейдіть до розділу 'Користувачі'.",
+              placement: "bottom",
+              skipBeacon: true,
+              styles: { buttonPrimary: { display: "none" } }
+            }
+          ]
+          : [
+            {
+              target: ".tour-nav-users-desktop",
+              content: "Перейдіть до розділу 'Користувачі', щоб керувати доступами.",
+              placement: "bottom",
+              skipBeacon: true,
+              styles: { buttonPrimary: { display: "none" } }
+            }
+          ];
+
+        tourSteps = [
+          ...initialSteps,
+          {
+            target: ".tour-user-card-menu",
+            content: "Тут ви бачите список користувачів. Іконки на картках позначають їхні поточні ролі. Натисніть на три крапки біля будь-якого користувача.",
+            placement: "auto",
+            skipBeacon: true,
+            styles: { buttonPrimary: { display: "none" } }
+          },
+          {
+            target: ".tour-user-action-edit",
+            content: "Ви можете видалити користувача, або змінити його дані. Оберіть 'Редагувати'.",
+            placement: "right",
+            skipBeacon: true,
+            styles: { buttonPrimary: { display: "none" } }
+          },
+          {
+            target: ".tour-user-name-email",
+            content: "Модалка редагування. 'Ім'я' та 'Email' — обов'язкові поля. Email використовується для ідентифікації при вході.",
+            placement: "bottom",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-user-info-phone",
+            content: "Поля 'Інформація' та 'Номер телефону' є опціональними.",
+            placement: "bottom",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-user-role-select",
+            content: (
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Найважливіше — <strong>'Роль'</strong>:
+                </Typography>
+                <Box component="ul" sx={{ mt: 0, pl: 2, mb: 1, textAlign: 'left' }}>
+                  <li><strong>User:</strong> базовий пошук і читання.</li>
+                  <li><strong>Librarian:</strong> додавання книг та RAG-індексація.</li>
+                  <li><strong>Admin:</strong> повний доступ до системи.</li>
+                </Box>
+                <Typography variant="body2" color="error.main">
+                  Змінюйте ролі обережно!
+                </Typography>
+              </Box>
+            ),
+            placement: "top",
+            skipBeacon: true,
+            locale: { last: "Завершити" }
+          }
+        ];
+        break;
+      }
+      case "lib_rag_index":
         tourSteps = [
           {
             target: "body",
-            content: "Це гайд: Керування користувачами та ролями.",
+            content: (
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
+                  Навіщо потрібна індексація?
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Коли ви просто додаєте книгу, вона з'являється на сайті, але штучний інтелект (RAG) її ще <strong>«не бачить»</strong>.
+                </Typography>
+                <Typography variant="body2">
+                  Щоб ШІ міг використовувати документ для відповідей на запитання, книгу необхідно <strong>проіндексувати</strong> — розбити текст на фрагменти та перетворити їх у математичні вектори.
+                </Typography>
+              </Box>
+            ),
             placement: "center",
+            skipBeacon: true,
           },
+          {
+            target: ".tour-book-card-menu",
+            content: "Щоб розпочати, знайдіть потрібну книгу на головній сторінці та натисніть на цю іконку з трьома крапками.",
+            placement: "auto",
+            skipBeacon: true,
+            styles: { buttonPrimary: { display: "none" } }
+          },
+          {
+            target: ".tour-index-option",
+            content: (
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography variant="body2" sx={{ mb: 1.5 }}>
+                  У меню оберіть опцію <strong>«Згенерувати RAG-індекс (AI)»</strong>. Після її натискання з'явиться вікно підтвердження.
+                </Typography>
+
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderLeft: '3px solid',
+                    borderColor: 'error.main',
+                    backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                    mb: 1.5
+                  }}
+                >
+                  <Typography variant="body2" color="error.main" sx={{ fontWeight: 'bold' }}>
+                    Увага: індексація може тривати кілька хвилин. Під час генерації категорично НЕ МОЖНА закривати модальне вікно, інакше процес перерветься.
+                  </Typography>
+                </Box>
+
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                  *Зараз натискати опцію не обов'язково. Щоб завершити гайд, просто натисніть кнопку нижче.
+                </Typography>
+              </Box>
+            ),
+            placement: "right",
+            skipBeacon: true,
+            locale: { last: "Завершити" }
+          }
         ];
         break;
       case "user_rag":

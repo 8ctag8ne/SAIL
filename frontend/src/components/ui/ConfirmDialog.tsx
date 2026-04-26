@@ -16,6 +16,7 @@ interface ConfirmDialogProps {
     onCancel: () => void;
     confirmColor?: "inherit" | "primary" | "secondary" | "success" | "error" | "info" | "warning";
     confirmText?: string;
+    className?: string;
 }
 
 const ConfirmDialog = ({
@@ -24,7 +25,8 @@ const ConfirmDialog = ({
     onConfirm,
     onCancel,
     confirmColor = "error",
-    confirmText = "Підтвердити"
+    confirmText = "Підтвердити",
+    className
 }: ConfirmDialogProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,6 +44,7 @@ const ConfirmDialog = ({
 
     return (
         <Dialog
+            className={className}
             open={open}
             onClose={() => !isSubmitting && onCancel()}
             fullWidth

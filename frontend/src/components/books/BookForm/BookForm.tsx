@@ -11,6 +11,7 @@ import { startMetadataExtraction, checkMetadataStatus } from "../../../api/AiApi
 import { toast } from "react-fox-toast";
 import { useTags } from "../../../hooks/useTags";
 import { useAuthors } from "../../../hooks/useAuthors";
+import { useTour } from "../../../contexts/TourContext";
 
 type BookFormProps = {
   initialData?: {
@@ -46,6 +47,20 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
   );
   const [generatingCover, setGeneratingCover] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { run, activeTour, stepIndex, stopTour } = useTour();
+
+  useEffect(() => {
+    if (run && activeTour === "lib_create_book") {
+      // stepIndex 4 is .tour-ai-analyze
+      if (stepIndex === 4) {
+        if (!form.file || form.file.type !== "application/pdf") {
+          toast.info("Тур завершено, оскільки файл не було завантажено. Ви можете продовжувати самостійно.", { isCloseBtn: true });
+          stopTour();
+        }
+      }
+    }
+  }, [run, activeTour, stepIndex, form.file, stopTour]);
 
   const { data: tagsData, isLoading: tagsLoading } = useTags({ PageSize: 1000 });
   const allTags = tagsData?.items.map((t) => ({ id: t.id, title: t.title || "" })) || [];
@@ -119,10 +134,10 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
         pollingTimerRef.current = setInterval(async () => {
           try {
             const { status, metadata, error } = await checkMetadataStatus(task_id);
-            
+
             if (status === "completed") {
               if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
-              
+
               if (metadata) {
                 setForm(prev => ({
                   ...prev,
@@ -132,20 +147,20 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
 
                 // Автори
                 let authorsArray: string[] = [];
-                
+
                 if (Array.isArray(metadata.author)) {
                   authorsArray = metadata.author.map((a: any) => typeof a === "string" ? a.trim() : "");
                 } else if (typeof metadata.author === "string" && metadata.author.trim()) {
                   // Fallback for when the model occasionally returns a single string instead of an array
                   authorsArray = [metadata.author.trim()];
                 }
-                
+
                 // Якщо масив порожній (або був null), встановлюємо значення "Невідомо"
                 const activeAuthors = authorsArray.filter(a => a.length > 0);
                 if (activeAuthors.length === 0) {
                   activeAuthors.push("Невідомо");
                 }
-                
+
                 const matchedAuthors: SimpleAuthor[] = [];
                 const newAuthorTexts: string[] = [];
 
@@ -180,7 +195,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
                 if (metadata.tags && Array.isArray(metadata.tags)) {
                   const matchedTags: SimpleTag[] = [];
                   const newTags: string[] = [];
-                  
+
                   metadata.tags.forEach((tagStr: string) => {
                     const existingTag = allTags.find(t => t.title.toLowerCase() === tagStr.toLowerCase());
                     if (existingTag) {
@@ -198,14 +213,14 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
                       tags: [...prev.tags, ...distinctMatched]
                     };
                   });
-                  
+
                   setSuggestedTagNames(prev => {
                     const combined = [...prev, ...newTags];
                     return Array.from(new Set(combined));
                   });
                 }
               }
-              
+
               setAnalyzing(false);
               toast.success("Аналіз успішно завершено", { isCloseBtn: true });
             } else if (status === "failed") {
@@ -355,45 +370,62 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
         >
           {/* Ліва частина: фото та файл */}
           <Box sx={{ width: { xs: "100%", md: 220 }, flexShrink: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-            <CardMedia
-              component="img"
-              sx={{
-                width: "100%",
-                aspectRatio: "1/1.414",
-                objectFit: "cover",
-                borderRadius: 1,
-              }}
-              image={imagePreview || "https://placehold.co/180x240?text=No+Image"}
-              alt="Book cover"
-            />
-            <Button
-              variant="outlined"
-              component="label"
-              fullWidth
-            >
-              Завантажити фото
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={handleImageChange}
+            <Box className="tour-cover-actions" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <CardMedia
+                component="img"
+                sx={{
+                  width: "100%",
+                  aspectRatio: "1/1.414",
+                  objectFit: "cover",
+                  borderRadius: 1,
+                }}
+                image={imagePreview || "https://placehold.co/180x240?text=No+Image"}
+                alt="Book cover"
               />
-            </Button>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                maxWidth: 200,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                textAlign: "center",
-              }}
-            >
-              {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
-              {form.image && form.image.name}
-            </Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+              >
+                Завантажити фото
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </Button>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  maxWidth: 200,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  textAlign: "center",
+                }}
+              >
+                {imagePreview && !form.image && initialData?.imageUrl && "Поточне зображення"}
+                {form.image && form.image.name}
+              </Typography>
+
+              {form.file && form.file.type === "application/pdf" && (
+                <Button
+                  className="tour-generate-cover"
+                  variant="outlined"
+                  fullWidth
+                  type="button"
+                  onClick={handleGenerateCover}
+                  disabled={generatingCover}
+                >
+                  {generatingCover ? <LoadingIndicator minHeight={20} /> : "Звичайна обкладинка"}
+                </Button>
+              )}
+            </Box>
+
             <Button
+              className="tour-upload-pdf"
               variant="outlined"
               component="label"
               fullWidth
@@ -419,8 +451,10 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
             >
               {fileName && `Файл: ${fileName}`}
             </Typography>
+
             {form.file && form.file.type === "application/pdf" && (
               <Button
+                className="tour-ai-analyze"
                 variant="outlined"
                 fullWidth
                 type="button"
@@ -430,53 +464,49 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
                 {analyzing ? <LoadingIndicator minHeight={20} /> : "Аналізувати книгу"}
               </Button>
             )}
-            {form.file && form.file.type === "application/pdf" && (
-              <Button
-                variant="outlined"
-                fullWidth
-                type="button"
-                onClick={handleGenerateCover}
-                disabled={generatingCover}
-              >
-                {generatingCover ? <LoadingIndicator minHeight={20} /> : "Звичайна обкладинка"}
-              </Button>
-            )}
           </Box>
           {/* Права частина: форма */}
           <Box sx={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField
-              label="Назва"
-              fullWidth
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-            <TextField
-              label="Опис"
-              fullWidth
-              multiline
-              rows={4}
-              value={form.info}
-              onChange={(e) => setForm({ ...form, info: e.target.value })}
-            />
-            <UniversalCreatableSelector
-              label="Автори"
-              options={allAuthors}
-              selectedExisting={form.authors || []}
-              selectedNew={newAuthorNames ?? []}
-              onExistingChange={(authors) => setForm((prev) => ({ ...prev, authors: authors as SimpleAuthor[] }))}
-              onNewChange={setNewAuthorNames}
-              isLoading={authorsLoading}
-            />
-            <UniversalCreatableSelector
-              label="Теги"
-              options={allTags}
-              selectedExisting={form.tags || []}
-              selectedNew={suggestedTagNames ?? []}
-              onExistingChange={(tags) => setForm((prev) => ({ ...prev, tags: tags as SimpleTag[] }))}
-              onNewChange={setSuggestedTagNames}
-              isLoading={tagsLoading}
-            />
+            <Box className="tour-book-basic-info" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <TextField
+                label="Назва"
+                fullWidth
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+              <TextField
+                label="Опис"
+                fullWidth
+                multiline
+                rows={4}
+                value={form.info}
+                onChange={(e) => setForm({ ...form, info: e.target.value })}
+              />
+            </Box>
+
+            <Box className="tour-book-multiselects" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <UniversalCreatableSelector
+                label="Автори"
+                options={allAuthors}
+                selectedExisting={form.authors || []}
+                selectedNew={newAuthorNames ?? []}
+                onExistingChange={(authors) => setForm((prev) => ({ ...prev, authors: authors as SimpleAuthor[] }))}
+                onNewChange={setNewAuthorNames}
+                isLoading={authorsLoading}
+              />
+              <UniversalCreatableSelector
+                label="Теги"
+                options={allTags}
+                selectedExisting={form.tags || []}
+                selectedNew={suggestedTagNames ?? []}
+                onExistingChange={(tags) => setForm((prev) => ({ ...prev, tags: tags as SimpleTag[] }))}
+                onNewChange={setSuggestedTagNames}
+                isLoading={tagsLoading}
+              />
+            </Box>
+
             <Button
+              className="tour-submit-book"
               type="submit"
               variant="outlined"
               color="primary"

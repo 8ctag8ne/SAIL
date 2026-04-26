@@ -5,6 +5,7 @@ import PageContainer from "../components/layout/PageContainer/PageContainer";
 import UserCard from "../components/user/UserCard/UserCard";
 import { Typography, Box } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
+import { useTour } from "../contexts/TourContext";
 
 const UsersPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,6 +16,19 @@ const UsersPage: React.FC = () => {
 
     getAllUsers().then((data) => setUsers(data as User[]));
   }, [user]);
+
+  const { run, activeTour, stepIndex, setStepIndex } = useTour();
+
+  useEffect(() => {
+    if (run && activeTour === "admin_users") {
+      const isMobileTour = window.innerWidth < 1200;
+      if (isMobileTour && stepIndex === 1) {
+        setStepIndex(2);
+      } else if (!isMobileTour && stepIndex === 0) {
+        setStepIndex(1);
+      }
+    }
+  }, [run, activeTour, stepIndex, setStepIndex]);
 
   if (!user || !user.roles.includes("Admin")) {
     return (
@@ -44,7 +58,7 @@ const UsersPage: React.FC = () => {
             justifyContent: "center",
           }}
         >
-          {users.map(user => (
+          {users.map((user, index) => (
             <Box
               key={user.id}
               sx={{
@@ -53,7 +67,7 @@ const UsersPage: React.FC = () => {
                 minWidth: 250,
               }}
             >
-              <UserCard user={user} showEdit />
+              <UserCard user={user} showEdit isFirst={index === 0} />
             </Box>
           ))}
         </Box>
