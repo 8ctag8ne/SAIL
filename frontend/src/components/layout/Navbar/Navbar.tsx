@@ -37,12 +37,16 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import PersonIcon from "@mui/icons-material/Person";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import LogoutIcon from "@mui/icons-material/Logout";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import LoginIcon from "@mui/icons-material/Login";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import logo from "../../../logo.svg";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
 
   const { mutateAsync: addBookMutation } = useAddBook();
   const { mutateAsync: addAuthorMutation } = useAddAuthor();
@@ -77,6 +81,14 @@ const Navbar = () => {
 
   const handleAddMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileMenuClose = () => {
+    setProfileAnchorEl(null);
   };
 
   const isAdminOrLibrarian = user?.roles?.includes("Admin") || user?.roles?.includes("Librarian");
@@ -233,30 +245,49 @@ const Navbar = () => {
           </Menu>
         </>
       )}
-      {user ? (
-        <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
-          <IconButton
-            color="inherit"
-            onClick={() => navigate(`/users/${user.id}`)}
-            sx={{ mr: 1, ...navActionSx }}
-            aria-label="profile"
-          >
-            <AccountCircleIcon />
-          </IconButton>
-          <Button color="inherit" onClick={handleLogout} sx={navActionSx}>
-            Вийти
-          </Button>
-        </Box>
-      ) : (
-        <Box sx={{ display: "flex", gap: 1, ml: 2 }}>
-          <Button color="inherit" onClick={() => navigate("/login")} sx={navActionSx}>
-            Логін
-          </Button>
-          <Button color="inherit" onClick={() => navigate("/register")} sx={navActionSx}>
-            Реєстрація
-          </Button>
-        </Box>
-      )}
+      <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
+        <IconButton
+          color="inherit"
+          onClick={handleProfileMenuOpen}
+          sx={{ ...navActionSx }}
+          aria-label="profile"
+        >
+          {user ? <AccountCircleIcon /> : <LoginIcon />}
+        </IconButton>
+        <Menu
+          anchorEl={profileAnchorEl}
+          open={Boolean(profileAnchorEl)}
+          onClose={handleProfileMenuClose}
+          sx={{
+            "& .MuiPaper-root": {
+              borderRadius: 0,
+              border: "1px solid #2d2f33",
+            },
+          }}
+        >
+          {user ? [
+            <MenuItem key="profile" sx={menuItemSx} onClick={() => { handleProfileMenuClose(); navigate(`/users/${user.id}`); }}>
+              Профіль
+            </MenuItem>,
+            <MenuItem key="help" sx={menuItemSx} onClick={() => { handleProfileMenuClose(); navigate("/help"); }}>
+              Допомога
+            </MenuItem>,
+            <MenuItem key="logout" sx={menuItemSx} onClick={() => { handleProfileMenuClose(); handleLogout(); }}>
+              Вийти
+            </MenuItem>
+          ] : [
+            <MenuItem key="login" sx={menuItemSx} onClick={() => { handleProfileMenuClose(); navigate("/login"); }}>
+              Вхід
+            </MenuItem>,
+            <MenuItem key="register" sx={menuItemSx} onClick={() => { handleProfileMenuClose(); navigate("/register"); }}>
+              Реєстрація
+            </MenuItem>,
+            <MenuItem key="help" sx={menuItemSx} onClick={() => { handleProfileMenuClose(); navigate("/help"); }}>
+              Допомога
+            </MenuItem>
+          ]}
+        </Menu>
+      </Box>
     </>
   );
 
@@ -362,6 +393,14 @@ const Navbar = () => {
                   <ListItemText primary="Профіль" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
                 </ListItemButton>
               </ListItem>
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton onClick={() => { closeDrawer(); navigate("/help"); }} sx={mobileMenuItemSx}>
+                  <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+                    <HelpOutlineIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Допомога" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                </ListItemButton>
+              </ListItem>
               <ListItem disablePadding>
                 <ListItemButton onClick={handleLogout} sx={mobileMenuItemSx}>
                   <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
@@ -375,12 +414,26 @@ const Navbar = () => {
             <>
               <ListItem disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton onClick={() => { closeDrawer(); navigate("/login"); }} sx={mobileMenuItemSx}>
-                  <ListItemText primary="Логін" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                  <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+                    <LoginIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Вхід" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                </ListItemButton>
+              </ListItem>
+              <ListItem disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton onClick={() => { closeDrawer(); navigate("/register"); }} sx={mobileMenuItemSx}>
+                  <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+                    <PersonAddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Реєстрація" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
                 </ListItemButton>
               </ListItem>
               <ListItem disablePadding>
-                <ListItemButton onClick={() => { closeDrawer(); navigate("/register"); }} sx={mobileMenuItemSx}>
-                  <ListItemText primary="Реєстрація" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                <ListItemButton onClick={() => { closeDrawer(); navigate("/help"); }} sx={mobileMenuItemSx}>
+                  <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+                    <HelpOutlineIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Допомога" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
                 </ListItemButton>
               </ListItem>
             </>
