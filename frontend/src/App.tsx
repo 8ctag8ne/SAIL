@@ -14,6 +14,9 @@ import { useSearchParams } from "react-router-dom";
 import BookListPage from "./pages/BookListPage";
 import UsersPage from "./pages/UsersPage";
 import RagSearchPage from "./pages/RagSearchPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
+import Footer from "./components/layout/Footer/Footer";
 import { Box } from "@mui/material";
 import { ToastContainer } from "react-fox-toast";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -38,31 +41,36 @@ function App() {
                 <AuthProvider>
                     <ToastContainer position="top-center" />
                     <BrowserRouter>
-                        <Navbar />
-                        <Box
-                            component="main"
-                            sx={{
-                                pt: '80px', // Відступ висоти навбару
-                                minHeight: '100vh',
-                                px: 3, // Бокові відступи
-                                // py: 5  // Вертикальні відступи
-                            }}
-                        >
-                            <Routes>
-                                <Route path="/" element={<BookSearchPage />} />
-                                <Route path="/books" element={<BookSearchPage />} />
-                                <Route path="/login" element={<LoginPage />} />
-                                <Route path="/register" element={<RegisterPage />} />
-                                <Route path="/books/:id" element={<BookDetailsPage />} />
-                                <Route path="/authors/:id" element={<AuthorDetailsPage />} />
-                                <Route path="/authors" element={<AuthorListPage />} />
-                                <Route path="/tags" element={<TagListPage />} />
-                                <Route path="/tags/:id" element={<TagDetailsPage />} />
-                                <Route path="/users" element={<UsersPage />} />
-                                <Route path="/users/:id" element={<UserProfilePage />} />
-                                <Route path="/booklists/:id" element={<BookListPage />} />
-                                <Route path="/rag-search" element={<RagSearchPage />} />
-                            </Routes>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                            <Navbar />
+                            <Box
+                                component="main"
+                                sx={{
+                                    pt: '80px', // Відступ висоти навбару
+                                    flexGrow: 1,
+                                    px: 3, // Бокові відступи
+                                    // py: 5  // Вертикальні відступи
+                                }}
+                            >
+                                <Routes>
+                                    <Route path="/" element={<BookSearchPage />} />
+                                    <Route path="/books" element={<BookSearchPage />} />
+                                    <Route path="/login" element={<LoginPage />} />
+                                    <Route path="/register" element={<RegisterPage />} />
+                                    <Route path="/books/:id" element={<BookDetailsPage />} />
+                                    <Route path="/authors/:id" element={<AuthorDetailsPage />} />
+                                    <Route path="/authors" element={<AuthorListPage />} />
+                                    <Route path="/tags" element={<TagListPage />} />
+                                    <Route path="/tags/:id" element={<TagDetailsPage />} />
+                                    <Route path="/users" element={<UsersPage />} />
+                                    <Route path="/users/:id" element={<UserProfilePage />} />
+                                    <Route path="/booklists/:id" element={<BookListPage />} />
+                                    <Route path="/rag-search" element={<RagSearchPage />} />
+                                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                                    <Route path="/terms" element={<TermsOfUse />} />
+                                </Routes>
+                            </Box>
+                            <Footer />
                         </Box>
                     </BrowserRouter>
                 </AuthProvider>
