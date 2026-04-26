@@ -294,7 +294,7 @@ const Navbar = () => {
   const drawerContent = (
     <Box sx={{ width: 280, display: "flex", flexDirection: "column", height: "100%", pb: 2, backgroundColor: "background.default" }}>
       <Toolbar />
-      <Box sx={{ pt: 2, px: 2, mb: 1 }}>
+      <Box className="tour-logo-mobile" sx={{ pt: 2, px: 2, mb: 1 }}>
         <Typography variant="caption" sx={{ color: "text.primary", fontFamily: "'JetBrains Mono', monospace" }}>
           Military Archive & Retrieval System
         </Typography>
@@ -469,6 +469,7 @@ const Navbar = () => {
           <Box
             component={Link}
             to="/"
+            className="tour-logo-desktop"
             sx={{
               display: "flex",
               alignItems: "center",

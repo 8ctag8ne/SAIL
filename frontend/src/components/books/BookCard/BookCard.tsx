@@ -21,6 +21,7 @@ import RagIndexDialog from "../BookDetails/RagIndexDialog";
 import BASE_URL from "../../../config";
 
 type BookCardProps = {
+  className?: string;
   id: number;
   title: string;
   imageUrl?: string;
@@ -36,6 +37,7 @@ type BookCardProps = {
 const MAX_INFO_HEIGHT = 120;
 
 const BookCard: React.FC<BookCardProps> = ({
+  className,
   id, title, imageUrl, info, tags, fileUrl,
   likesCount = 0, isLiked = false, authors = [],
   onRemoveFromList
@@ -202,6 +204,7 @@ const BookCard: React.FC<BookCardProps> = ({
   return (
     <>
       <BaseEntityCard
+        className={className}
         onClick={handleNavigate}
         imageUrl={fullImageUrl}
         imageAspectRatio="1/1.414"
@@ -215,6 +218,7 @@ const BookCard: React.FC<BookCardProps> = ({
                 <React.Fragment key={a.id}>
                   <Box
                     component="span"
+                    className="tour-author-link"
                     onClick={(e) => handleAuthorClick(e, a.id)}
                     sx={{
                       cursor: "pointer",

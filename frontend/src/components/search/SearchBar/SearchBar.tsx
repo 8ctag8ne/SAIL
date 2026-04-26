@@ -46,7 +46,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <Box sx={{ display: 'flex', width: '100%' }}>
+    <Box sx={{ display: 'flex', width: '100%' }} className="tour-search-bar">
       <TextField
         variant="outlined"
         value={query}
@@ -57,6 +57,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         InputProps={{
           endAdornment: onFilterToggle && (
             <IconButton
+              className="tour-tag-filter"
               onClick={onFilterToggle}
               sx={{
                 color: isFilterActive ? 'primary.main' : 'text.secondary',

@@ -1,4 +1,4 @@
-import { Routes, Route, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter, useNavigate } from "react-router-dom";
 import BookSearchPage from "./pages/BookSearchPage";
 import BookDetailsPage from "./pages/BookDetailsPage";
 import Navbar from "./components/layout/Navbar/Navbar";
@@ -19,7 +19,7 @@ import TermsOfUse from "./pages/TermsOfUse";
 import Footer from "./components/layout/Footer/Footer";
 import HelpPage from "./pages/HelpPage";
 import { TourProvider, useTour } from "./contexts/TourContext";
-import { Joyride } from "react-joyride";
+import { Joyride, EVENTS, STATUS, ACTIONS } from "react-joyride";
 import { Box } from "@mui/material";
 import { ToastContainer } from "react-fox-toast";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -38,16 +38,69 @@ const queryClient = new QueryClient({
 });
 
 const GlobalJoyride = () => {
-    const { run, steps, stopTour } = useTour();
+    const { run, setRun, steps, stepIndex, setStepIndex, stopTour, activeTour } = useTour();
+    const navigate = useNavigate();
+
     return (
         <Joyride
             steps={steps}
             run={run}
+            stepIndex={stepIndex}
             continuous
+            locale={{ back: 'Назад', close: 'Закрити', last: 'Завершити', next: 'Далі', skip: 'Пропустити' }}
             onEvent={(data: any) => {
-                const { status } = data;
-                if (status === "finished" || status === "skipped") {
+                const { action, index, status, type } = data;
+
+                if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+                    navigate("/help");
                     stopTour();
+                    return;
+                }
+
+                if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
+                    const nextStepIndex = index + (action === ACTIONS.PREV ? -1 : 1);
+
+                    if (activeTour === "guest_navigation") {
+                        if (index === 3 && action === ACTIONS.NEXT) {
+                            // Navigate to Author page
+                            const authorLink = document.querySelector('.tour-author-link') as HTMLElement;
+                            if (authorLink) {
+                                authorLink.click();
+                            } else {
+                                navigate("/authors/1");
+                            }
+                            setTimeout(() => setStepIndex(nextStepIndex), 400);
+                        } else if (index === 4 && action === ACTIONS.PREV) {
+                            // Go back from Author page to Home page
+                            navigate("/");
+                            setTimeout(() => setStepIndex(nextStepIndex), 400);
+                        } else if (index === 4 && action === ACTIONS.NEXT) {
+                            // Navigate from Author page to Book page
+                            const bookCard = document.querySelector('.tour-book-card') as HTMLElement;
+                            if (bookCard) {
+                                bookCard.click();
+                            } else {
+                                navigate("/books/1");
+                            }
+                            setTimeout(() => setStepIndex(nextStepIndex), 400);
+                        } else if (index === 5 && action === ACTIONS.PREV) {
+                            // Go back from Book page to Author page
+                            navigate(-1);
+                            setTimeout(() => setStepIndex(nextStepIndex), 400);
+                        } else {
+                            setStepIndex(nextStepIndex);
+                        }
+                    } else if (activeTour === "user_rag") {
+                        if (index === 0 && action === ACTIONS.NEXT) {
+                            setRun(false);
+                            setStepIndex(1); // Set to next step, will resume in RagSearchPage
+                            navigate("/rag-search?q=Що робити при критичній кровотечі?");
+                        } else {
+                            setStepIndex(nextStepIndex);
+                        }
+                    } else {
+                        setStepIndex(nextStepIndex);
+                    }
                 }
             }}
             options={{
@@ -58,6 +111,7 @@ const GlobalJoyride = () => {
                 textColor: '#e0e0e0',
                 showProgress: true,
                 buttons: ['back', 'close', 'primary', 'skip'],
+                zIndex: 10000,
             }}
             styles={{
                 tooltip: { backgroundColor: '#15171a', borderRadius: 0, border: '1px solid #2d2f33', color: '#e0e0e0' },
@@ -75,9 +129,9 @@ function App() {
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                     <TourProvider>
-                        <GlobalJoyride />
                         <ToastContainer position="top-center" />
                         <BrowserRouter>
+                            <GlobalJoyride />
                             <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                                 <Navbar />
                                 <Box

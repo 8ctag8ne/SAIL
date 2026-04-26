@@ -2,13 +2,24 @@ import React from "react";
 import { Box, Typography, Button, Container, Divider } from "@mui/material";
 import { useTour } from "../contexts/TourContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const HelpPage = () => {
   const { startTour } = useTour();
   const { user } = useAuth();
 
+  const navigate = useNavigate();
+
   const handleStartTour = (tourName: string) => {
-    startTour(tourName);
+    if (tourName === "guest_navigation") {
+      navigate("/");
+      setTimeout(() => startTour(tourName), 200);
+    } else if (tourName === "user_rag") {
+      navigate("/rag-search");
+      setTimeout(() => startTour(tourName), 200);
+    } else {
+      startTour(tourName);
+    }
   };
 
   const isUser = !!user;

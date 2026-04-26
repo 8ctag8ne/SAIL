@@ -29,7 +29,7 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
     >
       {/* Джерела (Sources) */}
       {ragResponse.sources.length > 0 && (
-        <Box>
+        <Box className="tour-rag-sources">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
             <MenuBookIcon color="primary" />
             <Typography variant="h6">Джерела</Typography>
@@ -114,7 +114,7 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
 
       {/* Відповідь (Generated Answer) */}
       {ragResponse.answer && (
-        <Box>
+        <Box className="tour-rag-answer">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
             <AutoAwesomeIcon color="primary" />
             <Typography variant="h6">Відповідь</Typography>
@@ -137,7 +137,7 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
 
       {/* Пов'язані теми та запитання */}
       {((ragResponse.relatedTags && ragResponse.relatedTags.length > 0) || (ragResponse.suggestedQuestions && ragResponse.suggestedQuestions.length > 0)) && (
-        <Box>
+        <Box className="tour-rag-related">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
             <LightbulbIcon color="primary" />
             <Typography variant="h6">Дізнатися більше</Typography>

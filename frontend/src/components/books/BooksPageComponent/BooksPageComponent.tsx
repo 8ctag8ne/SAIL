@@ -23,8 +23,8 @@ const BooksPageComponent: React.FC<BooksPageComponentProps> = ({ queryParams = {
         <Typography>Нічого не знайдено.</Typography>
       ) : (
         <>
-          {data.items.map((book) => (
-            <BookCard key={book.id} {...book} />
+          {data.items.map((book, index) => (
+            <BookCard key={book.id} className={index === 0 ? "tour-book-card" : undefined} {...book} />
           ))}
           <Box sx={{ display: "flex", justifyContent: "center", marginTop: 2 }}>
             <Pagination

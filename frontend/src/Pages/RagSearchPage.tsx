@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Box, Accordion, AccordionSummary, AccordionDetails, Typography, Switch, Slider, FormGroup, FormControlLabel, Stack, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Box, Accordion, AccordionSummary, AccordionDetails, Typography, Slider, Stack } from "@mui/material";
 import SearchBar from "../components/search/SearchBar/SearchBar";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
 import RagSearchView from "../components/ui/RagSearchView/RagSearchView";
@@ -8,6 +8,9 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TuneIcon from "@mui/icons-material/Tune";
 import { RagResponse } from "../types";
 import { askRagQuestion } from "../api/AiApi";
+import { useTour } from "../contexts/TourContext";
+import { toast } from "react-fox-toast";
+import { MOCK_RAG_RESPONSE } from "../mocks/ragTourMock";
 
 const ragCache = new Map<string, RagResponse>();
 
@@ -20,13 +23,25 @@ const RagSearchPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [temperature, setTemperature] = useState<number>(0.7);
   const ragResultRef = React.useRef<HTMLDivElement>(null);
+  const { activeTour, stepIndex, run, setRun, stopTour } = useTour();
+
+  useEffect(() => {
+    if (activeTour === "user_rag" && stepIndex === 1 && !run) {
+      if (!loading && ragResult) {
+        setTimeout(() => setRun(true), 400);
+      } else if (!loading && error) {
+        toast.error("Не вдалося завантажити результати для туру.", { isCloseBtn: true });
+        stopTour();
+      }
+    }
+  }, [loading, ragResult, error, activeTour, stepIndex, run, setRun, stopTour]);
 
   const fetchRagData = async (searchString: string, tempParam: number) => {
     const cacheKey = `${searchString}_${tempParam}`;
     if (ragCache.has(cacheKey)) {
-        setRagResult(ragCache.get(cacheKey) as RagResponse);
-        setError(null);
-        return;
+      setRagResult(ragCache.get(cacheKey) as RagResponse);
+      setError(null);
+      return;
     }
 
     setLoading(true);
@@ -45,12 +60,16 @@ const RagSearchPage: React.FC = () => {
 
   useEffect(() => {
     setQuery(urlQuery); // Sync the SearchBar text with the URL
-    if (urlQuery.trim()) {
+    if (activeTour === "user_rag") {
+      setRagResult(MOCK_RAG_RESPONSE);
+      setLoading(false);
+      setError(null);
+    } else if (urlQuery.trim()) {
       fetchRagData(urlQuery, temperature);
     } else {
       setRagResult(null); // Clear results if URL is empty
     }
-  }, [urlQuery]);
+  }, [urlQuery, activeTour, temperature]);
 
   const handleSearchSubmit = (newQuery: string) => {
     if (!newQuery.trim()) {
@@ -70,44 +89,37 @@ const RagSearchPage: React.FC = () => {
         px: { xs: 2, sm: 3 },
       }}
     >
-      <SearchBar
-        placeholder="Введіть фразу для пошуку по знаннях..."
-        onSearch={handleSearchSubmit}
-        onChange={(e) => setQuery(e.target.value)}
-        value={query}
-        icon={<AutoAwesomeIcon />}
-      />
+      <Box className="tour-rag-controls">
+        <SearchBar
+          placeholder="Введіть фразу для пошуку по знаннях..."
+          onSearch={handleSearchSubmit}
+          onChange={(e) => setQuery(e.target.value)}
+          value={query}
+          icon={<AutoAwesomeIcon />}
+        />
 
-      <Accordion elevation={0} sx={{ bgcolor: "transparent", "&:before": { display: "none" }, mb: 2 }}>
-        <AccordionSummary expandIcon={<TuneIcon />} sx={{ px: 1 }}>
-          <Typography>Опції пошуку</Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ px: 1 }}>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-
-            <Box>
-              <Typography gutterBottom>Креативність (Температура)</Typography>
-              <Slider
-                value={temperature}
-                onChange={(_, newValue) => setTemperature(newValue as number)}
-                step={0.1}
-                marks
-                min={0}
-                max={1}
-                valueLabelDisplay="auto"
-              />
-            </Box>
-            {/* <FormControl fullWidth size="small">
-              <InputLabel>Мова відповіді</InputLabel>
-              <Select label="Мова відповіді" defaultValue="Автоматично">
-                <MenuItem value="Українська">Українська</MenuItem>
-                <MenuItem value="English">English</MenuItem>
-                <MenuItem value="Автоматично">Автоматично</MenuItem>
-              </Select>
-            </FormControl> */}
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
+        <Accordion elevation={0} sx={{ bgcolor: "transparent", "&:before": { display: "none" }, mb: 2 }}>
+          <AccordionSummary expandIcon={<TuneIcon />} sx={{ px: 1 }}>
+            <Typography>Опції пошуку</Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ px: 1 }}>
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              <Box>
+                <Typography gutterBottom>Креативність (Температура)</Typography>
+                <Slider
+                  value={temperature}
+                  onChange={(_, newValue) => setTemperature(newValue as number)}
+                  step={0.1}
+                  marks
+                  min={0}
+                  max={1}
+                  valueLabelDisplay="auto"
+                />
+              </Box>
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
 
       {loading && (
         <Box sx={{ mt: 4 }}>
