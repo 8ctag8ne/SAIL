@@ -9,6 +9,8 @@ import CreateBookListButton from "./CreateBookListButton";
 import { useAuth } from "../../../contexts/AuthContext";
 import EntityListSelector from "../../ui/EntityListSelector";
 import { toast } from "react-fox-toast";
+import { useTour } from "../../../contexts/TourContext";
+
 
 type Props = {
   open: boolean;
@@ -25,6 +27,23 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
   const [alreadyInLists, setAlreadyInLists] = useState<number[]>([]);
   const [refresh, setRefresh] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { activeTour, stepIndex, setStepIndex, setRun } = useTour();
+  const wasOpenRef = React.useRef(false);
+
+  useEffect(() => {
+    if (open) wasOpenRef.current = true;
+  }, [open]);
+
+  useEffect(() => {
+    if (activeTour === "user_save_books") {
+      if (open && stepIndex === 1) {
+        setStepIndex(2);
+      } else if (!open && wasOpenRef.current && (stepIndex === 2 || stepIndex === 3 || stepIndex === 4)) {
+        setRun(false);
+        wasOpenRef.current = false;
+      }
+    }
+  }, [open, activeTour, stepIndex, setStepIndex, setRun]);
 
   useEffect(() => {
     if (user?.id && open) {
@@ -64,14 +83,16 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2 }}>
         Додати до списку
         {onClose && (
-          <IconButton onClick={onClose} sx={{ color: 'text.secondary', mr: -1 }}>
+          <IconButton className="tour-list-modal-close" onClick={onClose} sx={{ color: 'text.secondary', mr: -1 }}>
             <CloseIcon />
           </IconButton>
         )}
       </DialogTitle>
       <DialogContent>
-        <CreateBookListButton onCreated={() => setRefresh(r => r + 1)} />
-        <Box sx={{ mt: 2 }}>
+        <Box className="tour-list-modal-create">
+          <CreateBookListButton onCreated={() => setRefresh(r => r + 1)} />
+        </Box>
+        <Box sx={{ mt: 2 }} className="tour-list-modal-select">
           <EntityListSelector
             items={filteredLists}
             searchQuery={searchQuery}

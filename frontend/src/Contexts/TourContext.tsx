@@ -72,9 +72,37 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
       case "user_save_books":
         tourSteps = [
           {
-            target: "body",
-            content: "Це гайд по збереженню книг.",
+            target: ".tour-book-card-menu",
+            content: "Щоб зберегти книгу, натисніть на цю іконку з трьома крапками на картці книги.",
+            placement: "auto",
+            skipBeacon: true,
+            styles: { buttonPrimary: { display: "none" } }
+          },
+          {
+            target: ".tour-add-to-list-option",
+            content: "Тепер оберіть опцію 'Додати до списку'.",
+            placement: "right",
+            skipBeacon: true,
+            styles: { buttonPrimary: { display: "none" } }
+          },
+          {
+            target: ".tour-list-modal-create",
+            content: "Ви можете створити новий список, вказавши назву, опис та налаштувавши приватність (тільки для вас або публічний).",
+            placement: "bottom",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-list-modal-select",
+            content: "Або виберіть існуючий список із переліку та натисніть кнопку додавання.",
+            placement: "bottom",
+            skipBeacon: true,
+          },
+          {
+            target: ".tour-list-modal-close",
+            content: "Готово! Книга у вашому списку. Видалити її або переглянути всі збережені матеріали можна у вашому Профілі.",
             placement: "center",
+            skipBeacon: true,
+            locale: { last: "Завершити" }
           },
         ];
         break;

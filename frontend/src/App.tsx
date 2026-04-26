@@ -1,4 +1,5 @@
-import { Routes, Route, BrowserRouter, useNavigate } from "react-router-dom";
+import { Routes, Route, BrowserRouter, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
 import BookSearchPage from "./pages/BookSearchPage";
 import BookDetailsPage from "./pages/BookDetailsPage";
 import Navbar from "./components/layout/Navbar/Navbar";
@@ -40,6 +41,15 @@ const queryClient = new QueryClient({
 const GlobalJoyride = () => {
     const { run, setRun, steps, stepIndex, setStepIndex, stopTour, activeTour } = useTour();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (run && activeTour === "user_save_books" && stepIndex === 0) {
+            if (location.pathname !== "/") {
+                navigate("/");
+            }
+        }
+    }, [run, activeTour, stepIndex, location.pathname, navigate]);
 
     return (
         <Joyride
@@ -52,12 +62,14 @@ const GlobalJoyride = () => {
                 const { action, index, status, type } = data;
 
                 if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-                    navigate("/help");
+                    if (activeTour === "user_rag") {
+                        navigate("/help");
+                    }
                     stopTour();
                     return;
                 }
 
-                if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
+                if (type === EVENTS.STEP_AFTER) {
                     const nextStepIndex = index + (action === ACTIONS.PREV ? -1 : 1);
 
                     if (activeTour === "guest_navigation") {
@@ -110,6 +122,7 @@ const GlobalJoyride = () => {
                 primaryColor: '#7ed321',
                 textColor: '#e0e0e0',
                 showProgress: true,
+                disableFocusTrap: true,
                 buttons: ['back', 'close', 'primary', 'skip'],
                 zIndex: 10000,
             }}
