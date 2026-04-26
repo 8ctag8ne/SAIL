@@ -1,6 +1,6 @@
 {
-  "short_name": "SAIL",
-  "name": "Military Library RAG",
+  "short_name": "MARS",
+  "name": "Military Archive & Retrieval System",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#1976d2",
-  "background_color": "#ffffff"
+  "theme_color": "#7ed321",
+  "background_color": "#0d0f12"
 }

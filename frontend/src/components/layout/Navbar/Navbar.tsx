@@ -394,7 +394,7 @@ const Navbar = () => {
             to="/"
             sx={{ flexGrow: 1, textDecoration: "none", color: "inherit", "&:hover": { color: "primary.main" } }}
           >
-            Smart AI - integrated Library
+            Military Archive & Retrieval System
           </Typography>
           {!isMobile && desktopContent}
         </Toolbar>
