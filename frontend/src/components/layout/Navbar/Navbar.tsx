@@ -16,6 +16,7 @@ import {
   ListItemButton,
   useTheme,
   useMediaQuery,
+  Divider,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -32,6 +33,11 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import PeopleIcon from "@mui/icons-material/People";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import MenuIcon from "@mui/icons-material/Menu";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import PersonIcon from "@mui/icons-material/Person";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import LogoutIcon from "@mui/icons-material/Logout";
+import logo from "../../../logo.svg";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -255,23 +261,39 @@ const Navbar = () => {
   );
 
   const drawerContent = (
-    <Box sx={{ width: 280, display: "flex", flexDirection: "column", height: "100%", pt: 3, pb: 2, backgroundColor: "background.default" }}>
-      <Typography variant="h6" sx={{ mb: 2, px: 2, fontFamily: "'JetBrains Mono', monospace", color: "primary.main" }}>
+    <Box sx={{ width: 280, display: "flex", flexDirection: "column", height: "100%", pb: 2, backgroundColor: "background.default" }}>
+      <Toolbar />
+      <Box sx={{ pt: 2, px: 2, mb: 1 }}>
+        <Typography variant="caption" sx={{ color: "text.primary", fontFamily: "'JetBrains Mono', monospace" }}>
+          Military Archive & Retrieval System
+        </Typography>
+      </Box>
+      <Box sx={{ my: 2, borderBottom: "1px dashed #2d2f33", mx: 1 }} />
+      <Typography variant="body2" sx={{ mb: 1, px: 2, fontFamily: "'JetBrains Mono', monospace", color: "text.secondary" }}>
         ~ / навігація
       </Typography>
       <List sx={{ flexGrow: 1, px: 1 }}>
         <ListItem disablePadding sx={{ mb: 0.5 }}>
           <ListItemButton component={Link} to="/books" onClick={closeDrawer} sx={mobileMenuItemSx}>
+            <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+              <MenuBookIcon />
+            </ListItemIcon>
             <ListItemText primary="Книги" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding sx={{ mb: 0.5 }}>
           <ListItemButton component={Link} to="/authors" onClick={closeDrawer} sx={mobileMenuItemSx}>
+            <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+              <PersonIcon />
+            </ListItemIcon>
             <ListItemText primary="Автори" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding sx={{ mb: 0.5 }}>
           <ListItemButton component={Link} to="/tags" onClick={closeDrawer} sx={mobileMenuItemSx}>
+            <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+              <LocalOfferIcon />
+            </ListItemIcon>
             <ListItemText primary="Теги" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
           </ListItemButton>
         </ListItem>
@@ -342,6 +364,9 @@ const Navbar = () => {
               </ListItem>
               <ListItem disablePadding>
                 <ListItemButton onClick={handleLogout} sx={mobileMenuItemSx}>
+                  <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
+                    <LogoutIcon />
+                  </ListItemIcon>
                   <ListItemText primary="Вийти" primaryTypographyProps={{ fontFamily: "'JetBrains Mono', monospace" }} />
                 </ListItemButton>
               </ListItem>
@@ -388,14 +413,44 @@ const Navbar = () => {
               <MenuIcon />
             </IconButton>
           )}
-          <Typography
-            variant="h6"
+          <Box
             component={Link}
             to="/"
-            sx={{ flexGrow: 1, textDecoration: "none", color: "inherit", "&:hover": { color: "primary.main" } }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexGrow: 1,
+              textDecoration: "none",
+              color: "inherit",
+              "&:hover": { color: "primary.main" },
+              gap: 2,
+            }}
           >
-            Military Archive & Retrieval System
-          </Typography>
+            <Box
+              component="img"
+              src={logo}
+              alt="MARS Logo"
+              sx={{ height: 32, width: "auto" }}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                display: { xs: "none", md: "none", lg: "block" },
+              }}
+            >
+              Military Archive & Retrieval System
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                display: { xs: "block", md: "block", lg: "none" },
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: "bold",
+              }}
+            >
+              [ MARS ]
+            </Typography>
+          </Box>
           {!isMobile && desktopContent}
         </Toolbar>
       </AppBar>
