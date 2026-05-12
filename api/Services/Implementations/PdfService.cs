@@ -1,10 +1,9 @@
-using System.Text;
 using api.Services.Interfaces;
 using Docnet.Core;
 using Docnet.Core.Models;
-using Docnet.Core.Readers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace MilLib.Services.Implementations;
 public class PdfService : IPdfRenderService
@@ -35,13 +34,9 @@ public class PdfService : IPdfRenderService
             pageReader.GetPageHeight()
         );
         
+        // ДОДАНО: Заливаємо прозорі пікселі білим кольором
+        image.Mutate(x => x.BackgroundColor(Color.White));
+        
         return Task.FromResult(image.CloneAs<Rgba32>());
-    }
-
-    private byte[] ReadAllBytes(Stream input)
-    {
-        using var ms = new MemoryStream();
-        input.CopyTo(ms);
-        return ms.ToArray();
     }
 }
