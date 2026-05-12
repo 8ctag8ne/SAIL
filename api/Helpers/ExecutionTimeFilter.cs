@@ -20,17 +20,21 @@ public class ExecutionTimeFilter : IActionFilter
                 ? $"{elapsedMs}ms" 
                 : $"{elapsedMs / 1000.0:F2}s";
             
-        context.HttpContext.Response.Headers.Append(
-            "X-Execution-Time", 
-            readableTime
-        );
+        if (!context.HttpContext.Response.HasStarted)
+        {
+            context.HttpContext.Response.Headers.Append("X-Execution-Time", readableTime);
 
-        var controller = context.RouteData.Values["controller"];
-        var action = context.RouteData.Values["action"];
-        
-        context.HttpContext.Response.Headers.Append(
-            "X-Endpoint",
-            $"{controller}.{action}"
-        );
+            var controller = context.RouteData.Values["controller"];
+            var action = context.RouteData.Values["action"];
+
+            
+            context.HttpContext.Response.Headers.Append(
+                "X-Endpoint",
+                $"{controller}.{action}"
+            );
+        }
+        else {
+            Console.WriteLine($"Response already started, cannot append new headers");
+        }
     }
 }

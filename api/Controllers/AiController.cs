@@ -168,7 +168,42 @@ namespace MilLib.Controllers
         }
 
         [HttpPost("rag/ask")]
-        public async Task<IActionResult> AskRagQuestion([FromBody] RagAskRequestDto request)
+        public async Task AskRagQuestion([FromBody] RagAskRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Query))
+            {
+                Response.StatusCode = 400;
+                await Response.WriteAsync("Query cannot be empty.");
+                return;
+            }   
+
+            var client = _httpClientFactory.CreateClient("AiService");
+            var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+            var jsonContent = new StringContent(JsonSerializer.Serialize(request, jsonOptions), Encoding.UTF8, "application/json");
+            
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "rag/ask")
+            {
+                Content = jsonContent
+            };
+
+            using var response = await client.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Response.StatusCode = (int)response.StatusCode;
+                await Response.WriteAsync(errorContent);
+                return;
+            }
+
+            Response.ContentType = "text/event-stream";
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            await stream.CopyToAsync(Response.Body);
+        }
+
+        [HttpPost("rag/ask/old")]
+        public async Task<IActionResult> AskRagQuestionOld([FromBody] RagAskRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Query))
             {
@@ -179,7 +214,7 @@ namespace MilLib.Controllers
             var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             var jsonContent = new StringContent(JsonSerializer.Serialize(request, jsonOptions), Encoding.UTF8, "application/json");
             
-            var response = await client.PostAsync($"rag/ask", jsonContent);
+            var response = await client.PostAsync("rag/ask/old", jsonContent);
 
             if (!response.IsSuccessStatusCode)
             {

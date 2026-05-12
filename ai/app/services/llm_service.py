@@ -15,8 +15,8 @@ class LLMService:
             api_key=self.api_key,
         )
         self.embedding_model = os.getenv("EMBEDDING_MODEL", "qwen/qwen3-embedding-4b")
-        self.summary_model = os.getenv("SUMMARY_MODEL", "qwen/qwen-2.5-7b-instruct")
-        self.chat_model = os.getenv("CHAT_MODEL", "qwen/qwen-2.5-72b-instruct")
+        self.summary_model = os.getenv("SUMMARY_MODEL", "qwen/qwen3-vl-8b-instruct")
+        self.chat_model = os.getenv("CHAT_MODEL", "qwen/qwen3-vl-8b-instruct")
         
         # Обмежуємо кількість одночасних запитів до API
         self.semaphore = asyncio.Semaphore(5)
@@ -163,7 +163,7 @@ Summary:"""
                 response = await self.client.chat.completions.create(
                     model=self.chat_model,
                     messages=[
-                        {"role": "system", "content": "Ти професійний військовий аналітик. Твоє завдання - дати чітку відповідь на запит.\n\nПРАВИЛА:\n1. МОВА: Відповідай ТІЛЬКИ тією ж мовою, якою написано запит користувача (наприклад, якщо запит українською - відповідай українською, якщо англійською - англійською).\n2. ДОСТОВІРНІСТЬ: Спирайся ВИКЛЮЧНО на наданий контекст. Не вигадуй фактів. Якщо в контексті немає відповіді, скажи про це прямо."},
+                        {"role": "system", "content": "Ти професійний військовий аналітик. Твоє завдання - дати чітку відповідь на запит. Контекст може містити фрагменти різними мовами, тому ретельно аналізуй його, але формулюй відповідь граматично бездоганно, стилістично природно та ВИКЛЮЧНО тією ж мовою, що й запит користувача.\n\nПРАВИЛА:\n1. МОВА: Відповідай ТІЛЬКИ тією ж мовою, якою написано запит користувача (наприклад, якщо запит українською - відповідай українською, якщо англійською - англійською).\n2. ДОСТОВІРНІСТЬ: Спирайся ВИКЛЮЧНО на наданий контекст. Не вигадуй фактів. Якщо в контексті немає відповіді, скажи про це прямо."},
                         {"role": "user", "content": f"Контекст:\n{context}\n\nЗапит: {query}"}
                     ],
                     temperature=temperature
@@ -180,11 +180,34 @@ Summary:"""
                 print(f"DEBUG LLM Error: {str(e)}")
                 return f"Виникла помилка при зверненні до ШІ: {str(e)}"
 
+    async def generate_rag_answer_stream(self, query: str, context: str, temperature: float = 0.7, enable_thinking: bool = False):
+        model_name = "qwen/qwen3-vl-8b-thinking" if enable_thinking else "qwen/qwen3-vl-8b-instruct"
+        
+        async with self.semaphore:
+            try:
+                response_stream = await self.client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": "Ти професійний військовий аналітик. Твоє завдання - дати чітку відповідь на запит. Контекст може містити фрагменти різними мовами, тому ретельно аналізуй його, але формулюй відповідь граматично бездоганно, стилістично природно та ВИКЛЮЧНО тією ж мовою, що й запит користувача.\n\nПРАВИЛА:\n1. МОВА: Відповідай ТІЛЬКИ тією ж мовою, якою написано запит користувача (наприклад, якщо запит українською - відповідай українською, якщо англійською - англійською).\n2. ДОСТОВІРНІСТЬ: Спирайся ВИКЛЮЧНО на наданий контекст. Не вигадуй фактів. Якщо в контексті немає відповіді, скажи про це прямо."},
+                        {"role": "user", "content": f"Контекст:\n{context}\n\nЗапит: {query}"}
+                    ],
+                    temperature=temperature,
+                    stream=True
+                )
+                
+                async for chunk in response_stream:
+                    if chunk.choices and chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
+                        
+            except Exception as e:
+                print(f"DEBUG LLM Stream Error: {str(e)}")
+                yield f"Виникла помилка при зверненні до ШІ: {str(e)}"
+
     async def generate_suggested_questions(self, query: str, context: str) -> list[str]:
         async with self.semaphore:
             try:
                 response = await self.client.chat.completions.create(
-                    model="qwen/qwen-2.5-72b-instruct",
+                    model=self.chat_model,
                     messages=[
                         {"role": "system", "content": "Ти помічник. Твоє завдання - згенерувати 3 логічні наступні запитання на основі контексту та попереднього запиту користувача. \nПРАВИЛА:\n1. Пиши тією ж мовою, що й запит.\n2. Поверни ТІЛЬКИ валідний JSON-масив рядків (наприклад: [\"Питання 1?\", \"Питання 2?\"]). Ніякого додаткового тексту чи форматування Markdown."},
                         {"role": "user", "content": f"Контекст:\n{context}\n\nПопередній запит: {query}"}
