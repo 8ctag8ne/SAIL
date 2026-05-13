@@ -5,15 +5,24 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SearchIcon from "@mui/icons-material/Search";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 import { useNavigate } from "react-router-dom";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 type Props = {
   ragResponse: RagResponse;
+  thinkingText?: string;
+  answerText?: string;
   onSearch?: (query: string) => void;
 };
 
-const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch }, ref) => {
+const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, thinkingText, answerText, onSearch }, ref) => {
   const navigate = useNavigate();
+  
+  const displayAnswer = answerText !== undefined ? answerText : ragResponse.answer;
 
   return (
     <Box
@@ -112,8 +121,39 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
         </Box>
       )}
 
+      {/* Роздуми (Thinking) */}
+      {thinkingText && thinkingText.trim().length > 0 && (
+        <Box className="tour-rag-thinking">
+          <Accordion 
+            elevation={0}
+            sx={{
+              bgcolor: "rgba(0, 0, 0, 0.03)",
+              border: "1px solid",
+              borderColor: "divider",
+              "&:before": { display: "none" }
+            }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <PsychologyIcon color="secondary" />
+                <Typography variant="subtitle1" fontWeight="medium">Процес міркування</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails sx={{ px: 2, pb: 2 }}>
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ fontStyle: "italic", whiteSpace: "pre-wrap" }}
+              >
+                {thinkingText}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
+      )}
+
       {/* Відповідь (Generated Answer) */}
-      {ragResponse.answer && (
+      {displayAnswer && (
         <Box className="tour-rag-answer">
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
             <AutoAwesomeIcon color="primary" />
@@ -129,7 +169,7 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, onSearch
             }}
           >
             <Typography sx={{ whiteSpace: "pre-wrap" }}>
-              {ragResponse.answer}
+              {displayAnswer}
             </Typography>
           </Box>
         </Box>

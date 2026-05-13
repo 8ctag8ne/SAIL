@@ -11,6 +11,7 @@ namespace MilLib.Models.DTOs.Ai
     {
         public required string Query { get; set; }
         public double? Temperature { get; set; }
+        public bool? EnableThinking { get; set; }
     }
 
     public class RagAskResponseDto

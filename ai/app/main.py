@@ -4,7 +4,7 @@ import time
 import uuid
 import httpx
 
-from fastapi import BackgroundTasks, FastAPI, Depends, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, Depends, File, HTTPException, UploadFile, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -20,6 +20,7 @@ from app.services.parser.heuristic_service import HeuristicService
 from app.services.llm_service import LLMService
 from app.services.chunking_strategies import SimpleChunkingStrategy
 from app.services.rag_service import ChunkingService, RAGService
+from fastapi.responses import StreamingResponse
 
 app = FastAPI(title="AI Knowledge Service")
 
@@ -44,6 +45,7 @@ class ProcessBookTaskResponse(BaseModel):
 class RagAskRequest(BaseModel):
     query: str
     temperature: Optional[float] = 0.7
+    enable_thinking: Optional[bool] = False
 
 class RagAskResponse(BaseModel):
     answer: str
@@ -262,7 +264,17 @@ async def get_process_book_status(task_id: str):
     )
 
 @app.post("/rag/ask")
-async def ask_rag_question(request: RagAskRequest, db: AsyncSession = Depends(get_db)):
+async def ask_rag_question(request: RagAskRequest, req: Request, db: AsyncSession = Depends(get_db)):
+    llm_service = LLMService()
+    rag_service = RAGService(llm_service)
+    
+    return StreamingResponse(
+        rag_service.ask_question_stream(db, request.query, request.temperature, request.enable_thinking, req),
+        media_type="text/event-stream"
+    )
+
+@app.post("/rag/ask/old")
+async def ask_rag_question_old(request: RagAskRequest, db: AsyncSession = Depends(get_db)):
     llm_service = LLMService()
     rag_service = RAGService(llm_service)
     answer, sources, suggested_questions = await rag_service.ask_question(db, request.query, request.temperature)
