@@ -22,5 +22,8 @@ namespace MilLib.Models.DTOs.Book
         public bool IsLiked {get; set;} = false;
         public List<TagSimpleDto> Tags {get; set;} = new List<TagSimpleDto>();
         public List<CommentDto> Comments { get; set; } = new List<CommentDto>();
+        
+        public bool Parsed { get; set; }
+        public bool Processed { get; set; }
     }
 }

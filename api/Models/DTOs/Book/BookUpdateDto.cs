@@ -16,5 +16,8 @@ namespace MilLib.Models.DTOs.Book
         public List<int>? AuthorIds {get; set;}
         public List<string> NewTagTitles {get; set;} = new List<string>();
         public List<string> NewAuthorNames { get; set; } = new List<string>();
+        
+        public bool? Parsed { get; set; }
+        public bool? Processed { get; set; }
     }
 }

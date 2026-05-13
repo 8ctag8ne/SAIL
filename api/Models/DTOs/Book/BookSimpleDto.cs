@@ -12,5 +12,7 @@ namespace MilLib.Models.DTOs.Book
         public required string Title {get; set;}
         public string? Info {get; set;}
         public string? ImageUrl {get; set;}
+        public bool Parsed { get; set; }
+        public bool Processed { get; set; }
     }
 }

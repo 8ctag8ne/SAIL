@@ -28,6 +28,7 @@ import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import RagIndexDialog from "./RagIndexDialog";
+import MarkdownEditorModal from "./MarkdownEditorModal";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-fox-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,6 +42,8 @@ type BookDetailsProps = {
   likesCount?: number;
   isLiked?: boolean;
   authors?: SimpleAuthor[];
+  parsed?: boolean;
+  processed?: boolean;
 };
 const MAX_INFO_HEIGHT = 140; // px, ~6-7 рядків
 const BookDetails: React.FC<BookDetailsProps> = ({
@@ -52,6 +55,8 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   likesCount,
   isLiked,
   authors = [],
+  parsed,
+  processed,
 }) => {
   const fullImageUrl = imageUrl ?? undefined;
   const { id } = useParams(); // Отримуємо ID з URL
@@ -69,6 +74,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isRagIndexOpen, setIsRagIndexOpen] = useState(false);
+  const [isMarkdownEditorOpen, setIsMarkdownEditorOpen] = useState(false);
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
@@ -167,10 +173,20 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   }
 
   if (isAdmin) {
+    if (parsed) {
+      menuActions.push({
+        label: processed ? "Оновити RAG-індекс" : "Згенерувати RAG-індекс",
+        icon: <AutoAwesomeIcon />,
+        onClick: (e?: React.MouseEvent) => {
+          if (e) e.stopPropagation();
+          setIsRagIndexOpen(true);
+        },
+      });
+    }
     menuActions.push({
-      label: "Згенерувати RAG-індекс (AI)",
-      icon: <AutoAwesomeIcon />,
-      onClick: () => setIsRagIndexOpen(true),
+      label: parsed ? "Редагувати Markdown" : "Переглянути/Аналізувати текст",
+      icon: <BookIcon />,
+      onClick: () => setIsMarkdownEditorOpen(true),
     });
   }
 
@@ -371,6 +387,19 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         bookId={Number(id)}
         onClose={() => setIsRagIndexOpen(false)}
       />
+
+      {isMarkdownEditorOpen && (
+        <MarkdownEditorModal
+          open={isMarkdownEditorOpen}
+          bookId={Number(id)}
+          onClose={() => setIsMarkdownEditorOpen(false)}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ["books"] });
+            queryClient.invalidateQueries({ queryKey: ["book", id] });
+          }}
+          parsed={parsed}
+        />
+      )}
     </>
   );
 };

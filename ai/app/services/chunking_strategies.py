@@ -17,13 +17,12 @@ class BaseChunkingStrategy(ABC):
         pass
 
 class SimpleChunkingStrategy(BaseChunkingStrategy):
-    async def chunk_document(self, book_id: int, parsed_data: any) -> List[DocumentChunk]:
-        # Використовуємо локальний імпорт для уникнення циклічних залежностей
-        from app.services.parser.heuristic_service import HeuristicService
-        heuristic = HeuristicService()
-        
-        # Перетворюємо побудоване дерево в єдиний markdown документ
-        markdown_text = heuristic.convert_to_markdown(parsed_data)
+    async def chunk_document(self, book_id: int, markdown_text: str) -> List[DocumentChunk]:
+        if not isinstance(markdown_text, str):
+            # Fallback if old code somehow passes dict
+            from app.services.parser.heuristic_service import HeuristicService
+            markdown_text = HeuristicService().convert_to_markdown(markdown_text)
+
         markdown_text = markdown_text.replace('\x00', '')
         
         text_splitter = RecursiveCharacterTextSplitter(

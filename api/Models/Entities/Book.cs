@@ -22,5 +22,10 @@ namespace MilLib.Models.Entities
         public List<Comment> Comments { get; set; } = new List<Comment>();
         public List<Like> Likes { get; set; } = new List<Like>();
         public int LikesCount {get; set;} = 0;
+        
+        public bool Parsed { get; set; } = false;
+        public bool Processed { get; set; } = false;
+        
+        public BookMarkdown? BookMarkdown { get; set; }
     }
 }

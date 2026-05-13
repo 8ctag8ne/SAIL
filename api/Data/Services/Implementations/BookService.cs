@@ -18,15 +18,18 @@ namespace MilLib.Services.Implementations
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
         private readonly UserManager<User> _userManager;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public BookService(
             ApplicationDbContext context,
             IFileService fileService,
-            UserManager<User> userManager)
+            UserManager<User> userManager,
+            IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _fileService = fileService;
             _userManager = userManager;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<PaginatedResult<BookDto>> GetAllBooksAsync(BookQueryObject query, string? userId = null)
@@ -79,6 +82,8 @@ namespace MilLib.Services.Implementations
                     b.FileUrl,
                     b.Info,
                     b.LikesCount,
+                    b.Parsed,
+                    b.Processed,
                     Tags = b.Tags.Select(bt => new { bt.Tag!.Id, bt.Tag.Title }).ToList(),
                     Authors = b.Authors.Select(ab => new { ab.Author!.Id, ab.Author.Name }).ToList()
                 })
@@ -92,6 +97,8 @@ namespace MilLib.Services.Implementations
                 FileUrl = _fileService.GetFullUrl(b.FileUrl),
                 Info = b.Info,
                 LikesCount = b.LikesCount,
+                Parsed = b.Parsed,
+                Processed = b.Processed,
                 Tags = b.Tags.Select(t => new TagSimpleDto { Id = t.Id, Title = t.Title }).ToList(),
                 Authors = b.Authors.Select(a => new AuthorSimpleDto { Id = a.Id, Name = a.Name }).ToList()
             }).ToList();
@@ -135,6 +142,8 @@ namespace MilLib.Services.Implementations
                     b.Info,
                     b.FileUrl,
                     b.LikesCount,
+                    b.Parsed,
+                    b.Processed,
                     Tags = b.Tags.Select(bt => new { bt.Tag!.Id, bt.Tag.Title }).ToList(),
                     Authors = b.Authors.Select(ab => new { ab.Author!.Id, ab.Author.Name }).ToList(),
                     Comments = b.Comments.Select(c => new
@@ -165,6 +174,8 @@ namespace MilLib.Services.Implementations
                 Info = book.Info,
                 FileUrl = _fileService.GetFullUrl(book.FileUrl),
                 LikesCount = book.LikesCount,
+                Parsed = book.Parsed,
+                Processed = book.Processed,
                 IsLiked = isLiked,
                 Tags = book.Tags.Select(t => new TagSimpleDto { Id = t.Id, Title = t.Title }).ToList(),
                 Authors = book.Authors.Select(a => new AuthorSimpleDto { Id = a.Id, Name = a.Name }).ToList(),
@@ -220,6 +231,21 @@ namespace MilLib.Services.Implementations
 
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
+
+            // Fire-and-forget background parsing trigger
+            var bookId = book.Id;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var client = _httpClientFactory.CreateClient("AiService");
+                    await client.PostAsync($"rag/convert-to-md/book/{bookId}", null);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[BookService] Error triggering background parsing: {ex.Message}");
+                }
+            });
 
             // Повертаємо створену книгу
             return await GetBookByIdAsync(book.Id) ?? throw new InvalidOperationException("Failed to retrieve created book");
@@ -415,6 +441,8 @@ namespace MilLib.Services.Implementations
                         l.Book.ImageUrl,
                         l.Book.Info,
                         l.Book.LikesCount,
+                        l.Book.Parsed,
+                        l.Book.Processed,
                         Tags = l.Book.Tags.Select(bt => new { bt.Tag.Id, bt.Tag.Title }).ToList(),
                         Authors = l.Book.Authors.Select(ab => new { ab.Author.Id, ab.Author.Name }).ToList()
                     }
@@ -431,6 +459,8 @@ namespace MilLib.Services.Implementations
                 ImageUrl = _fileService.GetFullUrl(lb.Book.ImageUrl),
                 Info = lb.Book.Info,
                 LikesCount = lb.Book.LikesCount,
+                Parsed = lb.Book.Parsed,
+                Processed = lb.Book.Processed,
                 Tags = lb.Book.Tags.Select(t => new TagSimpleDto { Id = t.Id, Title = t.Title }).ToList(),
                 Authors = lb.Book.Authors.Select(a => new AuthorSimpleDto { Id = a.Id, Name = a.Name }).ToList()
             }).ToList();

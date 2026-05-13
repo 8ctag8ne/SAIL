@@ -36,7 +36,7 @@ namespace MilLib.Controllers
             content.Add(streamContent, "file", file.FileName);
 
             // Відправляємо POST у Python
-            var response = await client.PostAsync("convert/pdf-to-md", content);
+            var response = await client.PostAsync("rag/convert-to-md/upload", content);
             
             if (!response.IsSuccessStatusCode)
                 return StatusCode((int)response.StatusCode, "Помилка комунікації з AI сервісом");
@@ -54,7 +54,7 @@ namespace MilLib.Controllers
             var client = _httpClientFactory.CreateClient("AiService");
             
             // Відправляємо GET у Python
-            var response = await client.GetAsync($"convert/status/{taskId}");
+            var response = await client.GetAsync($"rag/convert-to-md/status/{taskId}");
             
             if (!response.IsSuccessStatusCode)
                 return NotFound("Задачу не знайдено");
@@ -154,6 +154,40 @@ namespace MilLib.Controllers
         {
             var client = _httpClientFactory.CreateClient("AiService");
             var response = await client.GetAsync($"rag/process-book/status/{taskId}");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    return NotFound(new { message = "Task not found" });
+
+                return StatusCode((int)response.StatusCode, "Error fetching status from AI service");
+            }
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            return Content(responseData, "application/json");
+        }
+
+        [HttpPost("rag/parse-pdf/{bookId}")]
+        public async Task<IActionResult> ParsePdfToMd(int bookId)
+        {
+            var client = _httpClientFactory.CreateClient("AiService");
+            var response = await client.PostAsync($"rag/convert-to-md/book/{bookId}", null);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return StatusCode((int)response.StatusCode, errorContent);
+            }
+
+            var responseData = await response.Content.ReadAsStringAsync();
+            return Content(responseData, "application/json");
+        }
+
+        [HttpGet("rag/parse-pdf/status/{taskId}")]
+        public async Task<IActionResult> GetParsePdfStatus(string taskId)
+        {
+            var client = _httpClientFactory.CreateClient("AiService");
+            var response = await client.GetAsync($"rag/convert-to-md/status/{taskId}");
             
             if (!response.IsSuccessStatusCode)
             {
