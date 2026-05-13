@@ -46,6 +46,7 @@ class RagAskRequest(BaseModel):
     query: str
     temperature: Optional[float] = 0.7
     enable_thinking: Optional[bool] = False
+    use_hybrid_search: Optional[bool] = True
 
 class RagAskResponse(BaseModel):
     answer: str
@@ -269,7 +270,7 @@ async def ask_rag_question(request: RagAskRequest, req: Request, db: AsyncSessio
     rag_service = RAGService(llm_service)
     
     return StreamingResponse(
-        rag_service.ask_question_stream(db, request.query, request.temperature, request.enable_thinking, req),
+        rag_service.ask_question_stream(db, request.query, request.temperature, request.enable_thinking, request.use_hybrid_search, req),
         media_type="text/event-stream"
     )
 
@@ -277,7 +278,7 @@ async def ask_rag_question(request: RagAskRequest, req: Request, db: AsyncSessio
 async def ask_rag_question_old(request: RagAskRequest, db: AsyncSession = Depends(get_db)):
     llm_service = LLMService()
     rag_service = RAGService(llm_service)
-    answer, sources, suggested_questions = await rag_service.ask_question(db, request.query, request.temperature)
+    answer, sources, suggested_questions = await rag_service.ask_question(db, request.query, request.temperature, request.use_hybrid_search)
     
     formatted_sources = []
     for chunk in sources:

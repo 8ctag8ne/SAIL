@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 import { RagResponse } from "../../../types";
-import { Box, Typography, Chip, Paper, Stack, Button } from "@mui/material";
+import { Box, Typography, Chip, Paper, Stack, Button, Table, TableHead, TableBody, TableRow, TableCell, TableContainer } from "@mui/material";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SearchIcon from "@mui/icons-material/Search";
@@ -11,6 +11,8 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type Props = {
   ragResponse: RagResponse;
@@ -168,9 +170,39 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, thinking
               borderRadius: "0 8px 8px 0",
             }}
           >
-            <Typography sx={{ whiteSpace: "pre-wrap" }}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ node, ...props }) => <Typography variant="body1" sx={{ mb: 2 }} {...props} />,
+                h1: ({ node, ...props }) => <Typography variant="h4" sx={{ mt: 3, mb: 2, fontWeight: 'bold' }} {...props} />,
+                h2: ({ node, ...props }) => <Typography variant="h5" sx={{ mt: 3, mb: 2, fontWeight: 'bold' }} {...props} />,
+                h3: ({ node, ...props }) => <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }} {...props} />,
+                h4: ({ node, ...props }) => <Typography variant="subtitle1" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }} {...props} />,
+                h5: ({ node, ...props }) => <Typography variant="subtitle2" sx={{ mt: 1, mb: 1, fontWeight: 'bold' }} {...props} />,
+                h6: ({ node, ...props }) => <Typography variant="caption" sx={{ mt: 1, mb: 1, fontWeight: 'bold' }} {...props} />,
+                ul: ({ node, ...props }) => <Box component="ul" sx={{ pl: 3, mb: 2 }} {...props} />,
+                ol: ({ node, ...props }) => <Box component="ol" sx={{ pl: 3, mb: 2 }} {...props} />,
+                li: ({ node, ...props }) => <Typography component="li" variant="body1" sx={{ mb: 1 }} {...props} />,
+                a: ({ node, ...props }) => <Typography component="a" sx={{ color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }} {...props} />,
+                table: ({ node, ...props }) => (
+                  <TableContainer component={Paper} sx={{ mb: 2 }}>
+                    <Table size="small" {...props} />
+                  </TableContainer>
+                ),
+                thead: ({ node, ...props }) => <TableHead sx={{ bgcolor: 'action.hover' }} {...props} />,
+                tbody: ({ node, ...props }) => <TableBody {...props} />,
+                tr: ({ node, ...props }) => <TableRow {...props} />,
+                th: ({ node, ...props }) => <TableCell sx={{ fontWeight: 'bold' }} {...(props as any)} />,
+                td: ({ node, ...props }) => <TableCell {...(props as any)} />,
+                blockquote: ({ node, ...props }) => (
+                  <Box sx={{ borderLeft: '4px solid', borderColor: 'divider', pl: 2, py: 1, mb: 2, bgcolor: 'action.hover' }}>
+                    <Typography variant="body2" color="text.secondary" {...props} />
+                  </Box>
+                ),
+              }}
+            >
               {displayAnswer}
-            </Typography>
+            </ReactMarkdown>
           </Box>
         </Box>
       )}

@@ -2,9 +2,14 @@
 import uuid
 import asyncio
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Any
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.callbacks import CallbackManagerForRetrieverRun
+from langchain_core.documents import Document
+from langchain_community.retrievers import BM25Retriever
+from pydantic import Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import delete
@@ -12,6 +17,45 @@ from sqlalchemy import delete
 from app.db.models import DocumentChunk
 from app.services.llm_service import LLMService
 from app.services.chunking_strategies import BaseChunkingStrategy
+
+class AsyncCustomVectorRetriever(BaseRetriever):
+    db: Any = Field(exclude=True)
+    llm_service: Any = Field(exclude=True)
+    top_k: int = 10
+
+    def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
+        raise NotImplementedError("This retriever only supports async operations.")
+
+    async def _aget_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
+        query_embedding = await self.llm_service.generate_embedding(query)
+        if not query_embedding:
+            return []
+            
+        distance_expr = DocumentChunk.embedding.cosine_distance(query_embedding)
+        result = await self.db.execute(
+            select(DocumentChunk, distance_expr).order_by(distance_expr).limit(self.top_k)
+        )
+        
+        docs = []
+        seen_ids = set()
+        
+        for chunk, distance in result.all():
+            similarity_score = round(1.0 - float(distance), 4) 
+            if chunk.id not in seen_ids:
+                chunk.similarity_score = similarity_score
+                docs.append(Document(page_content=chunk.text, metadata={"chunk": chunk}))
+                seen_ids.add(chunk.id)
+                
+            if chunk.parent_id and chunk.parent_id not in seen_ids:
+                parent_result = await self.db.execute(
+                    select(DocumentChunk).where(DocumentChunk.id == chunk.parent_id)
+                )
+                parent_chunk = parent_result.scalar_one_or_none()
+                if parent_chunk:
+                    parent_chunk.similarity_score = similarity_score 
+                    docs.append(Document(page_content=parent_chunk.text, metadata={"chunk": parent_chunk}))
+                    seen_ids.add(parent_chunk.id)
+        return docs
 
 class ChunkingService:
     def __init__(self, strategy: BaseChunkingStrategy):
@@ -33,41 +77,68 @@ class RAGService:
     def __init__(self, llm_service: LLMService):
         self.llm_service = llm_service
         
-    async def retrieve_chunks(self, db: AsyncSession, query: str, top_k: int = 10) -> List[DocumentChunk]:
-        query_embedding = await self.llm_service.generate_embedding(query)
-        if not query_embedding:
-            return []
-            
-        distance_expr = DocumentChunk.embedding.cosine_distance(query_embedding)
-        result = await db.execute(
-            select(DocumentChunk, distance_expr)
-            .order_by(distance_expr)
-            .limit(top_k)
-        )
+    async def retrieve_chunks(self, db: AsyncSession, query: str, top_k: int = 10, use_hybrid_search: bool = True) -> List[DocumentChunk]:
+        vector_retriever = AsyncCustomVectorRetriever(db=db, llm_service=self.llm_service, top_k=top_k)
         
-        final_chunks = []
-        seen_ids = set()
-        
-        for chunk, distance in result.all():
-            if chunk.id not in seen_ids:
-                chunk.similarity_score = round(1.0 - float(distance), 4) 
-                final_chunks.append(chunk)
-                seen_ids.add(chunk.id)
+        if use_hybrid_search:
+            all_chunks_result = await db.execute(select(DocumentChunk))
+            all_chunks = all_chunks_result.scalars().all()
+            if not all_chunks:
+                return []
                 
-            if chunk.parent_id and chunk.parent_id not in seen_ids:
-                parent_result = await db.execute(
-                    select(DocumentChunk).where(DocumentChunk.id == chunk.parent_id)
-                )
-                parent_chunk = parent_result.scalar_one_or_none()
-                if parent_chunk:
-                    parent_chunk.similarity_score = chunk.similarity_score 
-                    final_chunks.append(parent_chunk)
-                    seen_ids.add(parent_chunk.id)
+            bm25_docs = [Document(page_content=c.text, metadata={"chunk": c}) for c in all_chunks]
+            bm25_retriever = BM25Retriever.from_documents(bm25_docs)
+            bm25_retriever.k = top_k
+            
+            # Обчислюємо істинні значення RRF (Reciprocal Rank Fusion)
+            c = 60
+            weights = [0.3, 0.7]
+            
+            bm25_result = await bm25_retriever.ainvoke(query)
+            vector_result = await vector_retriever.ainvoke(query)
+            
+            rrf_scores = {}
+            chunk_map = {}
+            
+            for rank, doc in enumerate(bm25_result, start=1):
+                chunk = doc.metadata.get("chunk")
+                if chunk:
+                    chunk_map[chunk.id] = chunk
+                    rrf_scores[chunk.id] = rrf_scores.get(chunk.id, 0.0) + weights[0] * (1.0 / (rank + c))
                     
-        return final_chunks
+            for rank, doc in enumerate(vector_result, start=1):
+                chunk = doc.metadata.get("chunk")
+                if chunk:
+                    chunk_map[chunk.id] = chunk
+                    rrf_scores[chunk.id] = rrf_scores.get(chunk.id, 0.0) + weights[1] * (1.0 / (rank + c))
+                    
+            sorted_items = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+            theoretical_max = sum(w / (1 + c) for w in weights)
+            
+            final_chunks = []
+            seen_ids = set()
+            for chunk_id, rrf_score in sorted_items:
+                if chunk_id not in seen_ids:
+                    chunk = chunk_map[chunk_id]
+                    # Нормалізація істинного RRF
+                    normalized_score = rrf_score / theoretical_max
+                    chunk.similarity_score = round(normalized_score, 4)
+                    final_chunks.append(chunk)
+                    seen_ids.add(chunk_id)
+            return final_chunks[:top_k]
+        else:
+            docs = await vector_retriever.ainvoke(query)
+            final_chunks = []
+            seen_ids = set()
+            for doc in docs:
+                chunk = doc.metadata.get("chunk")
+                if chunk and chunk.id not in seen_ids:
+                    final_chunks.append(chunk)
+                    seen_ids.add(chunk.id)
+            return final_chunks[:top_k]
         
-    async def ask_question(self, db: AsyncSession, query: str, temperature: float = 0.1) -> Tuple[str, List[DocumentChunk], List[str]]:
-        chunks = await self.retrieve_chunks(db, query)
+    async def ask_question(self, db: AsyncSession, query: str, temperature: float = 0.1, use_hybrid_search: bool = True) -> Tuple[str, List[DocumentChunk], List[str]]:
+        chunks = await self.retrieve_chunks(db, query, use_hybrid_search=use_hybrid_search)
         
         if not chunks:
             return "На жаль, інформації за вашим запитом не знайдено.", [], []
@@ -86,8 +157,8 @@ class RAGService:
         
         return answer, chunks, suggested_questions
 
-    async def ask_question_stream(self, db: AsyncSession, query: str, temperature: float = 0.7, enable_thinking: bool = False, req = None):
-        chunks = await self.retrieve_chunks(db, query)
+    async def ask_question_stream(self, db: AsyncSession, query: str, temperature: float = 0.7, enable_thinking: bool = False, use_hybrid_search: bool = True, req = None):
+        chunks = await self.retrieve_chunks(db, query, use_hybrid_search=use_hybrid_search)
         
         if req and await req.is_disconnected():
             return

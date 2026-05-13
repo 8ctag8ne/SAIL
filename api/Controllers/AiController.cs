@@ -182,7 +182,8 @@ namespace MilLib.Controllers
             {
                 query = request.Query,
                 temperature = request.Temperature,
-                enable_thinking = request.EnableThinking
+                enable_thinking = request.EnableThinking,
+                use_hybrid_search = request.UseHybridSearch
             };
             var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             
@@ -220,7 +221,8 @@ namespace MilLib.Controllers
             {
                 query = request.Query,
                 temperature = request.Temperature,
-                enable_thinking = request.EnableThinking
+                enable_thinking = request.EnableThinking,
+                use_hybrid_search = request.UseHybridSearch
             };
             var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             
