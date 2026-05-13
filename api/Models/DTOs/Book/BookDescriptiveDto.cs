@@ -16,5 +16,7 @@ namespace api.Models.DTOs.Book
         public string? Info {get; set;}
         public int? LikesCount {get; set;}
         public List<TagSimpleDto> Tags {get; set;} = new List<TagSimpleDto>();
+        public bool Parsed { get; set; }
+        public bool Processed { get; set; }
     }
 }

@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<Like> Likes {get; set;}
 
     public DbSet<DocumentChunk> DocumentChunks { get; set; }
+    public DbSet<BookMarkdown> BookMarkdowns { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,6 +44,12 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasOne(d => d.Book)
             .WithMany(b => b.Chunks)
             .HasForeignKey(d => d.BookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Book>()
+            .HasOne(b => b.BookMarkdown)
+            .WithOne(bm => bm.Book)
+            .HasForeignKey<BookMarkdown>(bm => bm.BookId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<BookTag>()

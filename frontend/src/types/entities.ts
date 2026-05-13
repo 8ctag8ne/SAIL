@@ -24,6 +24,8 @@ export type Book = {
     isLiked: boolean;
     tags: SimpleTag[];
     comments: Comment[];
+    parsed?: boolean;
+    processed?: boolean;
 };
 
 export type Comment = {

@@ -32,6 +32,8 @@ const BookDetailsPage: React.FC = () => {
                 likesCount={book.likesCount}
                 isLiked={book.isLiked}
                 authors={book.authors}
+                parsed={book.parsed}
+                processed={book.processed}
             />
             <CommentSection comments={book.comments} bookId={book.id} />
         </PageContainer>

@@ -18,6 +18,7 @@ import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
 import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 import AddBookToListsDialog from "../BookList/AddBookToListsDialog";
 import RagIndexDialog from "../BookDetails/RagIndexDialog";
+import MarkdownEditorModal from "../BookDetails/MarkdownEditorModal";
 import BASE_URL from "../../../config";
 
 type BookCardProps = {
@@ -31,6 +32,8 @@ type BookCardProps = {
   isLiked?: boolean;
   fileUrl?: string;
   authors?: SimpleAuthor[];
+  parsed?: boolean;
+  processed?: boolean;
   onRemoveFromList?: () => void;
 };
 
@@ -40,6 +43,7 @@ const BookCard: React.FC<BookCardProps> = ({
   className,
   id, title, imageUrl, info, tags, fileUrl,
   likesCount = 0, isLiked = false, authors = [],
+  parsed, processed,
   onRemoveFromList
 }) => {
   const navigate = useNavigate();
@@ -59,6 +63,7 @@ const BookCard: React.FC<BookCardProps> = ({
   const [addToListsOpen, setAddToListsOpen] = useState(false);
   const queryClient = useQueryClient();
   const [isRagIndexOpen, setIsRagIndexOpen] = useState(false);
+  const [isMarkdownEditorOpen, setIsMarkdownEditorOpen] = useState(false);
 
   const { mutateAsync: toggleLikeMutation } = useToggleLike();
   const { mutateAsync: updateBookMutation } = useUpdateBook();
@@ -147,7 +152,7 @@ const BookCard: React.FC<BookCardProps> = ({
   };
 
   const menuActions: ActionItem[] = [];
-  
+
   if (canEditOrDelete) {
     menuActions.push({
       label: "Редагувати",
@@ -173,12 +178,22 @@ const BookCard: React.FC<BookCardProps> = ({
   }
 
   if (isAdmin) {
+    if (parsed) {
+      menuActions.push({
+        label: processed ? "Оновити RAG-індекс" : "Згенерувати RAG-індекс",
+        icon: <AutoAwesomeIcon />,
+        onClick: (e?: React.MouseEvent) => {
+          if (e) e.stopPropagation();
+          setIsRagIndexOpen(true);
+        },
+      });
+    }
     menuActions.push({
-      label: "Згенерувати RAG-індекс (AI)",
-      icon: <AutoAwesomeIcon />,
+      label: parsed ? "Редагувати Markdown" : "Переглянути/Аналізувати текст",
+      icon: <Book />,
       onClick: (e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
-        setIsRagIndexOpen(true);
+        setIsMarkdownEditorOpen(true);
       },
     });
   }
@@ -243,20 +258,20 @@ const BookCard: React.FC<BookCardProps> = ({
         description={info}
         tags={
           tags.map(tag => (
-              <Chip
-                key={tag.id}
-                label={
-                  <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
-                    {tag.title}
-                  </Box>
-                }
-                clickable
-                onClick={(e) => handleTagClick(e, tag.id)}
-                sx={{
-                  cursor: "pointer",
-                  maxWidth: "100%",
-                }}
-              />
+            <Chip
+              key={tag.id}
+              label={
+                <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+                  {tag.title}
+                </Box>
+              }
+              clickable
+              onClick={(e) => handleTagClick(e, tag.id)}
+              sx={{
+                cursor: "pointer",
+                maxWidth: "100%",
+              }}
+            />
           ))
         }
         footer={
@@ -290,6 +305,19 @@ const BookCard: React.FC<BookCardProps> = ({
         bookId={id}
         onClose={() => setIsRagIndexOpen(false)}
       />
+
+      {isMarkdownEditorOpen && (
+        <MarkdownEditorModal
+          open={isMarkdownEditorOpen}
+          bookId={id}
+          onClose={() => setIsMarkdownEditorOpen(false)}
+          onSaved={() => {
+            queryClient.invalidateQueries({ queryKey: ["books"] });
+            queryClient.invalidateQueries({ queryKey: ["book", id.toString()] });
+          }}
+          parsed={parsed}
+        />
+      )}
 
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <BookForm

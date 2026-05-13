@@ -1,5 +1,5 @@
 # db/models.py
-from sqlalchemy import Column, Integer, String, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from pgvector.sqlalchemy import Vector
 from app.db.database import Base
@@ -13,6 +13,16 @@ class Book(Base):
     info = Column(Text, nullable=True)
     
     embedding = Column(Vector(2048), nullable=True) 
+    
+    parsed = Column(Boolean, default=False)
+    processed = Column(Boolean, default=False)
+
+class BookMarkdown(Base):
+    __tablename__ = "book_markdowns"
+    
+    id = Column(Integer, primary_key=True)
+    book_id = Column(Integer, ForeignKey("books.id"), unique=True, nullable=False)
+    content = Column(Text, nullable=False)
 
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"

@@ -82,7 +82,7 @@ async def background_conversion_task(task_id: str, file_bytes: bytes, filename: 
         })
 
 
-@app.post("/convert/pdf-to-md", response_model=TaskResponse, status_code=202)
+@app.post("/rag/convert-to-md/upload", response_model=TaskResponse, status_code=202)
 async def upload_pdf(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """Приймає файл, віддає ID задачі і запускає конвертацію у фоні"""
     task_id = str(uuid.uuid4())
@@ -95,7 +95,7 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: UploadFile = File(
     
     return TaskResponse(task_id=task_id, status="processing")
 
-@app.get("/convert/status/{task_id}", response_model=TaskResponse)
+@app.get("/rag/convert-to-md/status/{task_id}", response_model=TaskResponse)
 async def get_status(task_id: str):
     """Повертає поточний статус або готовий результат"""
     if task_id not in TASKS_DB:
@@ -190,28 +190,27 @@ async def debug_db_tags(db: AsyncSession = Depends(get_db)):
             "message": str(e)
         }
 
-async def background_chunking_task(task_id: str, book_id: int, file_bytes: bytes):
+async def background_chunking_task(task_id: str, book_id: int, markdown_text: str):
     try:
-        parser = OpenDataLoaderService()
-        heuristic = HeuristicService()
-        llm_service = LLMService()
-        
-        strategy = SimpleChunkingStrategy(llm_service)
+        strategy = SimpleChunkingStrategy(LLMService())
         chunking_service = ChunkingService(strategy)
-        
-        raw_json_data = await parser.parse(file_bytes)
-        print(f"DEBUG: Розпарсено JSON. Кількість сирих елементів: {len(raw_json_data)}")
-        
-        hierarchical_data = heuristic.build_hierarchical_structure(raw_json_data)
-        print(f"DEBUG: Побудовано ієрархію. Кількість вузлів після обробки: {len(hierarchical_data)}")
         
         async with AsyncSessionLocal() as db:
             try:
                 print("DEBUG: Починаємо запис чанків у БД...")
-                await chunking_service.process_and_save_book(db, book_id, hierarchical_data)
+                await chunking_service.process_and_save_book(db, book_id, markdown_text)
+                
+                # Mark as processed
+                book_result = await db.execute(select(Book).where(Book.id == book_id))
+                book = book_result.scalar_one_or_none()
+                if book:
+                    book.processed = True
+                    await db.commit()
+                    
                 print("DEBUG: Транзакція успішно зафіксована (commit).")
             except Exception as db_err:
                 print(f"CRITICAL DB ERROR: {db_err}")
+                await db.rollback()
                 raise db_err
             
         TASKS_DB[task_id].update({"status": "completed"})
@@ -224,7 +223,64 @@ async def background_chunking_task(task_id: str, book_id: int, file_bytes: bytes
         })
 
 @app.post("/rag/process-book/{book_id}")
-async def process_book_for_rag(book_id: int, background_tasks: BackgroundTasks):
+async def process_book_for_rag(book_id: int, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
+    task_id = str(uuid.uuid4())
+    TASKS_DB[task_id] = {"status": "processing"}
+    
+    from app.db.models import BookMarkdown
+    result = await db.execute(select(BookMarkdown).where(BookMarkdown.book_id == book_id))
+    book_md = result.scalar_one_or_none()
+    
+    if not book_md or not book_md.content:
+        raise HTTPException(status_code=400, detail="Книга ще не має розпарсеного Markdown. Спершу запустіть аналіз тексту.")
+        
+    markdown_text = book_md.content
+        
+    background_tasks.add_task(background_chunking_task, task_id, book_id, markdown_text)
+    return {"task_id": task_id, "status": "processing"}
+
+async def background_md_parser(task_id: str, book_id: int, file_bytes: bytes):
+    try:
+        from app.services.md_service import process_document_combined
+        markdown = await process_document_combined(file_bytes=file_bytes, filename=f"book_{book_id}.pdf")
+        
+        async with AsyncSessionLocal() as db:
+            try:
+                from app.db.models import BookMarkdown, Book
+                
+                result = await db.execute(select(BookMarkdown).where(BookMarkdown.book_id == book_id))
+                book_md = result.scalar_one_or_none()
+                
+                if book_md:
+                    book_md.content = markdown
+                else:
+                    book_md = BookMarkdown(book_id=book_id, content=markdown)
+                    db.add(book_md)
+                
+                book_result = await db.execute(select(Book).where(Book.id == book_id))
+                book = book_result.scalar_one_or_none()
+                if book:
+                    book.parsed = True
+                    
+                await db.commit()
+            except Exception as db_err:
+                await db.rollback()
+                raise db_err
+                
+        TASKS_DB[task_id].update({
+            "status": "completed",
+            "markdown": markdown
+        })
+        print(f"MD Parse task {task_id} completed successfully.")
+    except Exception as e:
+        print(f"MD Parse task {task_id} failed: {e}")
+        TASKS_DB[task_id].update({
+            "status": "failed",
+            "error": str(e)
+        })
+
+@app.post("/rag/convert-to-md/book/{book_id}")
+async def process_book_for_md(book_id: int, background_tasks: BackgroundTasks):
     task_id = str(uuid.uuid4())
     TASKS_DB[task_id] = {"status": "processing"}
     
@@ -249,7 +305,7 @@ async def process_book_for_rag(book_id: int, background_tasks: BackgroundTasks):
         TASKS_DB[task_id] = {"status": "failed", "error": f"Network error: {str(e)}"}
         raise HTTPException(status_code=500, detail=f"Error communicating with Main API: {str(e)}")
         
-    background_tasks.add_task(background_chunking_task, task_id, book_id, file_bytes)
+    background_tasks.add_task(background_md_parser, task_id, book_id, file_bytes)
     return {"task_id": task_id, "status": "processing"}
 
 @app.get("/rag/process-book/status/{task_id}", response_model=ProcessBookTaskResponse)
