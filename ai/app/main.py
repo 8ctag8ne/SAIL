@@ -239,7 +239,7 @@ async def process_book_for_rag(book_id: int, background_tasks: BackgroundTasks, 
     background_tasks.add_task(background_chunking_task, task_id, book_id, markdown_text)
     return {"task_id": task_id, "status": "processing"}
 
-async def background_md_parser(task_id: str, book_id: int, file_bytes: bytes):
+async def background_md_parser(task_id: str, book_id: int, file_bytes: bytes, save_to_db: bool = False):
     try:
         from app.services.md_service import process_document_combined
         markdown = await process_document_combined(file_bytes=file_bytes, filename=f"book_{book_id}.pdf")
@@ -247,28 +247,29 @@ async def background_md_parser(task_id: str, book_id: int, file_bytes: bytes):
         # PostgreSQL doesn't allow \x00 characters in text fields
         markdown = markdown.replace('\x00', '')
         
-        async with AsyncSessionLocal() as db:
-            try:
-                from app.db.models import BookMarkdown, Book
-                
-                result = await db.execute(select(BookMarkdown).where(BookMarkdown.book_id == book_id))
-                book_md = result.scalar_one_or_none()
-                
-                if book_md:
-                    book_md.content = markdown
-                else:
-                    book_md = BookMarkdown(book_id=book_id, content=markdown)
-                    db.add(book_md)
-                
-                book_result = await db.execute(select(Book).where(Book.id == book_id))
-                book = book_result.scalar_one_or_none()
-                if book:
-                    book.parsed = True
+        if save_to_db:
+            async with AsyncSessionLocal() as db:
+                try:
+                    from app.db.models import BookMarkdown, Book
                     
-                await db.commit()
-            except Exception as db_err:
-                await db.rollback()
-                raise db_err
+                    result = await db.execute(select(BookMarkdown).where(BookMarkdown.book_id == book_id))
+                    book_md = result.scalar_one_or_none()
+                    
+                    if book_md:
+                        book_md.content = markdown
+                    else:
+                        book_md = BookMarkdown(book_id=book_id, content=markdown)
+                        db.add(book_md)
+                    
+                    book_result = await db.execute(select(Book).where(Book.id == book_id))
+                    book = book_result.scalar_one_or_none()
+                    if book:
+                        book.parsed = True
+                        
+                    await db.commit()
+                except Exception as db_err:
+                    await db.rollback()
+                    raise db_err
                 
         TASKS_DB[task_id].update({
             "status": "completed",
@@ -283,7 +284,7 @@ async def background_md_parser(task_id: str, book_id: int, file_bytes: bytes):
         })
 
 @app.post("/rag/convert-to-md/book/{book_id}")
-async def process_book_for_md(book_id: int, background_tasks: BackgroundTasks):
+async def process_book_for_md(book_id: int, background_tasks: BackgroundTasks, save_to_db: bool = False):
     task_id = str(uuid.uuid4())
     TASKS_DB[task_id] = {"status": "processing"}
     
@@ -308,7 +309,7 @@ async def process_book_for_md(book_id: int, background_tasks: BackgroundTasks):
         TASKS_DB[task_id] = {"status": "failed", "error": f"Network error: {str(e)}"}
         raise HTTPException(status_code=500, detail=f"Error communicating with Main API: {str(e)}")
         
-    background_tasks.add_task(background_md_parser, task_id, book_id, file_bytes)
+    background_tasks.add_task(background_md_parser, task_id, book_id, file_bytes, save_to_db)
     return {"task_id": task_id, "status": "processing"}
 
 @app.get("/rag/process-book/status/{task_id}", response_model=ProcessBookTaskResponse)

@@ -105,13 +105,14 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId,
 
       pollingTimerRef.current = setInterval(async () => {
         try {
-          const { status, error } = await getParseStatus(taskId);
+          const { status, error, markdown } = await getParseStatus(taskId);
           if (status === "completed") {
             if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
             setIsParsing(false);
             toast.success("Аналіз успішно завершено", { isCloseBtn: true });
-            loadMarkdown();
-            if (onSaved) onSaved();
+            if (markdown) {
+              setContent(markdown);
+            }
           } else if (status === "failed") {
             if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
             setIsParsing(false);
@@ -255,7 +256,7 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId,
               variant="outlined"
               color="secondary"
               onClick={handleAutoParse}
-              disabled={isLoading || isParsing}
+              disabled={isLoading || isParsing || isSaving}
               fullWidth
               sx={{ height: 48 }}
             >
@@ -265,7 +266,7 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId,
               variant="outlined"
               color="primary"
               onClick={handleSave}
-              disabled={isLoading || isSaving}
+              disabled={isLoading || isSaving || isParsing}
               fullWidth
               sx={{ height: 48 }}
             >

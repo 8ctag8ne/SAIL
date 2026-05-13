@@ -61,7 +61,7 @@ export const autoParsePdfToMarkdown = async (bookId: number): Promise<{ taskId: 
     return { taskId: data.task_id || data.taskId, status: data.status };
 };
 
-export const getParseStatus = async (taskId: string): Promise<{ status: string, error?: string }> => {
+export const getParseStatus = async (taskId: string): Promise<{ status: string, error?: string, markdown?: string }> => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${BASE_URL}/api/Ai/rag/parse-pdf/status/${taskId}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}

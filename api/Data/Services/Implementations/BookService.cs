@@ -232,14 +232,14 @@ namespace MilLib.Services.Implementations
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
 
-            // Fire-and-forget background parsing trigger
+            // Fire-and-forget background parsing trigger with auto-save enabled
             var bookId = book.Id;
             _ = Task.Run(async () =>
             {
                 try
                 {
                     var client = _httpClientFactory.CreateClient("AiService");
-                    await client.PostAsync($"rag/convert-to-md/book/{bookId}", null);
+                    await client.PostAsync($"rag/convert-to-md/book/{bookId}?save_to_db=true", null);
                 }
                 catch (Exception ex)
                 {
