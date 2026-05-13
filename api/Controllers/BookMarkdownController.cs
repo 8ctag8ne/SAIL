@@ -54,10 +54,13 @@ namespace MilLib.Controllers
                 return BadRequest("Markdown for this book already exists. Use PUT to update.");
             }
 
+            // PostgreSQL doesn't allow \x00 characters in text fields
+            var sanitizedContent = content?.Replace("\0", "") ?? "";
+
             var markdown = new BookMarkdown
             {
                 BookId = bookId,
-                Content = content
+                Content = sanitizedContent
             };
 
             _context.BookMarkdowns.Add(markdown);
@@ -92,7 +95,8 @@ namespace MilLib.Controllers
                 return NotFound("Markdown for this book does not exist. Use POST to create.");
             }
 
-            book.BookMarkdown.Content = content;
+            var sanitizedContent = content?.Replace("\0", "") ?? "";
+            book.BookMarkdown.Content = sanitizedContent;
             book.Parsed = true;
 
             await _context.SaveChangesAsync();

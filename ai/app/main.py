@@ -244,6 +244,9 @@ async def background_md_parser(task_id: str, book_id: int, file_bytes: bytes):
         from app.services.md_service import process_document_combined
         markdown = await process_document_combined(file_bytes=file_bytes, filename=f"book_{book_id}.pdf")
         
+        # PostgreSQL doesn't allow \x00 characters in text fields
+        markdown = markdown.replace('\x00', '')
+        
         async with AsyncSessionLocal() as db:
             try:
                 from app.db.models import BookMarkdown, Book
