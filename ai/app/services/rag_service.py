@@ -86,11 +86,14 @@ class RAGService:
         
         return answer, chunks, suggested_questions
 
-    async def ask_question_stream(self, db: AsyncSession, query: str, temperature: float = 0.7, enable_thinking: bool = False):
+    async def ask_question_stream(self, db: AsyncSession, query: str, temperature: float = 0.7, enable_thinking: bool = False, req = None):
         chunks = await self.retrieve_chunks(db, query)
         
+        if req and await req.is_disconnected():
+            return
+        
         if not chunks:
-            yield '{"type": "error", "data": "На жаль, інформації за вашим запитом не знайдено."}\n'
+            yield f'data: {{"type": "error", "data": "На жаль, інформації за вашим запитом не знайдено."}}\n\n'
             return
             
         context_parts = []
@@ -115,18 +118,21 @@ class RAGService:
                 "similarityScore": getattr(chunk, "similarity_score", 0.0)
             })
             
-        yield json.dumps({"type": "sources", "data": formatted_sources}, ensure_ascii=False) + "\n"
+        yield f'data: {json.dumps({"type": "sources", "data": formatted_sources}, ensure_ascii=False)}\n\n'
         
         # Start suggested questions task (it runs concurrently)
         questions_task = asyncio.create_task(self.llm_service.generate_suggested_questions(query, context))
         
         # Stream answer
-        async for chunk_text in self.llm_service.generate_rag_answer_stream(query, context, temperature, enable_thinking):
-            yield json.dumps({"type": "chunk", "data": chunk_text}, ensure_ascii=False) + "\n"
+        async for sse_chunk in self.llm_service.generate_rag_answer_stream(query, context, temperature, enable_thinking, req):
+            if req and await req.is_disconnected():
+                print("DEBUG: Клієнт відключився під час стрімінгу відповіді.")
+                break
+            yield sse_chunk
             
         # Await and yield questions
         try:
             suggested_questions = await questions_task
-            yield json.dumps({"type": "questions", "data": suggested_questions}, ensure_ascii=False) + "\n"
+            yield f'data: {json.dumps({"type": "questions", "data": suggested_questions}, ensure_ascii=False)}\n\n'
         except Exception as e:
             pass

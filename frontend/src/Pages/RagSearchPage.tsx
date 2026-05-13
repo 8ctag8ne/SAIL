@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Box, Accordion, AccordionSummary, AccordionDetails, Typography, Slider, Stack } from "@mui/material";
+import { Box, Accordion, AccordionSummary, AccordionDetails, Typography, Slider, Stack, Button } from "@mui/material";
 import SearchBar from "../components/search/SearchBar/SearchBar";
 import LoadingIndicator from "../components/ui/LoadingIndicator";
 import RagSearchView from "../components/ui/RagSearchView/RagSearchView";
@@ -23,8 +23,10 @@ const RagSearchPage: React.FC = () => {
   const [query, setQuery] = useState(urlQuery);
   const [ragResult, setRagResult] = useState<RagResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [temperature, setTemperature] = useState<number>(0.7);
+  const [temperature, setTemperature] = useState<number>(0.1);
   const [enableThinking, setEnableThinking] = useState<boolean>(false);
   const [thinkingText, setThinkingText] = useState("");
   const [answerText, setAnswerText] = useState("");
@@ -66,13 +68,19 @@ const RagSearchPage: React.FC = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
       const response = await fetch(`${BASE_URL}/api/Ai/rag/ask`, {
         method: "POST",
         headers,
+        signal: abortControllerRef.current.signal,
         body: JSON.stringify({
           query: searchString,
           temperature: tempParam,
-          enable_thinking: useThinking
+          enableThinking: useThinking
         })
       });
 
@@ -84,6 +92,7 @@ const RagSearchPage: React.FC = () => {
       if (!reader) throw new Error("Stream not available");
 
       setLoading(false); // Прибираємо загальний індикатор, оскільки почався стрімінг
+      setIsStreaming(true);
 
       const decoder = new TextDecoder();
       let buffer = "";
@@ -96,17 +105,27 @@ const RagSearchPage: React.FC = () => {
 
         buffer += decoder.decode(value, { stream: true });
 
-        let boundary = buffer.indexOf('\n');
+        let boundary = buffer.indexOf('\n\n');
         while (boundary !== -1) {
-          const line = buffer.slice(0, boundary).trim();
-          buffer = buffer.slice(boundary + 1);
-          boundary = buffer.indexOf('\n');
+          let chunk = buffer.slice(0, boundary).trim();
+          buffer = buffer.slice(boundary + 2);
+          boundary = buffer.indexOf('\n\n');
 
-          if (line) {
+          if (chunk.startsWith('data: ')) {
+            chunk = chunk.slice(6);
+          }
+
+          if (chunk) {
             try {
-              const data = JSON.parse(line);
+              const data = JSON.parse(chunk);
+              const isNearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 30;
+
+              if (isNearBottom) {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
+              }
               if (data.type === "error") {
                 setError(data.data);
+                setIsStreaming(false);
                 return;
               } else if (data.type === "sources") {
                 partialResult.sources = data.data;
@@ -114,32 +133,11 @@ const RagSearchPage: React.FC = () => {
               } else if (data.type === "questions") {
                 partialResult.suggestedQuestions = data.data;
                 setRagResult({ ...partialResult });
-              } else if (data.type === "chunk") {
-                fullText += data.data;
-
-                const startTag = "<think>";
-                const endTag = "</think>";
-
-                const startIdx = fullText.indexOf(startTag);
-                const endIdx = fullText.indexOf(endTag);
-
-                if (startIdx !== -1) {
-                  if (endIdx !== -1) {
-                    const thinkContent = fullText.slice(startIdx + startTag.length, endIdx).trim();
-                    const afterThink = fullText.slice(endIdx + endTag.length).trimStart();
-                    setThinkingText(thinkContent);
-                    setAnswerText(afterThink);
-                    partialResult.answer = afterThink;
-                  } else {
-                    const thinkContent = fullText.slice(startIdx + startTag.length).trimStart();
-                    setThinkingText(thinkContent);
-                    setAnswerText("");
-                  }
-                } else {
-                  setAnswerText(fullText);
-                  partialResult.answer = fullText;
-                }
-
+              } else if (data.type === "thinking") {
+                setThinkingText(prev => prev + data.text);
+              } else if (data.type === "answer") {
+                setAnswerText(prev => prev + data.text);
+                partialResult.answer += data.text;
                 setRagResult({ ...partialResult });
               }
             } catch (e) {
@@ -149,7 +147,9 @@ const RagSearchPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      if (fullText.length > 0 || partialResult.sources.length > 0) {
+      if (err.name === 'AbortError') {
+        toast.info("Генерацію зупинено користувачем.");
+      } else if (fullText.length > 0 || partialResult.sources.length > 0) {
         toast.error("З'єднання перервано. Відповідь може бути неповною.");
         const errMsg = "\n\n[Помилка з'єднання: генерація перервана]";
         setAnswerText(prev => prev + errMsg);
@@ -159,7 +159,10 @@ const RagSearchPage: React.FC = () => {
         setError(err.message || "Сталася помилка при пошуку");
         setRagResult(null);
       }
+      setIsStreaming(false);
       setLoading(false);
+    } finally {
+      setIsStreaming(false);
     }
   };
 
@@ -176,7 +179,7 @@ const RagSearchPage: React.FC = () => {
       setThinkingText("");
       setAnswerText("");
     }
-  }, [urlQuery, activeTour, temperature, enableThinking]);
+  }, [urlQuery, activeTour]); // Removed temperature and enableThinking from dependencies
 
   const handleSearchSubmit = (newQuery: string) => {
     if (!newQuery.trim()) {
@@ -236,6 +239,23 @@ const RagSearchPage: React.FC = () => {
                 />
               </Box>
             </Stack>
+            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth
+                sx={{ mt: 2 }}
+                onClick={() => {
+                  if (query.trim()) {
+                    fetchRagData(query, temperature, enableThinking);
+                  } else if (urlQuery.trim()) {
+                    fetchRagData(urlQuery, temperature, enableThinking);
+                  }
+                }}
+              >
+                Застосувати налаштування
+              </Button>
+            </Box>
           </AccordionDetails>
         </Accordion>
       </Box>
@@ -253,13 +273,31 @@ const RagSearchPage: React.FC = () => {
       )}
 
       {!loading && !error && ragResult && (
-        <RagSearchView
-          ref={ragResultRef}
-          ragResponse={ragResult}
-          thinkingText={thinkingText}
-          answerText={answerText}
-          onSearch={handleSearchSubmit}
-        />
+        <>
+          <RagSearchView
+            ref={ragResultRef}
+            ragResponse={ragResult}
+            thinkingText={thinkingText}
+            answerText={answerText}
+            onSearch={handleSearchSubmit}
+          />
+          {isStreaming && (
+            <Box sx={{ mt: 2, mb: 4 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="error"
+                onClick={() => {
+                  if (abortControllerRef.current) {
+                    abortControllerRef.current.abort();
+                  }
+                }}
+              >
+                Зупинити генерацію
+              </Button>
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );

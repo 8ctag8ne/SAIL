@@ -168,7 +168,7 @@ namespace MilLib.Controllers
         }
 
         [HttpPost("rag/ask")]
-        public async Task AskRagQuestion([FromBody] RagAskRequestDto request)
+        public async Task AskRagQuestion([FromBody] RagAskRequestDto request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Query))
             {
@@ -178,15 +178,20 @@ namespace MilLib.Controllers
             }   
 
             var client = _httpClientFactory.CreateClient("AiService");
-            var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var jsonContent = new StringContent(JsonSerializer.Serialize(request, jsonOptions), Encoding.UTF8, "application/json");
+            var payload = new
+            {
+                query = request.Query,
+                temperature = request.Temperature,
+                enable_thinking = request.EnableThinking
+            };
+            var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, "rag/ask")
             {
                 Content = jsonContent
             };
 
-            using var response = await client.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await client.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -199,11 +204,11 @@ namespace MilLib.Controllers
             Response.ContentType = "text/event-stream";
 
             using var stream = await response.Content.ReadAsStreamAsync();
-            await stream.CopyToAsync(Response.Body);
+            await stream.CopyToAsync(Response.Body, cancellationToken);
         }
 
         [HttpPost("rag/ask/old")]
-        public async Task<IActionResult> AskRagQuestionOld([FromBody] RagAskRequestDto request)
+        public async Task<IActionResult> AskRagQuestionOld([FromBody] RagAskRequestDto request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Query))
             {
@@ -211,10 +216,15 @@ namespace MilLib.Controllers
             }   
 
             var client = _httpClientFactory.CreateClient("AiService");
-            var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var jsonContent = new StringContent(JsonSerializer.Serialize(request, jsonOptions), Encoding.UTF8, "application/json");
+            var payload = new
+            {
+                query = request.Query,
+                temperature = request.Temperature,
+                enable_thinking = request.EnableThinking
+            };
+            var jsonContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
             
-            var response = await client.PostAsync("rag/ask/old", jsonContent);
+            var response = await client.PostAsync("rag/ask/old", jsonContent, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {

@@ -4,7 +4,7 @@ import time
 import uuid
 import httpx
 
-from fastapi import BackgroundTasks, FastAPI, Depends, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, Depends, File, HTTPException, UploadFile, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -264,12 +264,12 @@ async def get_process_book_status(task_id: str):
     )
 
 @app.post("/rag/ask")
-async def ask_rag_question(request: RagAskRequest, db: AsyncSession = Depends(get_db)):
+async def ask_rag_question(request: RagAskRequest, req: Request, db: AsyncSession = Depends(get_db)):
     llm_service = LLMService()
     rag_service = RAGService(llm_service)
     
     return StreamingResponse(
-        rag_service.ask_question_stream(db, request.query, request.temperature, request.enable_thinking),
+        rag_service.ask_question_stream(db, request.query, request.temperature, request.enable_thinking, req),
         media_type="text/event-stream"
     )
 
