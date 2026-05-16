@@ -134,9 +134,13 @@ class HeuristicService:
         flat_elements = self.flatten_elements(elements)
         
         cleaned = []
+        page_count = 0
         
         # --- PASS 1: Очищення, багатомовна валідація та злиття ---
         for item in flat_elements:
+
+            page_count = max(page_count, item.get("page number", 0))
+
             new_item = dict(item)
             content = str(new_item.get("content", "")).strip()
             item_type = new_item.get("type", "")
@@ -228,14 +232,21 @@ class HeuristicService:
             for item in cleaned 
             if item.get("type") == "heading" and item.get("page number") == 1
         )
+        has_h1_on_last_page = any(
+            item.get("heading level") == 1 
+            for item in cleaned 
+            if item.get("type") == "heading" and item.get("page number") == page_count
+        )
         
         # 2. Збираємо рівні заголовків для визначення мінімального
         valid_headings = []
         for item in cleaned:
             if item.get("type") == "heading":
-                # Якщо на 1-й стор. є H1, ігноруємо всі заголовки 1-ї сторінки для розрахунку зсуву.
+                # Якщо на 1-й або останній сторінці є H1, ігноруємо всі заголовки 1-ї сторінки для розрахунку зсуву.
                 # Якщо H1 немає - беремо заголовки з 1-ї сторінки до уваги.
                 if item.get("page number") == 1 and has_h1_on_first_page:
+                    continue
+                if item.get("page number") == page_count and has_h1_on_last_page:
                     continue
                 
                 valid_headings.append(item["heading level"])
@@ -256,6 +267,7 @@ class HeuristicService:
         hierarchy = []
         active_headers = {}
         
+        # --- ЕТАП 1: Побудова базового дерева ---
         for item in json_data:
             item_type = item.get("type")
             page_num = item.get("page number", 1)
@@ -281,8 +293,16 @@ class HeuristicService:
                         parent_level -= 1
                     
                     if parent_level > 0:
+                        # 🔥 FIX HIERARCHY: Enforce making the level 1 greater than the parent.
+                        # This ignores the crazy parser numbers (e.g., H8 after H2 becomes H3)
+                        new_node["level"] = parent_level + 1
+                        level = new_node["level"] # Update local variable for active_headers
+                        
                         active_headers[parent_level]["children"].append(new_node)
                     else:
+                        # If parent is not found, it is a root node
+                        new_node["level"] = 1
+                        level = 1
                         hierarchy.append(new_node)
                 
                 # Update page_end for all active ancestors
@@ -317,6 +337,39 @@ class HeuristicService:
                 else:
                     hierarchy.append(new_node)
                     
+        # --- ЕТАП 2: Злиття дублікатів заголовків (Презентації) ---
+        def merge_duplicate_headings(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+            merged_nodes = []
+            seen_headings = {}  # Зберігає { "текст_заголовка": посилання_на_вузол }
+            
+            for node in nodes:
+                if node.get("type") == "heading":
+                    # Використовуємо очищений текст як ключ, щоб ігнорувати зайві пробіли
+                    text_key = node.get("text", "").strip()
+                    
+                    if text_key and text_key in seen_headings:
+                        # Знайшли дублікат на цьому ж рівні!
+                        existing_node = seen_headings[text_key]
+                        # Переносимо всіх дітей від дубліката до оригіналу
+                        existing_node["children"].extend(node.get("children", []))
+                        # Оновлюємо кінець сторінки для оригінального вузла
+                        existing_node["page_end"] = max(existing_node.get("page_end", 1), node.get("page_end", 1))
+                    else:
+                        # Це новий заголовок на цьому рівні
+                        merged_nodes.append(node)
+                        seen_headings[text_key] = node
+                else:
+                    # Параграфи та інші елементи просто додаємо
+                    merged_nodes.append(node)
+                    
+            # Рекурсивно застосовуємо до дітей кожного злитого вузла
+            for node in merged_nodes:
+                if node.get("children"):
+                    node["children"] = merge_duplicate_headings(node["children"])
+                    
+            return merged_nodes
+
+        # --- ЕТАП 3: Очищення порожніх вузлів ---
         def filter_empty_nodes(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             valid_nodes = []
             for node in nodes:
@@ -325,7 +378,10 @@ class HeuristicService:
                     valid_nodes.append(node)
             return valid_nodes
 
-        return filter_empty_nodes(hierarchy)
+        # Викликаємо наші фільтри по черзі
+        merged_hierarchy = merge_duplicate_headings(hierarchy)
+        return filter_empty_nodes(merged_hierarchy)
+
     def extract_metadata_context(self, json_data: List[Dict[str, Any]]) -> str:
         if not json_data:
             return ""
