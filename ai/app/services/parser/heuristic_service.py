@@ -3,54 +3,214 @@ from typing import List, Dict, Any
 import re
 
 class HeuristicService:
-    def clean_json_elements(self, elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        cleaned = []
-        last_level = 0
+    def _extract_cell_text(self, cell: Dict[str, Any]) -> str:
+        """Витягує та нормалізує текст з комірки таблиці для Markdown.
+
+        Делегує рекурсивний обхід вузла методу _extract_text_from_node,
+        після чого застосовує:
+          - нормалізацію маркованого списку: '• А;• Б;' → 'А; Б'
+          - екранування символу '|'
+          - видалення зайвих пробілів і переносів рядків
+        """
+        combined = self._extract_text_from_node(cell)
+
+        # Нормалізуємо маркований список: '• А;• Б;' → 'А; Б'
+        if "•" in combined:
+            bullets = [b.strip().rstrip(";").strip() for b in combined.split("•") if b.strip()]
+            combined = "; ".join(bullets)
+
+        # Видаляємо переноси рядків та екрануємо «|»
+        combined = combined.replace("\n", " ").replace("|", r"\|")
+        # Стискаємо зайві пробіли
+        combined = re.sub(r" {2,}", " ", combined).strip()
+        return combined
+
+    def _extract_text_from_node(self, node: Dict[str, Any]) -> str:
+        """Допоміжний метод: рекурсивно дістає весь текст з вузла (потрібно для комірок таблиці)."""
+        texts = []
+        content = str(node.get("content", "")).strip()
+        if content:
+            texts.append(content)
+            
+        for key in ["kids", "children", "list items"]:
+            if key in node and isinstance(node[key], list):
+                for child in node[key]:
+                    child_text = self._extract_text_from_node(child)
+                    if child_text:
+                        texts.append(child_text)
+                        
+        return " ".join(texts)
+
+    def _convert_table_to_markdown(self, table_node: Dict[str, Any]) -> str:
+        """Перетворює JSON-вузол таблиці на готову Markdown-таблицю.
         
+        Підтримує різні способи зберігання рядків:
+          - table_node["kids"] / table_node["children"] — масив рядків
+          - table_node["rows"] — явне поле rows
+        Перший рядок вважається заголовком і відділяється роздільником «---».
+        """
+        # Підтримуємо kids / children / rows як джерело рядків
+        rows: list = []
+        for key in ("kids", "children", "rows"):
+            candidate = table_node.get(key, [])
+            if candidate:
+                rows = candidate
+                break
+
+        if not rows:
+            return ""
+
+        md_lines: list[str] = []
+        row_index = 0  # лічильник лише для рядків типу «table row»
+
+        for row in rows:
+            if str(row.get("type", "")).lower() != "table row":
+                continue
+
+            # Отримуємо комірки: підтримуємо «cells» та «kids»/«children»
+            cells = row.get("cells") or row.get("kids") or row.get("children") or []
+
+            # Сортуємо комірки за номером стовпця, якщо є
+            cells = sorted(
+                cells,
+                key=lambda c: int(c.get("column number", c.get("col", 0)))
+            )
+
+            cell_texts = [self._extract_cell_text(cell) for cell in cells]
+
+            if not cell_texts:
+                continue
+
+            md_lines.append("| " + " | ".join(cell_texts) + " |")
+
+            # Після першого рядка-заголовка додаємо роздільник
+            if row_index == 0:
+                md_lines.append("| " + " | ".join(["---"] * len(cell_texts)) + " |")
+
+            row_index += 1
+
+        return "\n".join(md_lines)
+        
+    def flatten_elements(self, elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Рекурсивно витягує всі вкладені елементи, ігнорує футери і збирає таблиці."""
+        flat_list = []
         for item in elements:
+            flat_item = dict(item) 
+            item_type = str(flat_item.get("type", "")).lower()
+            
+            # 🔥 1. ІГНОРУЄМО СМІТТЯ: футери, хедери та вотермарки
+            if item_type in ["footer", "header", "watermark"]:
+                continue # Переходимо до наступного елемента, ігноруючи всіх його "дітей"
+                
+            # 🔥 2. ТАБЛИЦІ: Конвертуємо в Markdown і не йдемо глибше
+            if item_type == "table":
+                md_table = self._convert_table_to_markdown(flat_item)
+                if md_table:
+                    # Записуємо всю таблицю як один великий параграф
+                    flat_list.append({
+                        "type": "paragraph",
+                        "content": md_table,
+                        "page number": flat_item.get("page number", 1)
+                    })
+                continue # Ми вже обробили комірки, тому пропускаємо рекурсію для цієї таблиці
+
+            # 3. Збираємо всіх можливих "дітей" (звичайна логіка)
+            children = []
+            for key in ["kids", "children", "list items"]:
+                if key in flat_item and isinstance(flat_item[key], list):
+                    children.extend(flat_item.pop(key))
+            
+            # Якщо вузол має власний текст, додаємо його в плоский список
+            if str(flat_item.get("content", "")).strip():
+                flat_list.append(flat_item)
+                
+            # Якщо знайшли вкладені елементи - рекурсивно обробляємо їх
+            if children:
+                flat_list.extend(self.flatten_elements(children))
+                
+        return flat_list
+
+    def clean_json_elements(self, elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        flat_elements = self.flatten_elements(elements)
+        
+        cleaned = []
+        
+        # --- PASS 1: Очищення, багатомовна валідація та злиття ---
+        for item in flat_elements:
             new_item = dict(item)
             content = str(new_item.get("content", "")).strip()
             item_type = new_item.get("type", "")
+
+            # ЛІКУВАННЯ СПИСКІВ: Перетворюємо всі списки на параграфи
+            if item_type in ["list", "list item", "list_item"]:
+                item_type = "paragraph"
+                new_item["type"] = "paragraph"
+
+            # 1. ЖОРСТКА НОРМАЛІЗАЦІЯ СИМВОЛІВ (Лікуємо PDF-кодування)
+            # Повертаємо літеру "ї", яку парсер ковтнув
+            content = content.replace('\x00', 'ї')
             
-            # Step 1: Remove hyphenations
-            content = re.sub(r'(\w+)-\s*\n\s*(\w+)', r'\1\2', content)
-            content = re.sub(r'(\w+)-\s+(\w+)', r'\1\2', content)
+            # Нормалізація всіх видів апострофів до одного стандартного
+            content = re.sub(r"[’‘´`]", "'", content)
+            
+            # Лікуємо латинську "i" всередині кириличних слів
+            # Якщо латинська 'i' стоїть між двома кириличними літерами - міняємо на українську 'і'
+            content = re.sub(r'(?<=[А-Яа-яЄєЇїҐґ])i(?=[А-Яа-яЄєЇїҐґ])', 'і', content)
+                
+            # Markdown-таблиці мають власну структуру рядків — пропускаємо OCR-евристики
+            is_md_table = content.startswith("|") and "\n|" in content
+
+            if not is_md_table:
+                # Евристика 1: Очищення артефактів OCR
+                content = content.replace('\u00AD', '') # Видаляємо м'які перенесення
+                content = re.sub(r'(\w+)-\s*\n\s*(\w+)', r'\1\2', content) # Склеюємо слова
+                content = re.sub(r'(\w+)-\s+(\w+)', r'\1\2', content)
+                
+                # Евристика 2: Виправлення розрядки "С Е К Р Е Т Н О"
+                if re.match(r'^([^\W\d_]\s+){2,}[^\W\d_]$', content, flags=re.UNICODE):
+                    content = content.replace(' ', '')
+                    
+                # Склеюємо розірвані рядки всередині одного абзацу
+                content = re.sub(r'(?<!\n)\n(?!\n)', ' ', content)
+                content = re.sub(r'\s{2,}', ' ', content).strip()
+            
             new_item["content"] = content
             
-            # Step 2: Heading validation
+            # Евристика 3: Валідація заголовків (Більш обережна)
             if item_type == "heading":
                 is_invalid = False
                 
-                if len(content) > 150:
+                # Заголовок на 200 символів - це абзац
+                if len(content) > 200:
                     is_invalid = True
-                elif re.search(r'[!?,]$', content):
+                # Заголовки рідко закінчуються комою чи питанням
+                elif re.search(r'[?,]$', content):
                     is_invalid = True
-                elif content.endswith('.'):
-                    if not re.search(r'\d+\.$', content):
-                        is_invalid = True
-                        
+                    
                 if is_invalid:
                     item_type = "paragraph"
                     new_item["type"] = "paragraph"
-                else:
-                    # Fix hierarchy jumps
-                    curr_level = new_item.get("heading level", 1)
-                    if curr_level > last_level + 1:
-                        curr_level = last_level + 1
-                        new_item["heading level"] = curr_level
-                    last_level = curr_level
                     
-            # Step 3: Paragraph merging
-            if item_type == "paragraph" and cleaned:
+            # Евристика 4: Злиття абзаців та відірваних маркерів списків
+            # Markdown-таблиці не зливаємо ні з чим — вони мають власну структуру
+            if item_type == "paragraph" and cleaned and not is_md_table:
                 prev_item = cleaned[-1]
-                if prev_item.get("type") == "paragraph":
-                    prev_content = str(prev_item.get("content", "")).strip()
-                    if prev_content and not re.search(r'[.!?]$', prev_content):
-                        # Merge with previous block
+                prev_content = str(prev_item.get("content", "")).strip()
+                prev_is_md_table = prev_content.startswith("|") and "\n|" in prev_content
+
+                if prev_item.get("type") == "paragraph" and not prev_is_md_table:
+                    # Сценарій А: Попередній елемент - це відірваний маркер (напр. "1).", "-", "•")
+                    if re.match(r'^(\d+[\.\)]+|\w[\.\)]+|[•\-\*])$', prev_content):
                         cleaned[-1]["content"] = prev_content + " " + content
                         continue
                         
-            # Step 4: Heading merging
+                    # Сценарій Б: Звичайне злиття, якщо попереднє речення не закінчено.
+                    # Не включаємо двокрапку (:), щоб такі речення як "Але є нюанси:" зливалися з наступними!
+                    if prev_content and not re.search(r'[.!?:]$', prev_content):
+                        cleaned[-1]["content"] = prev_content + " " + content
+                        continue
+                        
+            # Евристика 5: Злиття розірваних заголовків однакового рівня
             if item_type == "heading" and cleaned:
                 prev_item = cleaned[-1]
                 if prev_item.get("type") == "heading" and prev_item.get("heading level") == new_item.get("heading level"):
@@ -60,7 +220,38 @@ class HeuristicService:
                         
             cleaned.append(new_item)
             
+        # --- PASS 2: Нормалізація рівнів заголовків (Вирівнювання ієрархії) ---
+        
+        # 1. Перевіряємо, чи є на першій сторінці хоча б один заголовок 1-го рівня
+        has_h1_on_first_page = any(
+            item.get("heading level") == 1 
+            for item in cleaned 
+            if item.get("type") == "heading" and item.get("page number") == 1
+        )
+        
+        # 2. Збираємо рівні заголовків для визначення мінімального
+        valid_headings = []
+        for item in cleaned:
+            if item.get("type") == "heading":
+                # Якщо на 1-й стор. є H1, ігноруємо всі заголовки 1-ї сторінки для розрахунку зсуву.
+                # Якщо H1 немає - беремо заголовки з 1-ї сторінки до уваги.
+                if item.get("page number") == 1 and has_h1_on_first_page:
+                    continue
+                
+                valid_headings.append(item["heading level"])
+        
+        # 3. Застосовуємо зсув до ВСІХ заголовків (включно з титульними)
+        if valid_headings:
+            min_level = min(valid_headings)
+            offset = min_level - 1
+            
+            if offset > 0:
+                for item in cleaned:
+                    if item.get("type") == "heading":
+                        item["heading level"] = max(1, item["heading level"] - offset)
+                        
         return cleaned
+
     def build_hierarchical_structure(self, json_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         hierarchy = []
         active_headers = {}
@@ -149,7 +340,7 @@ class HeuristicService:
         for item in json_data:
             page = item.get("page number")
             if isinstance(page, int):
-                if page <= 5 or page >= max_page - 4:
+                if page <= 10 or page >= max_page - 4:
                     content = item.get("content")
                     if content:
                         filtered_contents.append(str(content))
