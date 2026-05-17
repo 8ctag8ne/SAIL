@@ -18,11 +18,11 @@ namespace MilLib.Models.Entities
         public Book? Book {get; set;}
         
         // Metadata
-        public int PageStart { get; set; }
-        public int PageEnd { get; set; }
+        public int? PageStart { get; set; }
+        public int? PageEnd { get; set; }
         public string Text { get; set; } = string.Empty;
         
-        [Column(TypeName = "vector(2048)")] 
+        [Column(TypeName = "vector(2560)")] 
         public Vector? Embedding { get; set; }
     }
 }

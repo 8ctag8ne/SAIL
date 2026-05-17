@@ -40,7 +40,7 @@ class LLMService:
                 input=text,
                 model=model
             )
-            return response.data[0].embedding[:2048]
+            return response.data[0].embedding[:2560]
 
     @retry(
         stop=stop_after_attempt(5),

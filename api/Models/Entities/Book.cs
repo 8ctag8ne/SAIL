@@ -14,7 +14,7 @@ namespace MilLib.Models.Entities
         public string? ImageUrl {get; set;}
         public string? Info {get; set;}
         
-        [Column(TypeName = "vector(4096)")] 
+        [Column(TypeName = "vector(2560)")] 
         public Vector? Embedding { get; set; }
         public List<DocumentChunk> Chunks {get; set;} = new List<DocumentChunk>();
         public List<BookTag> Tags {get; set;} = new List<BookTag>();

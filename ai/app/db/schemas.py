@@ -19,8 +19,8 @@ class DocumentChunkResponse(BaseModel):
     book_id: int
     level: int
     parent_id: Optional[str]
-    page_start: int
-    page_end: int
+    page_start: Optional[int]
+    page_end: Optional[int]
     text: str
     embedding: Optional[list[float]] = []
     model_config = ConfigDict(from_attributes=True)

@@ -12,7 +12,7 @@ class Book(Base):
     title = Column(String, nullable=False)
     info = Column(Text, nullable=True)
     
-    embedding = Column(Vector(2048), nullable=True) 
+    embedding = Column(Vector(2560), nullable=True) 
     
     parsed = Column(Boolean, default=False)
     processed = Column(Boolean, default=False)
@@ -38,7 +38,7 @@ class DocumentChunk(Base):
     text = Column(Text, nullable=False)
     # similarity_score = Column(float, nullable=True)
     
-    embedding = Column(Vector(2048), nullable=True)
+    embedding = Column(Vector(2560), nullable=True)
 
 class Tag(Base):
     __tablename__ = "tags"
