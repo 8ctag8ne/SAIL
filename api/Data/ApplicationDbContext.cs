@@ -122,6 +122,9 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany(b => b.Likes)
             .HasForeignKey(l => l.UserId);
 
+        modelBuilder.Entity<DocumentChunk>().Property(x => x.Embedding).HasColumnType("vector(2560)");
+        modelBuilder.Entity<Book>().Property(x => x.Embedding).HasColumnType("vector(2560)");
+
 
         List<IdentityRole> roles = new List<IdentityRole>
         {

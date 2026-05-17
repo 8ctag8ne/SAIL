@@ -16,7 +16,7 @@ from sqlalchemy import delete
 
 from app.db.models import DocumentChunk
 from app.services.llm_service import LLMService
-from app.services.chunking_strategies import BaseChunkingStrategy
+from app.services.chunking_strategies.base import BaseChunkingStrategy
 
 class AsyncCustomVectorRetriever(BaseRetriever):
     db: Any = Field(exclude=True)

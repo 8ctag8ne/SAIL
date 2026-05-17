@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -11,9 +12,11 @@ using Pgvector;
 namespace api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260517215852_AlterVectors2560")]
+    partial class AlterVectors2560
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,19 +59,19 @@ namespace api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "13f427c8-4bfd-4ab8-9a83-e2b3f9c53bee",
+                            Id = "a9b86844-6d3c-46ef-b349-f3989147bef5",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = "657c372a-15e3-4008-98d7-3e6922472652",
+                            Id = "2f49d79d-717a-4f49-9118-fce9a56c5cf5",
                             Name = "Librarian",
                             NormalizedName = "LIBRARIAN"
                         },
                         new
                         {
-                            Id = "95cf1626-8e85-41f3-92e8-6b1499475248",
+                            Id = "ca9f3809-f3b9-4181-a2f1-f50594950a69",
                             Name = "User",
                             NormalizedName = "USER"
                         });

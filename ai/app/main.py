@@ -20,7 +20,7 @@ from app.services.md_service import process_document_combined
 from app.services.parser.opendataloader_service import OpenDataLoaderService
 from app.services.parser.heuristic_service import HeuristicService
 from app.services.llm_service import LLMService
-from app.services.chunking_strategies import SimpleChunkingStrategy
+from app.services.chunking_strategies.simple import SimpleChunkingStrategy
 from app.services.rag_service import ChunkingService, RAGService
 from fastapi.responses import StreamingResponse
 

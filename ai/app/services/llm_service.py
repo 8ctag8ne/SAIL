@@ -47,35 +47,44 @@ class LLMService:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((openai.RateLimitError, openai.APITimeoutError, openai.APIConnectionError))
     )
-    async def summarize_children(self, children_texts: list[str]) -> str:
-        if not children_texts:
+    async def summarize_section(self, section_title: str, texts: list[str]) -> str:
+        """Суммаризація секції з жорстким збереженням мови та термінології."""
+        if not texts:
             return ""
             
-        combined_text = "\n\n".join([f"Child node {i+1}: {text}" for i, text in enumerate(children_texts)])
+        combined_text = "\n\n".join(texts)[:15000] # Захист контекстного вікна
         
-        prompt = f"""Summarize the following sections into a single, cohesive description that represents the combined context.
-Keep the summary concise and focused on the main thematic concepts.
+        system_prompt = (
+            "You are an expert military data analyst. Your task is to extract the core semantic context from the provided text fragments."
+        )
+        
+        user_prompt = f"""### INSTRUCTIONS:
+1. Summarize the content of the section "{section_title}".
+2. STRICT LANGUAGE RULE: Write the summary in the EXACT SAME LANGUAGE as the source text.
+3. Preserve all specific military terms, abbreviations, numbers, and tactical procedures.
+4. Keep the summary dense and concise (3 to 5 sentences maximum).
+5. Output ONLY the summary text, no conversational filler.
 
+### SOURCE TEXT:
 {combined_text}
 
-Summary:"""
-
-        model = self.summary_model
+### SUMMARY:"""
 
         try:
             async with self.semaphore:
                 response = await self.client.chat.completions.create(
-                    model=model,
+                    model=self.summary_model,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant that summarizes hierarchical document nodes."},
-                        {"role": "user", "content": prompt}
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
                     ],
-                    temperature=0.1,
-                    max_tokens=500
+                    temperature=0.1, # Низька температура для фактологічної точності
+                    max_tokens=700
                 )
                 return response.choices[0].message.content.strip()
         except Exception as e:
-            raise e
+            print(f"Summarization error: {e}")
+            return ""
 
     @retry(
         stop=stop_after_attempt(3),
