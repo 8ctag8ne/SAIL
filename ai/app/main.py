@@ -3,6 +3,8 @@ import asyncio
 import time
 import uuid
 import httpx
+import pymupdf
+import base64
 
 from fastapi import BackgroundTasks, FastAPI, Depends, File, HTTPException, UploadFile, Request
 from pydantic import BaseModel
@@ -115,17 +117,20 @@ async def background_metadata_task(task_id: str, file_bytes: bytes, filename: st
         parser = OpenDataLoaderService()
         heuristic = HeuristicService()
         llm_service = LLMService()
+
+        # 1. Отримуємо обкладинку
+        cover_base64 = get_pdf_cover_base64(file_bytes)
         
-        # 1. Розпарсити PDF у JSON
+        # 2. Розпарсити PDF у JSON
         raw_json_data = await parser.parse(file_bytes)
         
-        # 2. Витягнути текст перших і останніх сторінок
+        # 3. Витягнути текст перших і останніх сторінок
         metadata_text = heuristic.extract_metadata_context(raw_json_data)
         
-        # 3. Витягнути метадані через LLM
-        metadata = await llm_service.extract_metadata(metadata_text, existing_tags)
+        # 4. Витягнути метадані через LLM
+        metadata = await llm_service.extract_metadata(metadata_text, existing_tags, cover_base64)
         
-        # 4. Зберегти у TASKS_DB
+        # 5. Зберегти у TASKS_DB
         TASKS_DB[task_id].update({
             "status": "completed",
             "metadata": metadata
@@ -358,3 +363,22 @@ async def ask_rag_question_old(request: RagAskRequest, db: AsyncSession = Depend
         "sources": formatted_sources,
         "suggestedQuestions": suggested_questions
     }
+
+
+def get_pdf_cover_base64(file_bytes: bytes) -> str | None:
+    try:
+        # Відкриваємо PDF прямо з байтів (без збереження на диск)
+        doc = pymupdf.open("pdf", file_bytes)
+        page = doc[0]  # Беремо лише першу сторінку
+        
+        # Рендеримо картинку. dpi=150 - ідеальний баланс для нейронки (чіткий текст, мала вага)
+        pix = page.get_pixmap(dpi=150) 
+        
+        # Конвертуємо у JPEG (важить менше ніж PNG)
+        img_bytes = pix.tobytes("jpeg")
+        
+        # Перетворюємо у Base64 рядок
+        return base64.b64encode(img_bytes).decode('utf-8')
+    except Exception as e:
+        print(f"Помилка рендеру обкладинки: {e}")
+        return None

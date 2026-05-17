@@ -7,6 +7,8 @@ from typing import List
 from openai import AsyncOpenAI
 import openai
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import pymupdf
+import base64
 
 class LLMService:
     def __init__(self, api_key: str = None):
@@ -80,9 +82,9 @@ Summary:"""
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((openai.RateLimitError, openai.APITimeoutError, openai.APIConnectionError))
     )
-    async def extract_metadata(self, text: str, existing_tags: list[str]) -> dict:
+    async def extract_metadata(self, text: str, existing_tags: list[str], cover_base64: str = None) -> dict:
         system_prompt = (
-            "Ти — головний військовий бібліотекар-архіваріус. Твоє завдання: глибоко проаналізувати текст "
+            "Ти — головний військовий бібліотекар-архіваріус. Твоє завдання: зображення обкладинки документа ТА текст перших сторінок. "
             "і повернути метадані ВИКЛЮЧНО у форматі валідного JSON без жодних додаткових коментарів чи markdown-розмітки (без ```json)."
         )
 
@@ -90,7 +92,7 @@ Summary:"""
         
         user_prompt = f"""### ПРАВИЛА АНАЛІЗУ ДОКУМЕНТА
 
-Проаналізуй документ і згенеруй метадані відповідно до таких строгих правил:
+Проаналізуй прикріплене зображення обкладинки (якщо є) та текст документа. Згенеруй метадані відповідно до таких строгих правил:
 
 **1. "title" (Назва):**
 Зберігай оригінальну мову. Якщо точну назву не знайдено — створи коротку та змістовну.
@@ -123,6 +125,15 @@ Summary:"""
   "tags": []
 }}"""
 
+        user_content = [{"type": "text", "text": user_prompt}]
+        if cover_base64:
+            user_content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{cover_base64}"
+                }
+            })
+
         try:
             print("=" * 50)
             print(f"DEBUG - КІЛЬКІСТЬ ТЕГІВ ДЛЯ LLM: {len(existing_tags)}")
@@ -134,7 +145,7 @@ Summary:"""
                     model=self.chat_model,
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
+                        {"role": "user", "content": user_content}
                     ],
                     temperature=0.0,
                     max_tokens=3000
