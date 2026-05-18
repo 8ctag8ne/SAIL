@@ -1,4 +1,5 @@
 # main.py
+from app.services.chunking_strategies.hierarchical import HierarchicalChunkingStrategy
 import asyncio
 import time
 import uuid
@@ -197,7 +198,7 @@ async def debug_db_tags(db: AsyncSession = Depends(get_db)):
 
 async def background_chunking_task(task_id: str, book_id: int, markdown_text: str):
     try:
-        strategy = SimpleChunkingStrategy(LLMService())
+        strategy = HierarchicalChunkingStrategy(LLMService())
         chunking_service = ChunkingService(strategy)
         
         async with AsyncSessionLocal() as db:

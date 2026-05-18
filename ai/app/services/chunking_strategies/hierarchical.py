@@ -4,7 +4,9 @@ import re
 from typing import List, Dict, Any
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from app.db.models import DocumentChunk
+from app.db.models import DocumentChunk, Book
+from app.db.database import AsyncSessionLocal
+from sqlalchemy.future import select
 from app.services.chunking_strategies.base import BaseChunkingStrategy
 
 class HierarchicalChunkingStrategy(BaseChunkingStrategy):
@@ -17,24 +19,45 @@ class HierarchicalChunkingStrategy(BaseChunkingStrategy):
             separators=["\n\n", "\n", "(?<=[.!?]) +", " ", ""]
         )
 
-    async def chunk_document(self, book_id: int, markdown_text: str, book_title: str) -> List[DocumentChunk]:
+    async def chunk_document(self, book_id: int, markdown_text: str) -> List[DocumentChunk]:
         """Оркестратор, який запускає всі етапи по черзі."""
         if not markdown_text:
             return []
             
         markdown_text = markdown_text.replace('\x00', '')
+
+        # Отримуємо назву книги з її id
+        async with AsyncSessionLocal() as db:
+            try:
+                result = await db.execute(select(Book.title).where(Book.id == book_id))
+                book_title = result.scalar_one_or_none()
+                if not book_title:
+                    book_title = f"Книга {book_id}"
+            except Exception as db_err:
+                print(f"CRITICAL DB ERROR: {db_err}")
+                await db.rollback()
+                raise db_err
         
         # КРОК 1: Будуємо деревоподібну структуру (Рекурсивний спліт)
         tree = self._build_tree(markdown_text, current_level=0)
+        print("\n\n\n\n Built tree: \n")
+        print(tree)
+        print("\n\n\n\n End\n")
         
         # КРОК 2: Bottom-Up Суммаризація (проходимо знизу вгору)
+        print("\n\n\n\n Summarizing...\n")
         await self._summarize_bottom_up(tree, book_title)
+        print("\n\n\n\n End\n")
         
         # КРОК 3: Top-Down Прокидання контексту та шляхів
+        print("\n\n\n\n Injecting context...\n")
         self._inject_context_top_down(tree, parent_context="", current_path=book_title)
+        print("\n\n\n\n End\n")
         
         # КРОК 4: Сплющення дерева (Flattening)
+        print("\n\n\n\n Flattening...\n")
         flat_nodes = self._flatten_tree(tree)
+        print("\n\n\n\n End\n")
         
         # КРОК 5: Векторизація та формування об'єктів для БД
         all_chunks = []
@@ -72,22 +95,23 @@ class HierarchicalChunkingStrategy(BaseChunkingStrategy):
     # ================= ВНУТРІШНІ ЕТАПИ =================
 
     def _build_tree(self, text: str, current_level: int) -> List[Dict[str, Any]]:
-        """Крок 1: Рекурсивно сплітить текст, будуючи масив children."""
+        """Крок 1: Рекурсивна побудова дерева без дублювання тексту в батьківських вузлах."""
         text = text.strip()
         if not text:
             return []
 
-        # Якщо ми пробили дно ієрархії Markdown (рівень 6) - використовуємо RecursiveTextSplitter
-        if current_level >= 6:
+        # Якщо ми пробили дно ієрархії (6 рівень) АБО текст малий (< 700)
+        # Зупиняємо рекурсію і робимо листок (Leaf)
+        if current_level >= 6 or len(text) <= 700:
             if len(text) > 700:
                 splits = self.leaf_splitter.split_text(text)
                 return [{"title": "", "text": sp, "level": 7, "children": [], "summary": "", "context": "", "path": ""} for sp in splits]
             else:
-                return [{"title": "", "text": text, "level": 7, "children": [], "summary": "", "context": "", "path": ""}]
+                return [{"title": "", "text": text, "level": current_level + 1, "children": [], "summary": "", "context": "", "path": ""}]
 
         next_level = current_level + 1
         
-        # Шукаємо, чи є в тексті заголовки наступного рівня
+        # Шукаємо підзаголовки наступного рівня
         pattern = re.compile(rf'\n(?=#{{{next_level}}}\s)')
         parts = pattern.split('\n' + text)
         
@@ -108,24 +132,25 @@ class HierarchicalChunkingStrategy(BaseChunkingStrategy):
                 content = rest_content.strip()
                 node_level = next_level
             else:
-                # Це "висячий" вступний текст перед першим підзаголовком
                 title = ""
                 content = part
                 node_level = current_level
 
-            # Трешхолд спліту: якщо контент великий, розбиваємо його далі (наступним рівнем)
             children = []
+            node_text = ""
+            
+            # Якщо контент масивний (>700), сплітаємо його далі.
+            # Зверни увагу: node_text залишається порожнім, щоб не дублювати дані!
             if len(content) > 700:
                 children = self._build_tree(content, next_level)
             else:
-                # Якщо контент маленький, але має якийсь текст, він стає власною дитиною (Leaf)
+                # Якщо контент малий (<700), він стає текстом поточного вузла.
                 if content:
-                     children = [{"title": "", "text": content, "level": node_level + 1, "children": [], "summary": "", "context": "", "path": ""}]
-                content = "" # Контент батька очищаємо, бо він перейшов у дитину
+                    node_text = content
 
             nodes.append({
                 "title": title,
-                "text": content,
+                "text": node_text,
                 "level": node_level,
                 "children": children,
                 "summary": "",
@@ -136,29 +161,52 @@ class HierarchicalChunkingStrategy(BaseChunkingStrategy):
         return nodes
 
     async def _summarize_bottom_up(self, nodes: List[Dict], parent_title: str):
-        """Крок 2: Знизу вгору збирає контекст і суммаризує батьків."""
+        """Крок 2: Знизу вгору збирає контекст. Працює конкурентно, без втрати контексту."""
+        
+        # 1. Паралельно спускаємося на дно для всіх гілок
+        child_tasks = []
+        for node in nodes:
+            children = node.get("children", [])
+            if children:
+                node_title = node["title"] or parent_title
+                child_tasks.append(self._summarize_bottom_up(children, node_title))
+                
+        if child_tasks:
+            # Чекаємо, поки всі діти нижніх рівнів зроблять свої summary
+            await asyncio.gather(*child_tasks)
+            
+        # 2. Формуємо пули задач для суммаризації на поточному рівні
+        summarize_tasks = []
+        nodes_to_summarize = []
+        
         for node in nodes:
             children = node.get("children", [])
             
             if children:
-                # Спочатку спускаємося на дно
-                node_title = node["title"] or parent_title
-                await self._summarize_bottom_up(children, node_title)
-                
-                # Коли піднялися, збираємо тексти дітей для суммаризації
+                # Збираємо тексти дітей. Нічого не обрізаємо!
                 child_texts = []
                 for c in children:
-                    # Якщо дитина має summary, беремо його, якщо ні - сирий текст
                     text_to_add = c.get("summary") or c.get("text", "")
                     if text_to_add:
                         child_texts.append(text_to_add)
                 
-                # Суммаризуємо і записуємо в батька
                 if child_texts:
-                    node["summary"] = await self.llm_service.summarize_section(node_title, child_texts)
+                    node_title = node["title"] or parent_title
+                    # Передаємо в llm_service масив текстів
+                    summarize_tasks.append(
+                        self.llm_service.summarize_section(node_title, child_texts)
+                    )
+                    nodes_to_summarize.append(node)
             else:
-                # Якщо дітей немає (це Leaf), його текст і є його summary
-                node["summary"] = node["text"][:500]
+                # Для листків (де немає дітей): summary дорівнює всьому сирому тексту. Жодного зрізання!
+                node["summary"] = node.get("text", "")
+
+        # 3. Виконуємо всі запити батчем (Семафор в llm_service випустить їх по 5 штук)
+        if summarize_tasks:
+            summaries = await asyncio.gather(*summarize_tasks)
+            
+            for node, summary in zip(nodes_to_summarize, summaries):
+                node["summary"] = summary
 
     def _inject_context_top_down(self, nodes: List[Dict], parent_context: str, current_path: str):
         """Крок 3: Зверху вниз прокидає контекст і формує шлях."""
