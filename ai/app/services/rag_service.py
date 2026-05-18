@@ -1,10 +1,8 @@
 #ai/app/services/rag_service.py
-import uuid
 import asyncio
-import re
+import logging
 from typing import List, Tuple, Any
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
@@ -16,7 +14,10 @@ from sqlalchemy import delete
 
 from app.db.models import DocumentChunk
 from app.services.llm_service import LLMService
+from app.services.query_service import QueryProcessor
 from app.services.chunking_strategies.base import BaseChunkingStrategy
+
+logger = logging.getLogger(__name__)
 
 class AsyncCustomVectorRetriever(BaseRetriever):
     db: Any = Field(exclude=True)
@@ -76,47 +77,85 @@ class ChunkingService:
 class RAGService:
     def __init__(self, llm_service: LLMService):
         self.llm_service = llm_service
+        self.query_processor = QueryProcessor()
         
     async def retrieve_chunks(self, db: AsyncSession, query: str, top_k: int = 10, use_hybrid_search: bool = True) -> List[DocumentChunk]:
-        vector_retriever = AsyncCustomVectorRetriever(db=db, llm_service=self.llm_service, top_k=top_k)
-        
+        # ── Step 1: Domain Query Adaptation ──────────────────────────────────
+        glossary_context = self.query_processor.extract_glossary_context(query)
+        if glossary_context:
+            logger.debug(
+                "QueryProcessor matched glossary terms:\n%s", glossary_context
+            )
+
+        # ── Step 2: Query Rewriting (dense retrieval path) ───────────────────
+        # rewrite_query has its own fallback — it always returns a usable string.
+        rewritten_query = await self.llm_service.rewrite_query(query, glossary_context)
+        logger.debug("Rewritten query for dense search: %s", rewritten_query)
+
+        # BM25 benefits from extra keywords, so append glossary terms to the
+        # original query rather than using the full LLM-rewritten version.
+        glossary_keywords = " ".join(
+            line.replace("Синоніми: ", "").replace("Термін: ", "")
+            for line in glossary_context.splitlines()
+            if line.startswith(("Термін:", "Синоніми:"))
+        ).strip()
+        bm25_query = f"{query} {glossary_keywords}".strip() if glossary_keywords else query
+
+        vector_retriever = AsyncCustomVectorRetriever(
+            db=db, llm_service=self.llm_service, top_k=top_k
+        )
+
         if use_hybrid_search:
             all_chunks_result = await db.execute(select(DocumentChunk))
             all_chunks = all_chunks_result.scalars().all()
             if not all_chunks:
                 return []
-                
-            bm25_docs = [Document(page_content=c.text, metadata={"chunk": c}) for c in all_chunks]
+
+            bm25_docs = [
+                Document(page_content=c.text, metadata={"chunk": c})
+                for c in all_chunks
+            ]
             bm25_retriever = BM25Retriever.from_documents(bm25_docs)
             bm25_retriever.k = top_k
-            
-            # Обчислюємо істинні значення RRF (Reciprocal Rank Fusion)
+
+            # ── Step 3: Concurrent search ─────────────────────────────────────
+            bm25_result, vector_result = await asyncio.gather(
+                bm25_retriever.ainvoke(bm25_query),
+                vector_retriever.ainvoke(rewritten_query),
+            )
+
+            # ── Step 4: Weighted RRF (Reciprocal Rank Fusion) ─────────────────
             c = 60
             weights = [0.3, 0.7]
-            
-            bm25_result = await bm25_retriever.ainvoke(query)
-            vector_result = await vector_retriever.ainvoke(query)
-            
-            rrf_scores = {}
-            chunk_map = {}
-            
+
+            rrf_scores: dict = {}
+            chunk_map: dict = {}
+
             for rank, doc in enumerate(bm25_result, start=1):
                 chunk = doc.metadata.get("chunk")
                 if chunk:
                     chunk_map[chunk.id] = chunk
-                    rrf_scores[chunk.id] = rrf_scores.get(chunk.id, 0.0) + weights[0] * (1.0 / (rank + c))
-                    
+                    rrf_scores[chunk.id] = (
+                        rrf_scores.get(chunk.id, 0.0)
+                        + weights[0] * (1.0 / (rank + c))
+                    )
+
             for rank, doc in enumerate(vector_result, start=1):
                 chunk = doc.metadata.get("chunk")
                 if chunk:
                     chunk_map[chunk.id] = chunk
-                    rrf_scores[chunk.id] = rrf_scores.get(chunk.id, 0.0) + weights[1] * (1.0 / (rank + c))
-                    
-            sorted_items = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+                    rrf_scores[chunk.id] = (
+                        rrf_scores.get(chunk.id, 0.0)
+                        + weights[1] * (1.0 / (rank + c))
+                    )
+
+            sorted_items = sorted(
+                rrf_scores.items(), key=lambda x: x[1], reverse=True
+            )
             theoretical_max = sum(w / (1 + c) for w in weights)
-            
-            final_chunks = []
-            seen_ids = set()
+
+            final_chunks: list = []
+            seen_ids: set = set()
             for chunk_id, rrf_score in sorted_items:
                 if chunk_id not in seen_ids:
                     chunk = chunk_map[chunk_id]
@@ -127,9 +166,9 @@ class RAGService:
                     seen_ids.add(chunk_id)
             return final_chunks[:top_k]
         else:
-            docs = await vector_retriever.ainvoke(query)
+            docs = await vector_retriever.ainvoke(rewritten_query)
             final_chunks = []
-            seen_ids = set()
+            seen_ids: set = set()
             for doc in docs:
                 chunk = doc.metadata.get("chunk")
                 if chunk and chunk.id not in seen_ids:
