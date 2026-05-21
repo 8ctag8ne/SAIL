@@ -79,28 +79,55 @@ class RAGService:
         self.llm_service = llm_service
         self.query_processor = QueryProcessor()
         
-    async def retrieve_chunks(self, db: AsyncSession, query: str, top_k: int = 10, use_hybrid_search: bool = True) -> List[DocumentChunk]:
-        # ── Step 1: Domain Query Adaptation ──────────────────────────────────
+    async def rewrite_query_for_retrieval(self, query: str, uncensored: bool = False) -> tuple[str, str]:
+        """Rewrite *query* using the glossary + LLM and return (rewritten_query, bm25_query).
+
+        Args:
+            query:      Original user query.
+            uncensored: Passed to LLMService.rewrite_query — if True, tries the
+                        uncensored model (dolphin) first; if False (default),
+                        goes directly to qwen.
+        """
         glossary_context = self.query_processor.extract_glossary_context(query)
-        if glossary_context:
-            logger.debug(
-                "QueryProcessor matched glossary terms:\n%s", glossary_context
-            )
 
-        # ── Step 2: Query Rewriting (dense retrieval path) ───────────────────
-        # rewrite_query has its own fallback — it always returns a usable string.
-        rewritten_query = await self.llm_service.rewrite_query(query, glossary_context)
-        logger.debug("Rewritten query for dense search: %s", rewritten_query)
+        print("Retrieved glossary context: \n")
+        print(glossary_context+"\n\n----------------\n\n")
 
-        # BM25 benefits from extra keywords, so append glossary terms to the
+        # if not glossary_context:
+        #     # Nothing matched — skip the LLM call entirely and use the raw query.
+        #     return query, query
+
+        print("QueryProcessor matched glossary terms:\n%s", glossary_context)
+
+        # Dense retrieval path — full LLM rewrite.
+        rewritten_query = await self.llm_service.rewrite_query(query, glossary_context, uncensored=uncensored)
+        print(f"Rewritten query for dense search: {rewritten_query}")
+
+        # BM25 benefits from extra keywords; append matched terms/synonyms to the
         # original query rather than using the full LLM-rewritten version.
+        # Context lines now start with either "Термін:" or "Синонім:"
         glossary_keywords = " ".join(
-            line.replace("Синоніми: ", "").replace("Термін: ", "")
+            line.split(":", 1)[1].strip()
             for line in glossary_context.splitlines()
-            if line.startswith(("Термін:", "Синоніми:"))
+            if line.startswith(("Термін:", "Синонім:"))
         ).strip()
         bm25_query = f"{query} {glossary_keywords}".strip() if glossary_keywords else query
 
+        return rewritten_query, bm25_query
+
+    async def retrieve_chunks(
+        self,
+        db: AsyncSession,
+        vector_query: str,
+        bm25_query: str,
+        top_k: int = 10,
+        use_hybrid_search: bool = True,
+    ) -> List[DocumentChunk]:
+        """Retrieve chunks using pre-prepared *vector_query* (dense) and *bm25_query* (sparse).
+
+        Query rewriting is NOT performed here — callers are expected to prepare
+        the queries beforehand (e.g. via ``rewrite_query_for_retrieval``).
+        """
         vector_retriever = AsyncCustomVectorRetriever(
             db=db, llm_service=self.llm_service, top_k=top_k
         )
@@ -118,13 +145,13 @@ class RAGService:
             bm25_retriever = BM25Retriever.from_documents(bm25_docs)
             bm25_retriever.k = top_k
 
-            # ── Step 3: Concurrent search ─────────────────────────────────────
+            # ── Concurrent search ─────────────────────────────────────────────
             bm25_result, vector_result = await asyncio.gather(
                 bm25_retriever.ainvoke(bm25_query),
-                vector_retriever.ainvoke(rewritten_query),
+                vector_retriever.ainvoke(vector_query),
             )
 
-            # ── Step 4: Weighted RRF (Reciprocal Rank Fusion) ─────────────────
+            # ── Weighted RRF (Reciprocal Rank Fusion) ─────────────────────────
             c = 60
             weights = [0.3, 0.7]
 
@@ -159,14 +186,13 @@ class RAGService:
             for chunk_id, rrf_score in sorted_items:
                 if chunk_id not in seen_ids:
                     chunk = chunk_map[chunk_id]
-                    # Нормалізація істинного RRF
                     normalized_score = rrf_score / theoretical_max
                     chunk.similarity_score = round(normalized_score, 4)
                     final_chunks.append(chunk)
                     seen_ids.add(chunk_id)
             return final_chunks[:top_k]
         else:
-            docs = await vector_retriever.ainvoke(rewritten_query)
+            docs = await vector_retriever.ainvoke(vector_query)
             final_chunks = []
             seen_ids: set = set()
             for doc in docs:
@@ -176,28 +202,67 @@ class RAGService:
                     seen_ids.add(chunk.id)
             return final_chunks[:top_k]
         
-    async def ask_question(self, db: AsyncSession, query: str, temperature: float = 0.1, use_hybrid_search: bool = True) -> Tuple[str, List[DocumentChunk], List[str]]:
-        chunks = await self.retrieve_chunks(db, query, use_hybrid_search=use_hybrid_search)
-        
+    async def ask_question(
+        self,
+        db: AsyncSession,
+        query: str,
+        temperature: float = 0.1,
+        use_hybrid_search: bool = True,
+        rewrite: bool = True,
+        uncensored: bool = False,
+    ) -> Tuple[str, List[DocumentChunk], List[str]]:
+        # ── Query rewriting ───────────────────────────────────────────────────
+        if rewrite:
+            vector_query, bm25_query = await self.rewrite_query_for_retrieval(query, uncensored=uncensored)
+        else:
+            vector_query, bm25_query = query, query
+
+        chunks = await self.retrieve_chunks(
+            db, vector_query, bm25_query, use_hybrid_search=use_hybrid_search
+        )
+
         if not chunks:
             return "На жаль, інформації за вашим запитом не знайдено.", [], []
-            
+
         context_parts = []
-        
         for chunk in chunks:
             pages = f"{chunk.page_start}-{chunk.page_end}" if chunk.page_start != chunk.page_end else str(chunk.page_start)
             context_parts.append(f"[Сторінки: {pages}]: {chunk.text}")
-                
+
         context = "\n\n".join(context_parts)
-        answer_task = self.llm_service.generate_rag_answer(query, context, temperature)
-        questions_task = self.llm_service.generate_suggested_questions(query, context)
-        
+        answer_task = self.llm_service.generate_rag_answer(vector_query, context, temperature)
+        questions_task = self.llm_service.generate_suggested_questions(vector_query, context)
+
         answer, suggested_questions = await asyncio.gather(answer_task, questions_task)
-        
+
         return answer, chunks, suggested_questions
 
-    async def ask_question_stream(self, db: AsyncSession, query: str, temperature: float = 0.7, enable_thinking: bool = False, use_hybrid_search: bool = True, req = None):
-        chunks = await self.retrieve_chunks(db, query, use_hybrid_search=use_hybrid_search)
+    async def ask_question_stream(
+        self,
+        db: AsyncSession,
+        query: str,
+        temperature: float = 0.7,
+        enable_thinking: bool = False,
+        use_hybrid_search: bool = True,
+        rewrite: bool = True,
+        uncensored: bool = False,
+        req=None,
+    ):
+        # ── Query rewriting ───────────────────────────────────────────────────
+        if rewrite:
+            vector_query, bm25_query = await self.rewrite_query_for_retrieval(query, uncensored=uncensored)
+            print(f"\n\nVector Query: {vector_query}\n\n")
+            print(f"BM25 Query: {bm25_query}\n\n")
+            # Emit the rewritten query so the frontend can display it as a note
+            import json as _json
+            yield f'data: {_json.dumps({"type": "rewritten_query", "data": vector_query}, ensure_ascii=False)}\n\n'
+        else:
+            vector_query, bm25_query = query, query
+
+
+        chunks = await self.retrieve_chunks(
+            db, vector_query, bm25_query, use_hybrid_search=use_hybrid_search
+        )
         
         if req and await req.is_disconnected():
             return
@@ -231,10 +296,10 @@ class RAGService:
         yield f'data: {json.dumps({"type": "sources", "data": formatted_sources}, ensure_ascii=False)}\n\n'
         
         # Start suggested questions task (it runs concurrently)
-        questions_task = asyncio.create_task(self.llm_service.generate_suggested_questions(query, context))
+        questions_task = asyncio.create_task(self.llm_service.generate_suggested_questions(vector_query, context))
         
         # Stream answer
-        async for sse_chunk in self.llm_service.generate_rag_answer_stream(query, context, temperature, enable_thinking, req):
+        async for sse_chunk in self.llm_service.generate_rag_answer_stream(vector_query, context, temperature, enable_thinking, req):
             if req and await req.is_disconnected():
                 print("DEBUG: Клієнт відключився під час стрімінгу відповіді.")
                 break

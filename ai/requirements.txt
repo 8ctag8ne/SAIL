@@ -22,5 +22,7 @@ langchain-community
 langchain-classic
 rank_bm25
 pymorphy3
+pymorphy3-dicts-uk
+
 
 httpx

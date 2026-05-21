@@ -96,4 +96,5 @@ export interface RagResponse {
     sources: RagSource[];
     relatedTags?: { id: number; title: string }[];
     suggestedQuestions?: string[];
+    rewrittenQuery?: string;
 }

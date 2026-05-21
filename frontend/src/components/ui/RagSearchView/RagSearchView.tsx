@@ -19,9 +19,10 @@ type Props = {
   thinkingText?: string;
   answerText?: string;
   onSearch?: (query: string) => void;
+  rewrittenQuery?: string;
 };
 
-const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, thinkingText, answerText, onSearch }, ref) => {
+const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, thinkingText, answerText, onSearch, rewrittenQuery }, ref) => {
   const navigate = useNavigate();
   
   const displayAnswer = answerText !== undefined ? answerText : ragResponse.answer;
@@ -38,6 +39,23 @@ const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, thinking
         gap: 3,
       }}
     >
+      {/* Переписаний запит (примітка) */}
+      {rewrittenQuery && rewrittenQuery.trim() !== ragResponse.query.trim() && (
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            color: "text.disabled",
+            fontStyle: "italic",
+            mt: -1,
+            mb: -1,
+            pl: 0.5,
+          }}
+        >
+          🔍 Покращений запит: {rewrittenQuery}
+        </Typography>
+      )}
+
       {/* Джерела (Sources) */}
       {ragResponse.sources.length > 0 && (
         <Box className="tour-rag-sources">

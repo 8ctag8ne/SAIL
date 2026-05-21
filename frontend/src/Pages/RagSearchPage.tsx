@@ -29,6 +29,7 @@ const RagSearchPage: React.FC = () => {
   const [temperature, setTemperature] = useState<number>(0.1);
   const [enableThinking, setEnableThinking] = useState<boolean>(false);
   const [useHybridSearch, setUseHybridSearch] = useState<boolean>(true);
+  const [rewrite, setRewrite] = useState<boolean>(true);
   const [thinkingText, setThinkingText] = useState("");
   const [answerText, setAnswerText] = useState("");
   const ragResultRef = React.useRef<HTMLDivElement>(null);
@@ -45,7 +46,7 @@ const RagSearchPage: React.FC = () => {
     }
   }, [loading, ragResult, error, activeTour, stepIndex, run, setRun, stopTour]);
 
-  const fetchRagData = async (searchString: string, tempParam: number, useThinking: boolean, hybridSearch: boolean) => {
+  const fetchRagData = async (searchString: string, tempParam: number, useThinking: boolean, hybridSearch: boolean, rewriteQuery: boolean) => {
     setLoading(true);
     setError(null);
     setRagResult(null);
@@ -57,7 +58,8 @@ const RagSearchPage: React.FC = () => {
       query: searchString,
       answer: "",
       sources: [],
-      suggestedQuestions: []
+      suggestedQuestions: [],
+      rewrittenQuery: undefined,
     };
 
     try {
@@ -82,7 +84,8 @@ const RagSearchPage: React.FC = () => {
           query: searchString,
           temperature: tempParam,
           enableThinking: useThinking,
-          useHybridSearch: hybridSearch
+          useHybridSearch: hybridSearch,
+          rewrite: rewriteQuery
         })
       });
 
@@ -129,6 +132,9 @@ const RagSearchPage: React.FC = () => {
                 setError(data.data);
                 setIsStreaming(false);
                 return;
+              } else if (data.type === "rewritten_query") {
+                partialResult.rewrittenQuery = data.data;
+                setRagResult({ ...partialResult });
               } else if (data.type === "sources") {
                 partialResult.sources = data.data;
                 setRagResult({ ...partialResult });
@@ -175,7 +181,7 @@ const RagSearchPage: React.FC = () => {
       setLoading(false);
       setError(null);
     } else if (urlQuery.trim()) {
-      fetchRagData(urlQuery, temperature, enableThinking, useHybridSearch);
+      fetchRagData(urlQuery, temperature, enableThinking, useHybridSearch, rewrite);
     } else {
       setRagResult(null); // Clear results if URL is empty
       setThinkingText("");
@@ -232,6 +238,18 @@ const RagSearchPage: React.FC = () => {
                 <FormControlLabel
                   control={
                     <Switch
+                      checked={useHybridSearch}
+                      onChange={(e) => setUseHybridSearch(e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label="Гібридний пошук (BM25 + Вектор)"
+                />
+              </Box>
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
                       checked={enableThinking}
                       onChange={(e) => setEnableThinking(e.target.checked)}
                       color="secondary"
@@ -244,12 +262,12 @@ const RagSearchPage: React.FC = () => {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={useHybridSearch}
-                      onChange={(e) => setUseHybridSearch(e.target.checked)}
-                      color="primary"
+                      checked={rewrite}
+                      onChange={(e) => setRewrite(e.target.checked)}
+                      color="secondary"
                     />
                   }
-                  label="Гібридний пошук (BM25 + Вектор)"
+                  label="Покращити запит (Query Rewrite)"
                 />
               </Box>
             </Stack>
@@ -261,9 +279,9 @@ const RagSearchPage: React.FC = () => {
                 sx={{ mt: 2 }}
                 onClick={() => {
                   if (query.trim()) {
-                    fetchRagData(query, temperature, enableThinking, useHybridSearch);
+                    fetchRagData(query, temperature, enableThinking, useHybridSearch, rewrite);
                   } else if (urlQuery.trim()) {
-                    fetchRagData(urlQuery, temperature, enableThinking, useHybridSearch);
+                    fetchRagData(urlQuery, temperature, enableThinking, useHybridSearch, rewrite);
                   }
                 }}
               >
@@ -294,6 +312,7 @@ const RagSearchPage: React.FC = () => {
             thinkingText={thinkingText}
             answerText={answerText}
             onSearch={handleSearchSubmit}
+            rewrittenQuery={ragResult.rewrittenQuery}
           />
           {isStreaming && (
             <Box sx={{ mt: 2, mb: 4 }}>

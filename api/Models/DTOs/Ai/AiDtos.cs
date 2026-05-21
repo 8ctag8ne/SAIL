@@ -13,6 +13,8 @@ namespace MilLib.Models.DTOs.Ai
         public double? Temperature { get; set; }
         public bool? EnableThinking { get; set; }
         public bool UseHybridSearch { get; set; } = true;
+        public bool Rewrite { get; set; } = true;
+        public bool Uncensored { get; set; } = false;
     }
 
     public class RagAskResponseDto
@@ -20,6 +22,7 @@ namespace MilLib.Models.DTOs.Ai
         public string Answer { get; set; } = string.Empty;
         public List<DocumentChunkResponseDto> Sources { get; set; } = new();
         public List<string> SuggestedQuestions { get; set; } = new List<string>();
+        public string? RewrittenQuery { get; set; }
     }
 
     public class DocumentChunkResponseDto

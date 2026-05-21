@@ -24,6 +24,7 @@ from app.services.llm_service import LLMService
 from app.services.chunking_strategies.simple import SimpleChunkingStrategy
 from app.services.rag_service import ChunkingService, RAGService
 from fastapi.responses import StreamingResponse
+from app.services.query_service import QueryProcessor
 
 app = FastAPI(title="AI Knowledge Service")
 
@@ -50,11 +51,21 @@ class RagAskRequest(BaseModel):
     temperature: Optional[float] = 0.7
     enable_thinking: Optional[bool] = False
     use_hybrid_search: Optional[bool] = True
+    rewrite: Optional[bool] = True
+    uncensored: Optional[bool] = False
 
 class RagAskResponse(BaseModel):
     answer: str
     sources: List[DocumentChunkResponse]
     suggested_questions: List[str] = []
+    rewritten_query: Optional[str] = None
+
+class GlossaryDetectRequest(BaseModel):
+    query: str
+
+class QueryRewriteRequest(BaseModel):
+    query: str
+    uncensored: bool = True
 
 async def background_conversion_task(task_id: str, file_bytes: bytes, filename: str):
     """Обгортка для BackgroundTask, яка оновлює статус у словнику"""
@@ -336,7 +347,16 @@ async def ask_rag_question(request: RagAskRequest, req: Request, db: AsyncSessio
     rag_service = RAGService(llm_service)
     
     return StreamingResponse(
-        rag_service.ask_question_stream(db, request.query, request.temperature, request.enable_thinking, request.use_hybrid_search, req),
+        rag_service.ask_question_stream(
+            db,
+            request.query,
+            request.temperature,
+            request.enable_thinking,
+            request.use_hybrid_search,
+            request.rewrite,
+            request.uncensored,
+            req,
+        ),
         media_type="text/event-stream"
     )
 
@@ -344,7 +364,9 @@ async def ask_rag_question(request: RagAskRequest, req: Request, db: AsyncSessio
 async def ask_rag_question_old(request: RagAskRequest, db: AsyncSession = Depends(get_db)):
     llm_service = LLMService()
     rag_service = RAGService(llm_service)
-    answer, sources, suggested_questions = await rag_service.ask_question(db, request.query, request.temperature, request.use_hybrid_search)
+    answer, sources, suggested_questions = await rag_service.ask_question(
+        db, request.query, request.temperature, request.use_hybrid_search, request.rewrite, request.uncensored
+    )
     
     formatted_sources = []
     for chunk in sources:
@@ -363,6 +385,68 @@ async def ask_rag_question_old(request: RagAskRequest, db: AsyncSession = Depend
         "answer": answer if answer else "Не вдалося згенерувати відповідь.", 
         "sources": formatted_sources,
         "suggestedQuestions": suggested_questions
+    }
+
+
+@app.post("/debug/glossary-detect")
+async def debug_glossary_detect(request: GlossaryDetectRequest):
+    """
+    Debug-ендпоїнт: повертає всі терміни з глосарію, які знайдені у запиті.
+    Не звертається до LLM, не потребує бази даних.
+
+    Кожен елемент matches:
+      - matched_text : первинний термін або синонім, що спрацював
+      - is_primary   : True → спрацював primary_term; False → спрацював синонім
+      - definition   : визначення з глосарію
+    """
+    qp = QueryProcessor()
+    matches = qp.find_matches(request.query)
+
+    return {
+        "query": request.query,
+        "matched_count": len(matches),
+        "matches": matches,
+        "llm_context": qp.extract_glossary_context(request.query),
+    }
+
+
+@app.post("/debug/query-rewrite")
+async def debug_query_rewrite(request: QueryRewriteRequest):
+    """
+    Debug-ендпоїнт: повертає переписаний запит від LLM.
+
+    Параметр uncensored:
+      - True  → спочатку dolphin-mistral (uncensored), фолбек на qwen
+      - False → одразу qwen (без uncensored-моделі)
+    """
+
+    llm_service = LLMService()
+    qp = QueryProcessor()
+
+    glossary_context = qp.extract_glossary_context(request.query)
+    rewritten = await llm_service.rewrite_query(
+        query=request.query,
+        glossary_terms=glossary_context,
+        uncensored=request.uncensored,
+    )
+
+    uncensored_model = getattr(
+        llm_service,
+        "uncensored_model",
+        "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+    )
+    models_tried = (
+        [uncensored_model, llm_service.chat_model]
+        if request.uncensored
+        else [llm_service.chat_model]
+    )
+
+    return {
+        "original_query": request.query,
+        "rewritten_query": rewritten,
+        "glossary_context": glossary_context or None,
+        "uncensored": request.uncensored,
+        "models_tried": models_tried,
     }
 
 
