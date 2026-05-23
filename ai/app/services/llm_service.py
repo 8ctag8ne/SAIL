@@ -36,11 +36,16 @@ class LLMService:
         model = self.embedding_model
         
         async with self.semaphore:
-            response = await self.client.embeddings.create(
-                input=text,
-                model=model
-            )
-            return response.data[0].embedding[:2560]
+            try:
+                response = await self.client.embeddings.create(
+                    input=text,
+                    model=model,
+                    encoding_format="float"
+                )
+                return response.data[0].embedding[:2560]
+            except Exception as e:
+                print(f"Error generating embedding: {e}")
+                return []
 
     @retry(
         stop=stop_after_attempt(5),
@@ -227,8 +232,8 @@ class LLMService:
                 return f"Виникла помилка при зверненні до ШІ: {str(e)}"
 
     async def generate_rag_answer_stream(self, query: str, context: str, temperature: float = 0.7, enable_thinking: bool = False, req = None):
-        model_name = "qwen/qwen3-vl-8b-thinking" if enable_thinking else "qwen/qwen3-vl-8b-instruct"
-        
+        # model_name = "qwen/qwen3-vl-8b-thinking" if enable_thinking else "qwen/qwen3-vl-8b-instruct"
+        model_name = "qwen/qwen3-vl-30b-a3b-thinking"
         async with self.semaphore:
             try:
                 response_stream = await self.client.chat.completions.create(

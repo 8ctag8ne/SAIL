@@ -53,6 +53,7 @@ class RagAskRequest(BaseModel):
     use_hybrid_search: Optional[bool] = True
     rewrite: Optional[bool] = True
     uncensored: Optional[bool] = False
+    additional_questions: Optional[bool] = True
 
 class RagAskResponse(BaseModel):
     answer: str
@@ -356,6 +357,7 @@ async def ask_rag_question(request: RagAskRequest, req: Request, db: AsyncSessio
             request.rewrite,
             request.uncensored,
             req,
+            request.additional_questions,
         ),
         media_type="text/event-stream"
     )
@@ -365,7 +367,7 @@ async def ask_rag_question_old(request: RagAskRequest, db: AsyncSession = Depend
     llm_service = LLMService()
     rag_service = RAGService(llm_service)
     answer, sources, suggested_questions = await rag_service.ask_question(
-        db, request.query, request.temperature, request.use_hybrid_search, request.rewrite, request.uncensored
+        db, request.query, request.temperature, request.use_hybrid_search, request.rewrite, request.uncensored, request.additional_questions
     )
     
     formatted_sources = []

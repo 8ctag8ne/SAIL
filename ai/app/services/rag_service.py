@@ -210,6 +210,7 @@ class RAGService:
         use_hybrid_search: bool = True,
         rewrite: bool = True,
         uncensored: bool = False,
+        additional_questions: bool = True,
     ) -> Tuple[str, List[DocumentChunk], List[str]]:
         # ── Query rewriting ───────────────────────────────────────────────────
         if rewrite:
@@ -231,9 +232,13 @@ class RAGService:
 
         context = "\n\n".join(context_parts)
         answer_task = self.llm_service.generate_rag_answer(vector_query, context, temperature)
-        questions_task = self.llm_service.generate_suggested_questions(vector_query, context)
-
-        answer, suggested_questions = await asyncio.gather(answer_task, questions_task)
+        
+        if additional_questions:
+            questions_task = self.llm_service.generate_suggested_questions(vector_query, context)
+            answer, suggested_questions = await asyncio.gather(answer_task, questions_task)
+        else:
+            answer = await answer_task
+            suggested_questions = []
 
         return answer, chunks, suggested_questions
 
@@ -247,19 +252,17 @@ class RAGService:
         rewrite: bool = True,
         uncensored: bool = False,
         req=None,
+        additional_questions: bool = True,
     ):
         # ── Query rewriting ───────────────────────────────────────────────────
         if rewrite:
             vector_query, bm25_query = await self.rewrite_query_for_retrieval(query, uncensored=uncensored)
-            print(f"\n\nVector Query: {vector_query}\n\n")
-            print(f"BM25 Query: {bm25_query}\n\n")
-            # Emit the rewritten query so the frontend can display it as a note
             import json as _json
             yield f'data: {_json.dumps({"type": "rewritten_query", "data": vector_query}, ensure_ascii=False)}\n\n'
         else:
             vector_query, bm25_query = query, query
-
-
+ 
+ 
         chunks = await self.retrieve_chunks(
             db, vector_query, bm25_query, use_hybrid_search=use_hybrid_search
         )
@@ -295,19 +298,30 @@ class RAGService:
             
         yield f'data: {json.dumps({"type": "sources", "data": formatted_sources}, ensure_ascii=False)}\n\n'
         
-        # Start suggested questions task (it runs concurrently)
-        questions_task = asyncio.create_task(self.llm_service.generate_suggested_questions(vector_query, context))
+        # Start suggested questions task (it runs concurrently if enabled)
+        questions_task = None
+        if additional_questions:
+            questions_task = asyncio.create_task(self.llm_service.generate_suggested_questions(vector_query, context))
         
-        # Stream answer
-        async for sse_chunk in self.llm_service.generate_rag_answer_stream(vector_query, context, temperature, enable_thinking, req):
-            if req and await req.is_disconnected():
-                print("DEBUG: Клієнт відключився під час стрімінгу відповіді.")
-                break
-            yield sse_chunk
-            
-        # Await and yield questions
         try:
-            suggested_questions = await questions_task
-            yield f'data: {json.dumps({"type": "questions", "data": suggested_questions}, ensure_ascii=False)}\n\n'
-        except Exception as e:
-            pass
+            # Stream answer
+            async for sse_chunk in self.llm_service.generate_rag_answer_stream(vector_query, context, temperature, enable_thinking, req):
+                if req and await req.is_disconnected():
+                    print("DEBUG: Клієнт відключився під час стрімінгу відповіді.")
+                    break
+                yield sse_chunk
+                
+            # Await and yield questions
+            if additional_questions and questions_task:
+                try:
+                    suggested_questions = await questions_task
+                    yield f'data: {json.dumps({"type": "questions", "data": suggested_questions}, ensure_ascii=False)}\n\n'
+                except Exception as e:
+                    pass
+        finally:
+            if additional_questions and questions_task and not questions_task.done():
+                questions_task.cancel()
+                try:
+                    await questions_task
+                except asyncio.CancelledError:
+                    pass

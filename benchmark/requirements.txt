@@ -1,0 +1,10 @@
+ragas==0.1.20
+langchain
+langchain-google-genai
+pandas
+pytrec_eval
+python-dotenv
+tenacity
+google-api-core
+pypdf
+rapidfuzz
