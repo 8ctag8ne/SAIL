@@ -232,8 +232,7 @@ class LLMService:
                 return f"Виникла помилка при зверненні до ШІ: {str(e)}"
 
     async def generate_rag_answer_stream(self, query: str, context: str, temperature: float = 0.7, enable_thinking: bool = False, req = None):
-        # model_name = "qwen/qwen3-vl-8b-thinking" if enable_thinking else "qwen/qwen3-vl-8b-instruct"
-        model_name = "qwen/qwen3-vl-30b-a3b-thinking"
+        model_name = "qwen/qwen3-vl-8b-thinking" if enable_thinking else "qwen/qwen3-vl-32b-instruct"
         async with self.semaphore:
             try:
                 response_stream = await self.client.chat.completions.create(
