@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text.Json.Serialization;
 using api.Helpers;
 using api.Models.Entities;
@@ -110,8 +111,12 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var allowedOrigins = builder.Configuration["AllowedOrigins"]?.Split(',') 
-                             ?? ["http://localhost:3000"];
+        var allowedOriginsConfig = builder.Configuration["AllowedOrigins"];
+        var allowedOrigins = !string.IsNullOrEmpty(allowedOriginsConfig)
+            ? allowedOriginsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                  .Select(o => o.Trim().TrimEnd('/'))
+                                  .ToArray()
+            : new[] { "http://localhost:3000" };
         
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()

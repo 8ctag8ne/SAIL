@@ -239,9 +239,18 @@ namespace MilLib.Controllers
             }
 
             Response.ContentType = "text/event-stream";
+            Response.Headers.Append("Cache-Control", "no-cache");
+            Response.Headers.Append("Connection", "keep-alive");
+            Response.Headers.Append("X-Accel-Buffering", "no");
 
-            using var stream = await response.Content.ReadAsStreamAsync();
-            await stream.CopyToAsync(Response.Body, cancellationToken);
+            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            {
+                await Response.Body.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
         }
 
         [HttpPost("rag/ask/old")]
