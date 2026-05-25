@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Box, Accordion, AccordionSummary, AccordionDetails, Typography, Slider, Stack, Button } from "@mui/material";
 import SearchBar from "../components/search/SearchBar/SearchBar";
@@ -15,21 +15,45 @@ import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { useTour } from "../contexts/TourContext";
 
-const ragCache = new Map<string, RagResponse>();
+const memoryCache = new Map<string, { ragResult: RagResponse; thinkingText: string }>();
+
+const getCachedResult = (key: string): { ragResult: RagResponse; thinkingText: string } | null => {
+  try {
+    const cached = sessionStorage.getItem(`rag_cache_${key}`);
+    if (cached) return JSON.parse(cached);
+  } catch (e) {
+    // Ignore error
+  }
+  return memoryCache.get(key) || null;
+};
+
+const setCachedResult = (key: string, data: { ragResult: RagResponse; thinkingText: string }) => {
+  try {
+    sessionStorage.setItem(`rag_cache_${key}`, JSON.stringify(data));
+  } catch (e) {
+    // Ignore error
+  }
+  memoryCache.set(key, data);
+};
 
 const RagSearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
+  const urlTemp = parseFloat(searchParams.get("temp") || "0.1");
+  const urlThinking = searchParams.get("thinking") === "true";
+  const urlHybrid = searchParams.get("hybrid") !== "false";
+  const urlRewrite = searchParams.get("rewrite") !== "false";
+
   const [query, setQuery] = useState(urlQuery);
   const [ragResult, setRagResult] = useState<RagResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [temperature, setTemperature] = useState<number>(0.1);
-  const [enableThinking, setEnableThinking] = useState<boolean>(false);
-  const [useHybridSearch, setUseHybridSearch] = useState<boolean>(true);
-  const [rewrite, setRewrite] = useState<boolean>(true);
+  const [temperature, setTemperature] = useState<number>(urlTemp);
+  const [enableThinking, setEnableThinking] = useState<boolean>(urlThinking);
+  const [useHybridSearch, setUseHybridSearch] = useState<boolean>(urlHybrid);
+  const [rewrite, setRewrite] = useState<boolean>(urlRewrite);
   const [thinkingText, setThinkingText] = useState("");
   const [answerText, setAnswerText] = useState("");
   const ragResultRef = React.useRef<HTMLDivElement>(null);
@@ -46,7 +70,7 @@ const RagSearchPage: React.FC = () => {
     }
   }, [loading, ragResult, error, activeTour, stepIndex, run, setRun, stopTour]);
 
-  const fetchRagData = async (searchString: string, tempParam: number, useThinking: boolean, hybridSearch: boolean, rewriteQuery: boolean) => {
+  const fetchRagData = useCallback(async (searchString: string, tempParam: number, useThinking: boolean, hybridSearch: boolean, rewriteQuery: boolean) => {
     setLoading(true);
     setError(null);
     setRagResult(null);
@@ -54,6 +78,7 @@ const RagSearchPage: React.FC = () => {
     setAnswerText("");
 
     let fullText = "";
+    let accumulatedThinking = "";
     let partialResult: RagResponse = {
       query: searchString,
       answer: "",
@@ -142,6 +167,7 @@ const RagSearchPage: React.FC = () => {
                 partialResult.suggestedQuestions = data.data;
                 setRagResult({ ...partialResult });
               } else if (data.type === "thinking") {
+                accumulatedThinking += data.text;
                 setThinkingText(prev => prev + data.text);
               } else if (data.type === "answer") {
                 setAnswerText(prev => prev + data.text);
@@ -154,6 +180,13 @@ const RagSearchPage: React.FC = () => {
           }
         }
       }
+
+      // Save to cache
+      const cacheKey = `${searchString}_${tempParam}_${useThinking}_${hybridSearch}_${rewriteQuery}`;
+      setCachedResult(cacheKey, {
+        ragResult: { ...partialResult },
+        thinkingText: accumulatedThinking
+      });
     } catch (err: any) {
       if (err.name === 'AbortError') {
         toast.info("Генерацію зупинено користувачем.");
@@ -172,29 +205,49 @@ const RagSearchPage: React.FC = () => {
     } finally {
       setIsStreaming(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    setQuery(urlQuery); // Sync the SearchBar text with the URL
+    setQuery(urlQuery);
+    setTemperature(urlTemp);
+    setEnableThinking(urlThinking);
+    setUseHybridSearch(urlHybrid);
+    setRewrite(urlRewrite);
+
     if (activeTour === "user_rag") {
       setRagResult(MOCK_RAG_RESPONSE);
       setLoading(false);
       setError(null);
     } else if (urlQuery.trim()) {
-      fetchRagData(urlQuery, temperature, enableThinking, useHybridSearch, rewrite);
+      const cacheKey = `${urlQuery}_${urlTemp}_${urlThinking}_${urlHybrid}_${urlRewrite}`;
+      const cached = getCachedResult(cacheKey);
+      if (cached) {
+        setRagResult(cached.ragResult);
+        setThinkingText(cached.thinkingText);
+        setAnswerText(cached.ragResult.answer);
+        setLoading(false);
+        setError(null);
+      } else {
+        fetchRagData(urlQuery, urlTemp, urlThinking, urlHybrid, urlRewrite);
+      }
     } else {
       setRagResult(null); // Clear results if URL is empty
       setThinkingText("");
       setAnswerText("");
     }
-  }, [urlQuery, activeTour]); // Removed temperature and enableThinking from dependencies
+  }, [urlQuery, urlTemp, urlThinking, urlHybrid, urlRewrite, activeTour, fetchRagData]);
 
   const handleSearchSubmit = (newQuery: string) => {
     if (!newQuery.trim()) {
-      searchParams.delete("q");
-      setSearchParams(searchParams);
+      setSearchParams({});
     } else {
-      setSearchParams({ q: newQuery });
+      setSearchParams({
+        q: newQuery.trim(),
+        temp: temperature.toString(),
+        thinking: enableThinking.toString(),
+        hybrid: useHybridSearch.toString(),
+        rewrite: rewrite.toString()
+      });
     }
   };
 
@@ -278,10 +331,15 @@ const RagSearchPage: React.FC = () => {
                 fullWidth
                 sx={{ mt: 2 }}
                 onClick={() => {
-                  if (query.trim()) {
-                    fetchRagData(query, temperature, enableThinking, useHybridSearch, rewrite);
-                  } else if (urlQuery.trim()) {
-                    fetchRagData(urlQuery, temperature, enableThinking, useHybridSearch, rewrite);
+                  const targetQuery = query.trim() || urlQuery.trim();
+                  if (targetQuery) {
+                    setSearchParams({
+                      q: targetQuery,
+                      temp: temperature.toString(),
+                      thinking: enableThinking.toString(),
+                      hybrid: useHybridSearch.toString(),
+                      rewrite: rewrite.toString()
+                    });
                   }
                 }}
               >
