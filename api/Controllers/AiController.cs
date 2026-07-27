@@ -1,5 +1,6 @@
 //api/Controllers/AiController.cs
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MilLib.Models.DTOs.Ai;
 using System.Text.Json;
 using System.Text;
@@ -9,6 +10,7 @@ namespace MilLib.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting("AiRateLimiter")]
     public class AiController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;

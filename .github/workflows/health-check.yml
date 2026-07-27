@@ -1,0 +1,38 @@
+name: Ping Health Endpoint (Keep-Alive)
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every 5 days to prevent Supabase auto-pause
+    - cron: '0 0 */5 * *'
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'Optional API base URL to test (overrides secrets.RAILWAY_API_URL)'
+        required: false
+        default: ''
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API Health Endpoint
+        run: |
+          TARGET_URL="${{ github.event.inputs.api_url }}"
+          if [ -z "$TARGET_URL" ]; then
+            TARGET_URL="${{ secrets.RAILWAY_API_URL }}"
+          fi
+
+          if [ -z "$TARGET_URL" ]; then
+            echo "::error::Neither inputs.api_url nor secrets.RAILWAY_API_URL is set."
+            echo "Please add secret/variable RAILWAY_API_URL in Repository Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          # Strip trailing slash if present
+          TARGET_URL="${TARGET_URL%/}"
+
+          echo "Pinging health endpoint at: ${TARGET_URL}/health"
+          RESPONSE=$(curl -f -s -S "${TARGET_URL}/health" 2>&1)
+          
+          echo "Health check result:"
+          echo "$RESPONSE"

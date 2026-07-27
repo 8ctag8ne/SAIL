@@ -6,6 +6,8 @@ using api.Services.Implementations;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -146,6 +148,49 @@ var aiServiceUrl = builder.Configuration["AI_SERVICE_URL"] ?? "http://localhost:
 
 builder.Services.AddHttpClient("AiService", c => c.BaseAddress = new Uri(aiServiceUrl));
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // 1. Health Check Rate Limiter (5 requests per minute)
+    options.AddFixedWindowLimiter("HealthCheckLimiter", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+
+    // 2. Authentication Rate Limiter (5 requests per minute per IP address for Login/Register)
+    options.AddPolicy("AuthRateLimiter", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() 
+                ?? httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() 
+                ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }
+        )
+    );
+
+    // 3. AI & Heavy Operations Rate Limiter (10 requests per minute per IP address)
+    options.AddPolicy("AiRateLimiter", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() 
+                ?? httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() 
+                ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }
+        )
+    );
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -180,6 +225,7 @@ catch(Exception ex)
     Console.WriteLine($"Issues with JWT or role seeding: {ex.Message}");
 }
 
+app.UseRateLimiter();
 app.MapControllers();
 
 

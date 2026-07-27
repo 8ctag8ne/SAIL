@@ -257,6 +257,9 @@ class RAGService:
         # ── Query rewriting ───────────────────────────────────────────────────
         if rewrite:
             vector_query, bm25_query = await self.rewrite_query_for_retrieval(query, uncensored=uncensored)
+            print(f"\n\nVector Query: {vector_query}\n\n")
+            print(f"BM25 Query: {bm25_query}\n\n")
+            # Emit the rewritten query so the frontend can display it as a note
             import json as _json
             yield f'data: {_json.dumps({"type": "rewritten_query", "data": vector_query}, ensure_ascii=False)}\n\n'
         else:

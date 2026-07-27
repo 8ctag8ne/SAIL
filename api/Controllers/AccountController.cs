@@ -13,12 +13,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.Hosting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers
 {
     [Route("api/account")]
     [ApiController]
+    [EnableRateLimiting("AuthRateLimiter")]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
