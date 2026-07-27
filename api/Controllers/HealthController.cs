@@ -161,7 +161,7 @@ namespace MilLib.Controllers
                 if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     railwayOk = true;
-                    railwayMessage = $"Railway AI Service ping successful ({aiServiceUrl}, HTTP {(int)response.StatusCode})";
+                    railwayMessage = $"Railway AI Service ping successful";
                 }
                 else
                 {
@@ -173,14 +173,13 @@ namespace MilLib.Controllers
             {
                 railwaySw.Stop();
                 railwayOk = false;
-                railwayMessage = $"Railway AI Service ping failed ({aiServiceUrl}): {ex.Message}";
+                railwayMessage = $"Railway AI Service ping failed: {ex.Message}";
             }
 
             checks["railway_ai_service"] = new
             {
                 status = railwayOk ? "Healthy" : "Degraded",
                 message = railwayMessage,
-                aiServiceUrl = aiServiceUrl,
                 latencyMs = railwaySw.ElapsedMilliseconds
             };
 
