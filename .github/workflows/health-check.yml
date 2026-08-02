@@ -3,7 +3,7 @@ name: Ping Health Endpoint (Keep-Alive)
 on:
   schedule:
     # Runs at 00:00 UTC every 5 days to prevent Supabase auto-pause
-    - cron: '0 0 */5 * *'
+    - cron: '0 0,12 * * *'
   workflow_dispatch:
     inputs:
       api_url:
