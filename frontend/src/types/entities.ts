@@ -62,6 +62,9 @@ export type User = {
     email: string;
     about?: string;
     phoneNumber?: string;
+    isBanned?: boolean;
+    banReason?: string | null;
+    bannedAt?: string | null;
     roles: string[];
 };
 

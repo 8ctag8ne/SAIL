@@ -63,10 +63,10 @@ export const deleteUser = async (id: string) => {
 };
 
 // Отримати всіх користувачів (тільки для Admin)
-export const getAllUsers = async () => {
+export const getAllUsers = async (): Promise<any[]> => {
   console.trace("🔥 getAllUsers called");
   const token = localStorage.getItem("token");
-  const res = await axios.get(`${BASE_URL}/api/account/users`, {
+  const res = await axios.get<any[]>(`${BASE_URL}/api/account/users`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
@@ -76,6 +76,41 @@ export const getAllUsers = async () => {
 export const setUserRole = async (userId: string, newRole: string) => {
   const token = localStorage.getItem("token");
   const res = await axios.post(`${BASE_URL}/api/account/set-role`, { userId, newRole }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+// Заблокувати користувача (тільки для Admin)
+export const banUser = async (id: string, reason?: string) => {
+  const token = localStorage.getItem("token");
+  const res = await axios.post(
+    `${BASE_URL}/api/account/ban/${id}`,
+    { reason },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return res.data;
+};
+
+// Розблокувати користувача (тільки для Admin)
+export const unbanUser = async (id: string) => {
+  const token = localStorage.getItem("token");
+  const res = await axios.post(
+    `${BASE_URL}/api/account/unban/${id}`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return res.data;
+};
+
+// Отримати список заблокованих користувачів (тільки для Admin)
+export const getBannedUsers = async (): Promise<any[]> => {
+  const token = localStorage.getItem("token");
+  const res = await axios.get<any[]>(`${BASE_URL}/api/account/banned-users`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;

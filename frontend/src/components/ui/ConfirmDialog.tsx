@@ -34,6 +34,8 @@ const ConfirmDialog = ({
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     const handleConfirm = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
         setIsSubmitting(true);
         try {
             await onConfirm(e);
@@ -47,6 +49,7 @@ const ConfirmDialog = ({
             className={className}
             open={open}
             onClose={() => !isSubmitting && onCancel()}
+            onClick={(e) => e.stopPropagation()}
             fullWidth
             maxWidth="xs"
         >
@@ -66,7 +69,11 @@ const ConfirmDialog = ({
                 }}
             >
                 <Button
-                    onClick={onCancel}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onCancel();
+                    }}
+                    variant="outlined"
                     color="secondary"
                     disabled={isSubmitting}
                     fullWidth={isMobile}
@@ -79,6 +86,7 @@ const ConfirmDialog = ({
 
                 <Button
                     onClick={handleConfirm}
+                    variant="outlined"
                     color={confirmColor}
                     disabled={isSubmitting}
                     fullWidth={isMobile}

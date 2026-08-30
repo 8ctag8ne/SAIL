@@ -20,7 +20,7 @@ namespace api.Mappers
                 Email = user.Email,
                 About = user.About,
                 IsBanned = user.IsBanned,
-                BanReason = user.BanReason,
+                BanReason = user.IsBanned ? (string.IsNullOrWhiteSpace(user.BanReason) ? "Порушення правил спільноти" : user.BanReason) : null,
                 BannedAt = user.BannedAt,
                 Roles = (List<string>)await userManager.GetRolesAsync(user),
             };

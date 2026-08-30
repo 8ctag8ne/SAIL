@@ -1,19 +1,21 @@
-import React from "react";
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import React, { useState } from "react";
+import { Card, CardContent, Typography, Box, Chip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import BlockIcon from "@mui/icons-material/Block";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { User } from "../../../types";
 import { useAuth } from "../../../contexts/AuthContext";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import UserForm from "../UserForm/UserForm";
-import { useState } from "react";
-import DeleteIcon from "@mui/icons-material/Delete";
 import ConfirmDialog from "../../ui/ConfirmDialog";
+import BanUserForm from "../BanUserForm/BanUserForm";
 import { toast } from "react-fox-toast";
-import { editUser, setUserRole, deleteUser } from "../../../api/Account";
+import { editUser, setUserRole, deleteUser, banUser, unbanUser } from "../../../api/Account";
 import { useQueryClient } from "@tanstack/react-query";
 import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
 
@@ -38,9 +40,12 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
 
   const isOwner = currentUser?.id === user.id;
   const canEditOrDelete = showEdit && (isAdmin || isOwner);
+  const canBan = isAdmin && !user.roles.includes("Admin") && currentUser?.id !== user.id;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isBanModalOpen, setIsBanModalOpen] = useState(false);
+  const [isUnbanConfirmOpen, setIsUnbanConfirmOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const handleEditSubmit = async (data: { userName: string; email: string; about: string; phoneNumber: string; role: string }) => {
@@ -83,6 +88,38 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
     }
   };
 
+  const handleBanConfirm = async (reason: string) => {
+    try {
+      await banUser(user.id, reason);
+      toast.success(`Користувача ${user.userName} заблоковано!`, {
+        isCloseBtn: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setIsBanModalOpen(false);
+      onUpdated?.();
+    } catch (error) {
+      toast.error("Не вдалося заблокувати користувача.", {
+        isCloseBtn: true,
+      });
+    }
+  };
+
+  const handleUnbanConfirm = async () => {
+    try {
+      await unbanUser(user.id);
+      toast.success(`Користувача ${user.userName} успішно розблоковано!`, {
+        isCloseBtn: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setIsUnbanConfirmOpen(false);
+      onUpdated?.();
+    } catch (error) {
+      toast.error("Не вдалося розблокувати користувача.", {
+        isCloseBtn: true,
+      });
+    }
+  };
+
   const menuActions: ActionItem[] = [];
 
   if (canEditOrDelete) {
@@ -91,6 +128,26 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
       icon: <EditIcon />,
       onClick: () => setIsEditModalOpen(true),
     });
+  }
+
+  if (canBan) {
+    if (user.isBanned) {
+      menuActions.push({
+        label: "Розблокувати",
+        icon: <LockOpenIcon />,
+        onClick: () => setIsUnbanConfirmOpen(true),
+      });
+    } else {
+      menuActions.push({
+        label: "Заблокувати",
+        icon: <BlockIcon />,
+        onClick: () => setIsBanModalOpen(true),
+        isDestructive: true,
+      });
+    }
+  }
+
+  if (canEditOrDelete) {
     menuActions.push({
       label: "Видалити",
       icon: <DeleteIcon />,
@@ -102,13 +159,41 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
   return (
     <Card
       className="MuiCard-interactive"
-      sx={{ my: 2, cursor: "pointer", maxWidth: 400, mx: "auto", position: "relative" }}
+      sx={{
+        my: 2,
+        cursor: "pointer",
+        maxWidth: 400,
+        mx: "auto",
+        position: "relative",
+      }}
       onClick={() => navigate(`/users/${user.id}`)}>
       <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         {getRoleIcon(user.roles)}
-        <Box>
-          <Typography variant="h6">{user.userName}</Typography>
-          <Typography variant="body2" color="text.secondary">{user.email}</Typography>
+        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+            <Typography variant="h6" noWrap>{user.userName}</Typography>
+            {user.isBanned && (
+              <Chip
+                label="ЗАБЛОКОВАНО"
+                color="error"
+                variant="outlined"
+                size="small"
+                sx={{
+                  borderRadius: 0,
+                  fontSize: "0.65rem",
+                  height: 18,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: "bold",
+                }}
+              />
+            )}
+          </Box>
+          <Typography variant="body2" color="text.secondary" noWrap>{user.email}</Typography>
+          {user.isBanned && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+              Причина: {user.banReason || "Порушення правил спільноти"}
+            </Typography>
+          )}
         </Box>
         {menuActions.length > 0 && (
           <Box sx={{ ml: "auto" }}>
@@ -130,6 +215,23 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
           onClose={() => setIsEditModalOpen(false)}
         />
       </EntityModal>
+
+      <EntityModal open={isBanModalOpen} onClose={() => setIsBanModalOpen(false)}>
+        <BanUserForm
+          userName={user.userName}
+          onSubmit={handleBanConfirm}
+          onClose={() => setIsBanModalOpen(false)}
+        />
+      </EntityModal>
+
+      <ConfirmDialog
+        open={isUnbanConfirmOpen}
+        title={`Розблокувати користувача ${user.userName}?`}
+        confirmColor="primary"
+        confirmText="Розблокувати"
+        onConfirm={handleUnbanConfirm}
+        onCancel={() => setIsUnbanConfirmOpen(false)}
+      />
 
       <ConfirmDialog
         open={isDeleteConfirmOpen}

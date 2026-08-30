@@ -20,7 +20,6 @@ namespace api.Controllers
 {
     [Route("api/account")]
     [ApiController]
-    [EnableRateLimiting("AuthRateLimiter")]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
@@ -37,6 +36,7 @@ namespace api.Controllers
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("AuthRateLimiter")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
             try
@@ -87,6 +87,7 @@ namespace api.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("AuthRateLimiter")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
             if(!ModelState.IsValid)
@@ -286,7 +287,7 @@ namespace api.Controllers
             }
 
             user.IsBanned = true;
-            user.BanReason = banDto?.Reason ?? "Порушення правил спільноти";
+            user.BanReason = string.IsNullOrWhiteSpace(banDto?.Reason) ? "Порушення правил спільноти" : banDto.Reason.Trim();
             user.BannedAt = DateTime.UtcNow;
 
             var result = await _userManager.UpdateAsync(user);
@@ -336,7 +337,7 @@ namespace api.Controllers
                     About = u.About,
                     PhoneNumber = u.PhoneNumber,
                     IsBanned = u.IsBanned,
-                    BanReason = u.BanReason,
+                    BanReason = string.IsNullOrWhiteSpace(u.BanReason) ? "Порушення правил спільноти" : u.BanReason,
                     BannedAt = u.BannedAt
                 })
                 .ToListAsync();

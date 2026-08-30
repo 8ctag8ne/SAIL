@@ -16,10 +16,16 @@ export default function LoginPage() {
       const response = await login(form); // API має повернути { token, username, roles }
       doLogin(response.token, { id: response.id, username: response.userName, roles: response.roles });
       navigate("/");
-    } catch (err) {
-      toast.error("Логін не вдався. Перевірте ім'я користувача та пароль.", {
-        isCloseBtn: true,
-      });
+    } catch (err: any) {
+      if (err.response?.status === 403 && err.response?.data?.message) {
+        toast.error(err.response.data.message, {
+          isCloseBtn: true,
+        });
+      } else {
+        toast.error("Логін не вдався. Перевірте ім'я користувача та пароль.", {
+          isCloseBtn: true,
+        });
+      }
     }
   };
 
