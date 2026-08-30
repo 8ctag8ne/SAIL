@@ -77,7 +77,7 @@ description: Інструкції та специфікація для розр�
 
 ### 🩺 `HealthController` (`/api/health`)
 - **Моніторинг інфраструктури:**
-  - `GET /health` & `GET /health/ping`: Комплексна перевірка трьох компонентів: Supabase PostgreSQL DB (`pgvector`), BackBlaze B2 S3 Object Storage bucket та FastAPI AI Microservice.
+  - `GET /health` & `GET /health/ping`: Комплексна перевірка трьох компонентів: Supabase PostgreSQL DB (`pgvector`), BackBlaze B2 S3 приватного та публічного бакетів (`PrivateBucketName`, `PublicBucketName`) та FastAPI AI Microservice.
 - **Рейт-лімітинг:** Захищено `[EnableRateLimiting("HealthCheckLimiter")]` (5 запитів на хвилину).
 
 ---
@@ -86,6 +86,7 @@ description: Інструкції та специфікація для розр�
 
 - **Реєстрація HTTP-клієнта:** В `Program.cs` зареєстровано `HttpClient` з іменованою конфігурацією `"AiService"`, що використовує базову адресу з конфігурації `AI_SERVICE_URL`.
 - **Передача файлів:** Використання `MultipartFormDataContent` для завантаження PDF-файлів у FastAPI ендпоінти.
+- **Завантаження книг AI-сервісом:** AI-сервіс завантажує PDF безпосередньо через внутрішній шлюз `GET /api/Book/{bookId}/download`.
 - **Асинхронний статус завдань:** Для тривалих операцій (парсинг PDF, векторизація) AI-сервіс повертає `task_id`. Backend проксіює запити перевірки статусу за допомогою `status/{taskId}`.
 - **Проксіювання SSE-стрімів (`/api/ai/rag/ask`):**
   - Отримання JSON-запиту від фронтенду (`RagAskRequestDto`).
@@ -103,7 +104,7 @@ description: Інструкції та специфікація для розр�
 
 ### 🛠️ Сервісний шар (Dependency Injection)
 - **`IFileService`**:
-  - `CloudFileService`: Використовується в Production. Працює з BackBlaze B2 через `AWSSDK.S3`.
+  - `CloudFileService`: Використовується в Production. Працює з BackBlaze B2 через `AWSSDK.S3`. Розділяє сховище на `PrivateBucketName` (для PDF із генерацією S3 Pre-signed URLs через `GetPresignedUrl`) та `PublicBucketName` (для обкладинок/медіа з прямими публічними URL).
   - `LocalFileService`: Використовується в Development. Зберігає файли локально у `wwwroot/local_uploads`.
 - **`IBookService` / `ITagService` / `IAuthorService` / `IBookListService` / `ICommentService`**: Бізнес-логіка предметної області.
 - **`IPdfRenderService` (`PdfService`)**: Використовує `Docnet.Core` для вилучення обкладинки та рендерингу сторінок PDF у звичайні PNG/JPEG зображення.
@@ -140,5 +141,7 @@ description: Інструкції та специфікація для розр�
   - `ASPNETCORE_ENVIRONMENT=Production`
   - `SUPABASE_SESSION_POOLER`
   - `AI_SERVICE_URL`
+  - `Backblaze__PrivateBucketName`, `Backblaze__PublicBucketName`
+  - `Backblaze__KeyId`, `Backblaze__ApplicationKey`, `Backblaze__ServiceUrl`
   - `JWT__SigningKey`, `JWT__Issuer`, `JWT__Audience`
   - `AllowedOrigins`

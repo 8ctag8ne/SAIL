@@ -1,3 +1,18 @@
-# Docker
+# Environment & Secrets
+.env
+.env.*
+*.env
+*.local
+secrets.json
+
+# Docker & Storage
 docker-compose.local.yml
 local_uploads/
+
+# Build artifacts & Dependencies
+[Bb]in/
+[Oo]bj/
+node_modules/
+__pycache__/
+.venv/
+.DS_Store
