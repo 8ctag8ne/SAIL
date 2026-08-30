@@ -19,6 +19,9 @@ namespace api.Mappers
                 PhoneNumber = user.PhoneNumber,
                 Email = user.Email,
                 About = user.About,
+                IsBanned = user.IsBanned,
+                BanReason = user.BanReason,
+                BannedAt = user.BannedAt,
                 Roles = (List<string>)await userManager.GetRolesAsync(user),
             };
         }

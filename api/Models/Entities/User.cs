@@ -7,6 +7,9 @@ namespace api.Models.Entities
     public class User : IdentityUser
     {
         public string? About { get; set; }
+        public bool IsBanned { get; set; } = false;
+        public string? BanReason { get; set; }
+        public DateTime? BannedAt { get; set; }
         public List<Comment> Comments { get; set; } = new List<Comment>();
         public List<Like> Likes { get; set; } = new List<Like>();
         public List<BookList> BookLists { get; set; } = new List<BookList>();

@@ -12,6 +12,9 @@ namespace api.Models.DTOs.Account
         public string? Email { get; set;}
         public string? About { get; set; }
         public string? PhoneNumber { get; set; }
+        public bool IsBanned { get; set; }
+        public string? BanReason { get; set; }
+        public DateTime? BannedAt { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
     }
 }

@@ -130,16 +130,19 @@ public class ApplicationDbContext : IdentityDbContext<User>
         {
             new IdentityRole
             {
+                Id = "28ce31cc-ab42-49c6-98d6-d74ddfb3b012",
                 Name = "Admin",
                 NormalizedName = "ADMIN",
             },
             new IdentityRole
             {
+                Id = "a96399e8-3c1f-4626-9da2-bf3550a09c34",
                 Name = "Librarian",
                 NormalizedName = "LIBRARIAN",
             },
             new IdentityRole
             {
+                Id = "ea9624f7-b305-40a5-885e-d93786cc4620",
                 Name = "User",
                 NormalizedName = "USER",
             },

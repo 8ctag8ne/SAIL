@@ -101,6 +101,14 @@ namespace api.Controllers
                 return Unauthorized("Invalid username!");
             }
 
+            if (user.IsBanned)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    message = $"Ваш акаунт заблоковано. Причина: {user.BanReason ?? "Порушення правил спільноти"}"
+                });
+            }
+
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
             if(!result.Succeeded)
@@ -260,6 +268,80 @@ namespace api.Controllers
                 return BadRequest(resultAdd.Errors);
 
             return resultAdd.Succeeded ? Ok() : BadRequest(resultAdd.Errors);
+        }
+
+        [HttpPost("ban/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> BanUser([FromRoute] string id, [FromBody] BanUserDto? banDto)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            {
+                return BadRequest(new { message = "Cannot ban an administrator." });
+            }
+
+            user.IsBanned = true;
+            user.BanReason = banDto?.Reason ?? "Порушення правил спільноти";
+            user.BannedAt = DateTime.UtcNow;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return StatusCode(500, result.Errors);
+            }
+
+            return Ok(new { message = "User banned successfully", user.Id, user.UserName, user.BanReason, user.BannedAt });
+        }
+
+        [HttpPost("unban/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UnbanUser([FromRoute] string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found" });
+            }
+
+            user.IsBanned = false;
+            user.BanReason = null;
+            user.BannedAt = null;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return StatusCode(500, result.Errors);
+            }
+
+            return Ok(new { message = "User unbanned successfully", user.Id, user.UserName });
+        }
+
+        [HttpGet("banned-users")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetBannedUsers()
+        {
+            var bannedUsers = await _userManager.Users
+                .Where(u => u.IsBanned)
+                .OrderByDescending(u => u.BannedAt)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    About = u.About,
+                    PhoneNumber = u.PhoneNumber,
+                    IsBanned = u.IsBanned,
+                    BanReason = u.BanReason,
+                    BannedAt = u.BannedAt
+                })
+                .ToListAsync();
+
+            return Ok(bannedUsers);
         }
     }
 }
