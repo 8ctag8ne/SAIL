@@ -307,20 +307,10 @@ async def process_book_for_md(book_id: int, background_tasks: BackgroundTasks, s
     TASKS_DB[task_id] = {"status": "processing"}
     
     try:
-        async with httpx.AsyncClient() as client:
-            api_response = await client.get(f"{settings.MAIN_API_URL}/api/Book/{book_id}")
-            if api_response.status_code != 200:
-                raise HTTPException(status_code=404, detail="Book not found in Main API")
-            
-            book_data = api_response.json()
-            file_url = book_data.get("fileUrl")
-            
-            if not file_url:
-                raise HTTPException(status_code=400, detail="Book does not have a file")
-                
-            file_response = await client.get(file_url)
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            file_response = await client.get(f"{settings.MAIN_API_URL}/api/Book/{book_id}/download")
             if file_response.status_code != 200:
-                raise HTTPException(status_code=400, detail="Failed to download book file")
+                raise HTTPException(status_code=400, detail=f"Failed to download book file: status {file_response.status_code}")
                 
             file_bytes = file_response.content
     except httpx.RequestError as e:
