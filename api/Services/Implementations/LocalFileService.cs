@@ -88,6 +88,11 @@ namespace MilLib.Services.Implementations
             return $"{request.Scheme}://{request.Host}{request.PathBase}/{relativePath.TrimStart('/')}";
         }
 
+        public string GetPresignedUrl(string? relativePath, TimeSpan? expiry = null)
+        {
+            return GetFullUrl(relativePath);
+        }
+
         public async Task<FileResponse> GetFileAsync(string relativePath, string downloadName)
         {
             if (string.IsNullOrEmpty(relativePath))

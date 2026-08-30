@@ -94,29 +94,41 @@ namespace MilLib.Controllers
                 var options = _configuration.GetSection("Backblaze");
                 var keyId = options["KeyId"];
                 var applicationKey = options["ApplicationKey"];
-                var bucketName = options["BucketName"];
+                var privateBucketName = options["PrivateBucketName"];
+                var publicBucketName = options["PublicBucketName"];
                 var serviceUrl = options["ServiceUrl"];
 
                 if (!string.IsNullOrWhiteSpace(keyId) &&
                     !string.IsNullOrWhiteSpace(applicationKey) &&
                     !string.IsNullOrWhiteSpace(serviceUrl) &&
-                    !string.IsNullOrWhiteSpace(bucketName))
+                    !string.IsNullOrWhiteSpace(privateBucketName))
                 {
                     var s3Config = new AmazonS3Config { ServiceURL = serviceUrl };
                     using var s3Client = new AmazonS3Client(keyId, applicationKey, s3Config);
 
-                    var request = new ListObjectsV2Request
+                    var privateRequest = new ListObjectsV2Request
                     {
-                        BucketName = bucketName,
+                        BucketName = privateBucketName,
                         MaxKeys = 1
                     };
-                    await s3Client.ListObjectsV2Async(request);
+                    await s3Client.ListObjectsV2Async(privateRequest);
+
+                    if (!string.IsNullOrWhiteSpace(publicBucketName))
+                    {
+                        var publicRequest = new ListObjectsV2Request
+                        {
+                            BucketName = publicBucketName,
+                            MaxKeys = 1
+                        };
+                        await s3Client.ListObjectsV2Async(publicRequest);
+                    }
+
                     backblazeSw.Stop();
 
                     checks["backblaze"] = new
                     {
                         status = "Healthy",
-                        message = $"Backblaze B2 bucket '{bucketName}' accessible",
+                        message = $"Backblaze B2 buckets '{privateBucketName}' & '{publicBucketName}' accessible",
                         latencyMs = backblazeSw.ElapsedMilliseconds
                     };
                 }

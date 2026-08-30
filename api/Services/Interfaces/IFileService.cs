@@ -7,8 +7,8 @@ namespace MilLib.Services.Interfaces
         Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, string destination);
         Task DeleteAsync(string filePath);
         string GetFullUrl(string? relativePath);
-        // Головна зміна: повертаємо потік
         Task<FileResponse> GetFileAsync(string relativePath, string downloadName);
+        string GetPresignedUrl(string? relativePath, TimeSpan? expiry = null);
 
         public async Task<string?> UploadAsync(IFormFile? file, string destination)
         {
