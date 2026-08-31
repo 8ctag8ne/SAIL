@@ -3,7 +3,7 @@ import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { login } from "../api/Account";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-fox-toast";
+import { showApiError } from "../utils/apiError";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ id: "", userName: "", password: "" });
@@ -17,15 +17,7 @@ export default function LoginPage() {
       doLogin(response.token, { id: response.id, username: response.userName, roles: response.roles });
       navigate("/");
     } catch (err: any) {
-      if (err.response?.status === 403 && err.response?.data?.message) {
-        toast.error(err.response.data.message, {
-          isCloseBtn: true,
-        });
-      } else {
-        toast.error("Логін не вдався. Перевірте ім'я користувача та пароль.", {
-          isCloseBtn: true,
-        });
-      }
+      showApiError(err, "Логін не вдався. Перевірте ім'я користувача та пароль.");
     }
   };
 

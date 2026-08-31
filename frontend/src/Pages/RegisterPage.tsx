@@ -3,7 +3,7 @@ import { TextField, Button, Box, Typography, Paper } from "@mui/material";
 import { register, login } from "../api/Account"; // Імпортуємо login
 import { useAuth } from "../contexts/AuthContext"; // Використовуємо AuthContext
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-fox-toast";
+import { showApiError } from "../utils/apiError";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ id: "", userName: "", email: "", password: "" });
@@ -22,10 +22,8 @@ export default function RegisterPage() {
 
       // Перенаправлення на головну сторінку
       navigate("/");
-    } catch (err) {
-      toast.error("Реєстрація не вдалась. Перевірте дані та спробуйте ще раз.", {
-        isCloseBtn: true,
-      });
+    } catch (err: any) {
+      showApiError(err, "Реєстрація не вдалась. Перевірте дані та спробуйте ще раз.");
     }
   };
 

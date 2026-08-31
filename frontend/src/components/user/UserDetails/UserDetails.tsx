@@ -16,6 +16,7 @@ import UserForm from "../UserForm/UserForm";
 import ConfirmDialog from "../../ui/ConfirmDialog";
 import BanUserForm from "../BanUserForm/BanUserForm";
 import { toast } from "react-fox-toast";
+import { showApiError } from "../../../utils/apiError";
 import { editUser, setUserRole, deleteUser, banUser, unbanUser } from "../../../api/Account";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -38,18 +39,18 @@ type Props = {
   onUpdated?: () => void;
 };
 
-const UserDetails: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) => {
+const UserDetails: React.FC<Props> = ({ user, showEdit = true, onDeleted, onUpdated }) => {
   const { user: currentUser } = useAuth();
-  const isAdmin = currentUser?.roles.includes("Admin");
-  const isOwner = currentUser?.id === user.id;
-  const canEditOrDelete = showEdit && (isAdmin || isOwner);
-  const canBan = isAdmin && !user.roles.includes("Admin") && currentUser?.id !== user.id;
-
+  const queryClient = useQueryClient();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isBanModalOpen, setIsBanModalOpen] = useState(false);
   const [isUnbanConfirmOpen, setIsUnbanConfirmOpen] = useState(false);
-  const queryClient = useQueryClient();
+
+  const isAdmin = currentUser?.roles?.includes("Admin");
+  const isOwner = currentUser?.id === user.id;
+  const canEditOrDelete = showEdit && (isAdmin || isOwner);
+  const canBan = isAdmin && !user.roles.includes("Admin") && currentUser?.id !== user.id;
 
   const handleEditSubmit = async (data: { userName: string; email: string; about: string; phoneNumber: string; role: string }) => {
     try {
@@ -67,7 +68,7 @@ const UserDetails: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) 
       onUpdated?.();
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error("Не вдалося оновити дані.", { isCloseBtn: true });
+      showApiError(error, "Не вдалося оновити дані.");
     }
   };
 
@@ -79,7 +80,7 @@ const UserDetails: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) 
       setIsDeleteConfirmOpen(false);
       onDeleted?.();
     } catch (error) {
-      toast.error("Не вдалося видалити користувача.", { isCloseBtn: true });
+      showApiError(error, "Не вдалося видалити користувача.");
     }
   };
 
@@ -91,7 +92,7 @@ const UserDetails: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) 
       setIsBanModalOpen(false);
       onUpdated?.();
     } catch (error) {
-      toast.error("Не вдалося заблокувати користувача.", { isCloseBtn: true });
+      showApiError(error, "Не вдалося заблокувати користувача.");
     }
   };
 
@@ -103,7 +104,7 @@ const UserDetails: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated }) 
       setIsUnbanConfirmOpen(false);
       onUpdated?.();
     } catch (error) {
-      toast.error("Не вдалося розблокувати користувача.", { isCloseBtn: true });
+      showApiError(error, "Не вдалося розблокувати користувача.");
     }
   };
 

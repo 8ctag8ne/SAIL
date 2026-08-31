@@ -15,6 +15,7 @@ import UserForm from "../UserForm/UserForm";
 import ConfirmDialog from "../../ui/ConfirmDialog";
 import BanUserForm from "../BanUserForm/BanUserForm";
 import { toast } from "react-fox-toast";
+import { showApiError } from "../../../utils/apiError";
 import { editUser, setUserRole, deleteUser, banUser, unbanUser } from "../../../api/Account";
 import { useQueryClient } from "@tanstack/react-query";
 import EntityActionMenu, { ActionItem } from "../../ui/EntityActionMenu";
@@ -66,9 +67,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
       onUpdated?.();
       setIsEditModalOpen(false);
     } catch (error) {
-      toast.error("Не вдалося оновити дані.", {
-        isCloseBtn: true,
-      });
+      showApiError(error, "Не вдалося оновити дані.");
     }
   };
 
@@ -82,9 +81,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
       setIsDeleteConfirmOpen(false);
       onDeleted?.();
     } catch (error) {
-      toast.error("Не вдалося видалити користувача.", {
-        isCloseBtn: true,
-      });
+      showApiError(error, "Не вдалося видалити користувача.");
     }
   };
 
@@ -98,9 +95,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
       setIsBanModalOpen(false);
       onUpdated?.();
     } catch (error) {
-      toast.error("Не вдалося заблокувати користувача.", {
-        isCloseBtn: true,
-      });
+      showApiError(error, "Не вдалося заблокувати користувача.");
     }
   };
 
@@ -114,9 +109,7 @@ const UserCard: React.FC<Props> = ({ user, showEdit, onDeleted, onUpdated, isFir
       setIsUnbanConfirmOpen(false);
       onUpdated?.();
     } catch (error) {
-      toast.error("Не вдалося розблокувати користувача.", {
-        isCloseBtn: true,
-      });
+      showApiError(error, "Не вдалося розблокувати користувача.");
     }
   };
 
