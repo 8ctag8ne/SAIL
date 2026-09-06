@@ -135,9 +135,9 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
         </Button>
       )}
 
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
-        <DialogTitle>Додати нового автора</DialogTitle>
-        <DialogContent>
+      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>Додати нового автора</DialogTitle>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
           <TextField
             label="Ім'я"
             value={newAuthorName}
@@ -147,12 +147,17 @@ const SingleAuthorSelect: React.FC<SingleAuthorSelectProps> = ({
             sx={{ mt: 1 }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Скасувати</Button>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, pt: 1, display: "flex", flexDirection: { xs: "column-reverse", sm: "row" }, gap: { xs: 1.5, sm: 2 } }}>
+          <Button onClick={() => setAddDialogOpen(false)} variant="outlined" color="secondary" fullWidth sx={{ m: "0 !important" }}>
+            Скасувати
+          </Button>
           <Button
             onClick={handleAddAuthor}
             disabled={!newAuthorName.trim() || adding}
             variant="outlined"
+            color="primary"
+            fullWidth
+            sx={{ m: "0 !important" }}
           >
             Додати
           </Button>

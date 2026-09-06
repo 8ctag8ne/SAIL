@@ -321,25 +321,22 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
       sx={{
         width: 900,
         maxWidth: "100%",
-        height: { xs: "100dvh", md: "90vh" },
-        maxHeight: "90vh",
+        maxHeight: "100%",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        borderRadius: { xs: 0, md: 2 },
+        borderRadius: 0,
+        boxSizing: "border-box",
       }}
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <DialogTitle
           sx={{
-            p: 3,
-            pb: 2,
+            px: { xs: 2, sm: 3 },
+            py: 2,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
             backgroundColor: "background.paper",
             borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
             flexShrink: 0,
@@ -351,7 +348,8 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
           {onClose && (
             <IconButton
               onClick={onClose}
-              sx={{ color: "text.secondary", mr: -1 }}
+              size="small"
+              sx={{ color: "text.secondary", mr: -0.5, p: 0.5 }}
             >
               <CloseIcon />
             </IconButton>
@@ -360,11 +358,12 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
 
         <Box
           sx={{
-            p: 3,
+            p: { xs: 2, sm: 3 },
             display: "flex",
             flexDirection: { xs: "column", md: "row" },
-            gap: 4,
+            gap: { xs: 2, md: 4 },
             flex: 1,
+            minHeight: 0,
             overflowY: "auto",
           }}
         >

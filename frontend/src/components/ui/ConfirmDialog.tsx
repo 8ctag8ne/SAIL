@@ -52,19 +52,27 @@ const ConfirmDialog = ({
             onClick={(e) => e.stopPropagation()}
             fullWidth
             maxWidth="xs"
+            PaperProps={{
+                sx: {
+                    m: { xs: 2, sm: 4 },
+                    maxWidth: { xs: "calc(100vw - 32px)", sm: 444 },
+                    borderRadius: 0,
+                    boxSizing: "border-box",
+                }
+            }}
         >
-            <DialogTitle sx={{ px: 3, py: 2 }}>
+            <DialogTitle sx={{ px: { xs: 2, sm: 3 }, py: 2, wordBreak: "break-word" }}>
                 {title}
             </DialogTitle>
 
             <DialogActions
                 sx={{
-                    px: 3,
-                    pb: 3,
+                    px: { xs: 2, sm: 3 },
+                    pb: { xs: 2, sm: 3 },
                     pt: 1,
                     display: "flex",
-                    gap: 2,
-                    flexDirection: isMobile ? "column" : "row",
+                    gap: { xs: 1.5, sm: 2 },
+                    flexDirection: isMobile ? "column-reverse" : "row",
                     justifyContent: isMobile ? "stretch" : "flex-end"
                 }}
             >
@@ -78,6 +86,7 @@ const ConfirmDialog = ({
                     disabled={isSubmitting}
                     fullWidth={isMobile}
                     sx={{
+                        m: "0 !important",
                         flex: isMobile ? undefined : 1
                     }}
                 >
@@ -91,6 +100,7 @@ const ConfirmDialog = ({
                     disabled={isSubmitting}
                     fullWidth={isMobile}
                     sx={{
+                        m: "0 !important",
                         flex: isMobile ? undefined : 1
                     }}
                 >

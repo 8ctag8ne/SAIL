@@ -79,8 +79,8 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
   );
 
   return (
-    <Dialog open={open} onClose={() => !isSubmitting && onClose()} fullWidth>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2 }}>
+    <Dialog open={open} onClose={() => !isSubmitting && onClose()} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: { xs: 2, sm: 3 }, py: 2 }}>
         Додати до списку
         {onClose && (
           <IconButton className="tour-list-modal-close" onClick={onClose} sx={{ color: 'text.secondary', mr: -1 }}>
@@ -88,7 +88,7 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
           </IconButton>
         )}
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
         <Box className="tour-list-modal-create">
           <CreateBookListButton onCreated={() => setRefresh(r => r + 1)} />
         </Box>
@@ -122,7 +122,7 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
           />
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, pt: 1 }}>
         <Button
           onClick={handleAdd}
           disabled={selected.length === 0 || isSubmitting}

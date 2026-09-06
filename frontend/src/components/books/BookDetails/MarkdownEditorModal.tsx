@@ -138,19 +138,19 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId,
         sx={{
           width: 900,
           maxWidth: "100%",
-          height: { xs: "100dvh", md: "90vh" },
-          maxHeight: "90vh",
+          maxHeight: "100%",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          borderRadius: { xs: 0, md: 2 },
+          borderRadius: 0,
           bgcolor: "background.paper",
+          boxSizing: "border-box",
         }}
       >
         <DialogTitle
           sx={{
-            p: 3,
-            pb: 2,
+            px: { xs: 2, sm: 3 },
+            py: 2,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -161,12 +161,12 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId,
           <Typography variant="h6" fontWeight="bold">
             {parsed ? "Редагувати Markdown" : "Переглянути/Аналізувати текст"}
           </Typography>
-          <IconButton onClick={onClose} sx={{ color: "text.secondary", mr: -1 }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary", mr: -0.5, p: 0.5 }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
-        <Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 }, display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2, flexShrink: 0 }}>
             <Tabs value={tabIndex} onChange={handleTabChange} aria-label="markdown tabs">
               <Tab label="Редагування" />

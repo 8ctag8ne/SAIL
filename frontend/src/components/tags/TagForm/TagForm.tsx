@@ -89,28 +89,25 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onClose }) => 
       sx={{
         width: 800,
         maxWidth: "100%",
-        height: { xs: "100dvh", md: 700 }, // Жорсткі межі висоти
-        maxHeight: "100vh",
+        maxHeight: "100%",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden", // Блокуємо зовнішній скрол модалки
-        borderRadius: { xs: 0, md: 2 },
+        overflow: "hidden",
+        borderRadius: 0,
+        boxSizing: "border-box",
       }}
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
 
         {/* ШАПКА: Жорстко зафіксована зверху */}
         <DialogTitle
           sx={{
-            p: 3,
-            pb: 2,
+            px: { xs: 2, sm: 3 },
+            py: 2,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            flexShrink: 0, // Забороняємо шапці стискатися
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
+            flexShrink: 0,
             backgroundColor: "background.paper",
             borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
           }}
@@ -119,7 +116,7 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onClose }) => 
             {initialData ? "Редагувати тег" : "Додати тег"}
           </Typography>
           {onClose && (
-            <IconButton onClick={onClose} sx={{ color: "text.secondary", mr: -1 }}>
+            <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary", mr: -0.5, p: 0.5 }}>
               <CloseIcon />
             </IconButton>
           )}
@@ -128,13 +125,13 @@ const TagForm: React.FC<TagFormProps> = ({ initialData, onSubmit, onClose }) => 
         {/* ТІЛО ФОРМИ: ЄДИНЕ місце, де є скролбар */}
         <Box
           sx={{
-            p: 3,
-            pt: 0,
+            p: { xs: 2, sm: 3 },
             display: "flex",
             flexDirection: { xs: "column", md: "row" },
-            gap: 4,
-            flex: 1, // Займає весь вільний простір під шапкою
-            overflowY: "auto", // Дозволяє скролити всі колонки одночасно
+            gap: { xs: 2, md: 4 },
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
           }}
         >
           {/* Ліва частина: фото */}
