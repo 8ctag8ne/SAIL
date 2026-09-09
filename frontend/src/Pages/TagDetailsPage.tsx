@@ -129,7 +129,11 @@ const TagDetailsPage: React.FC = () => {
             variant="h4"
             fontWeight="bold"
             gutterBottom
-            sx={{ width: "100%", wordBreak: "break-word" }}
+            sx={{
+              fontSize: { xs: "1.35rem", sm: "1.75rem", md: "2.125rem" },
+              width: "100%",
+              wordBreak: "break-word",
+            }}
           >
             {tag.title}
           </Typography>

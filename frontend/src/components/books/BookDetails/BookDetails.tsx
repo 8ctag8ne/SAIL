@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import {
   Typography,
   Button,
+  IconButton,
   Box,
   Chip,
-  IconButton,
 } from "@mui/material";
 import BaseEntityDetails from "../../ui/BaseEntityDetails";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -202,45 +202,142 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   return (
     <>
       <BaseEntityDetails
-        imageWidth={255}
+        imageWidth={250}
         imageAspectRatio="1/1.414"
         imageUrl={fullImageUrl}
         imagePlaceholderIcon={<MenuBookIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
         leftColumnAppend={
-          <>
-            {fileUrl && (
-              <Box sx={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-                <Button
-                  className="tour-read-button"
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<BookIcon />}
-                  href={fileUrl}
-                  target="_blank"
-                  sx={{ width: "100%" }}
-                >
-                  Читати
-                </Button>
-                <Button
-                  className="tour-download-button"
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<DownloadIcon />}
-                  sx={{ width: "100%" }}
-                  component="a"
-                  href={`${BASE_URL}/api/book/${id}/download`}
-                  download
-                >
-                  Завантажити
-                </Button>
-              </Box>
-            )}
+          <Box sx={{ width: "100%", maxWidth: 250, mx: "auto" }}>
+            {/* DESKTOP (md+): Vertical stacked full-width buttons */}
+            <Box
+              sx={{
+                display: { xs: "none", md: "flex" },
+                flexDirection: "column",
+                gap: 1,
+                width: "100%",
+                mt: 0,
+              }}
+            >
+              {fileUrl && (
+                <>
+                  <Button
+                    className="tour-read-button"
+                    variant="outlined"
+                    color="primary"
+                    href={fileUrl}
+                    target="_blank"
+                    startIcon={<BookIcon />}
+                    sx={{
+                      width: "100%",
+                      py: 1,
+                      borderRadius: 0,
+                    }}
+                  >
+                    Читати
+                  </Button>
+
+                  <Button
+                    className="tour-download-button"
+                    variant="outlined"
+                    color="secondary"
+                    component="a"
+                    href={`${BASE_URL}/api/book/${id}/download`}
+                    download
+                    startIcon={<DownloadIcon />}
+                    sx={{
+                      width: "100%",
+                      py: 1,
+                      borderRadius: 0,
+                    }}
+                  >
+                    Завантажити
+                  </Button>
+                </>
+              )}
+
+              <Button
+                variant="outlined"
+                color={liked ? "primary" : "inherit"}
+                onClick={handleLikeClick}
+                startIcon={liked ? <ThumbUpIcon /> : <ThumbUpOffAltIcon />}
+                sx={{
+                  width: "100%",
+                  py: 1,
+                  borderRadius: 0,
+                  borderColor: liked ? "primary.main" : "divider",
+                  backgroundColor: liked ? "rgba(126, 211, 33, 0.08)" : "transparent",
+                }}
+              >
+                {liked ? `Вподобано (${likeCount})` : `Вподобати (${likeCount})`}
+              </Button>
+            </Box>
+
+            {/* MOBILE (xs, sm): Horizontal icon toolbar */}
+            <Box
+              sx={{
+                display: { xs: "flex", md: "none" },
+                flexDirection: "row",
+                width: "100%",
+                justifyContent: "space-between",
+                alignItems: "center",
+                px: 0.5,
+              }}
+            >
+              {/* Like Button (First on the left) */}
+              <IconButton
+                onClick={handleLikeClick}
+                color={liked ? "primary" : "default"}
+                size="small"
+                title={liked ? "Вподобано" : "Поставити лайк"}
+              >
+                {liked ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOffAltIcon fontSize="small" />}
+                <Typography sx={{ ml: 0.5, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+                  {likeCount}
+                </Typography>
+              </IconButton>
+
+              {fileUrl && (
+                <>
+                  {/* Read Button */}
+                  <IconButton
+                    className="tour-read-button"
+                    component="a"
+                    href={fileUrl}
+                    target="_blank"
+                    title="Читати онлайн"
+                    size="small"
+                  >
+                    <BookIcon fontSize="small" />
+                  </IconButton>
+
+                  {/* Download Button */}
+                  <IconButton
+                    className="tour-download-button"
+                    component="a"
+                    href={`${BASE_URL}/api/book/${id}/download`}
+                    download
+                    title="Завантажити файл"
+                    size="small"
+                  >
+                    <DownloadIcon fontSize="small" />
+                  </IconButton>
+                </>
+              )}
+
+              {/* Action Menu (only on mobile) */}
+              {menuActions.length > 0 && (
+                <Box sx={{ display: "inline-flex" }}>
+                  <EntityActionMenu actions={menuActions} />
+                </Box>
+              )}
+            </Box>
+
             <AddBookToListsDialog
               open={addToListsOpen}
               onClose={() => setAddToListsOpen(false)}
               bookId={Number(id)}
             />
-          </>
+          </Box>
         }
         title={
           <Typography
@@ -248,6 +345,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
             fontWeight="bold"
             gutterBottom
             sx={{
+              fontSize: { xs: "1.35rem", sm: "1.75rem", md: "2.125rem" },
               width: "100%",
               wordBreak: "break-word",
             }}
@@ -350,17 +448,6 @@ const BookDetails: React.FC<BookDetailsProps> = ({
                 }}
               />
             ))}
-          </Box>
-        }
-        footer={
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <IconButton
-              onClick={handleLikeClick}
-              color={liked ? "primary" : "default"}
-            >
-              {liked ? <ThumbUpIcon /> : <ThumbUpOffAltIcon />}
-              <Typography sx={{ ml: 0.5 }}>{likeCount}</Typography>
-            </IconButton>
           </Box>
         }
         actions={<EntityActionMenu actions={menuActions} />}

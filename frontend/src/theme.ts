@@ -24,6 +24,72 @@ export const theme = createTheme({
     typography: {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: 13,
+        h1: {
+            fontSize: '1.75rem',
+            '@media (min-width:600px)': { fontSize: '2.2rem' },
+            '@media (min-width:900px)': { fontSize: '2.5rem' },
+            fontWeight: 700,
+            lineHeight: 1.2,
+        },
+        h2: {
+            fontSize: '1.45rem',
+            '@media (min-width:600px)': { fontSize: '1.8rem' },
+            '@media (min-width:900px)': { fontSize: '2.1rem' },
+            fontWeight: 700,
+            lineHeight: 1.25,
+        },
+        h3: {
+            fontSize: '1.25rem',
+            '@media (min-width:600px)': { fontSize: '1.5rem' },
+            '@media (min-width:900px)': { fontSize: '1.75rem' },
+            fontWeight: 700,
+            lineHeight: 1.3,
+        },
+        h4: {
+            fontSize: '1.1rem',
+            '@media (min-width:600px)': { fontSize: '1.35rem' },
+            '@media (min-width:900px)': { fontSize: '1.55rem' },
+            fontWeight: 700,
+            lineHeight: 1.3,
+        },
+        h5: {
+            fontSize: '0.92rem',
+            '@media (min-width:600px)': { fontSize: '1.05rem' },
+            '@media (min-width:900px)': { fontSize: '1.2rem' },
+            fontWeight: 600,
+            lineHeight: 1.35,
+        },
+        h6: {
+            fontSize: '0.85rem',
+            '@media (min-width:600px)': { fontSize: '0.92rem' },
+            '@media (min-width:900px)': { fontSize: '1.02rem' },
+            fontWeight: 600,
+            lineHeight: 1.4,
+        },
+        body1: {
+            fontSize: '0.82rem',
+            '@media (min-width:600px)': { fontSize: '0.88rem' },
+            lineHeight: 1.5,
+        },
+        body2: {
+            fontSize: '0.75rem',
+            '@media (min-width:600px)': { fontSize: '0.8rem' },
+            lineHeight: 1.45,
+        },
+        subtitle1: {
+            fontSize: '0.82rem',
+            '@media (min-width:600px)': { fontSize: '0.9rem' },
+            lineHeight: 1.4,
+        },
+        subtitle2: {
+            fontSize: '0.75rem',
+            '@media (min-width:600px)': { fontSize: '0.82rem' },
+            lineHeight: 1.35,
+        },
+        button: {
+            fontSize: '0.8rem',
+            '@media (min-width:600px)': { fontSize: '0.85rem' },
+        },
     },
     shape: {
         borderRadius: 0,

@@ -13,6 +13,8 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useTour } from '../../contexts/TourContext';
 
+import { SxProps, Theme } from '@mui/material';
+
 export type ActionItem = {
   label: string;
   icon: React.ReactNode;
@@ -23,9 +25,10 @@ export type ActionItem = {
 export interface EntityActionMenuProps {
   actions: ActionItem[];
   menuClassName?: string;
+  sx?: SxProps<Theme>;
 }
 
-const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassName }) => {
+const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassName, sx }) => {
   const [open, setOpen] = useState(false);
   const { activeTour, stepIndex, setStepIndex, setRun } = useTour();
   const [clickedAction, setClickedAction] = useState(false);
@@ -93,7 +96,7 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassN
 
   return (
     <>
-      <IconButton className={menuClassName || "tour-book-card-menu"} onClick={handleOpen} size="small" aria-label="More actions">
+      <IconButton className={menuClassName || "tour-book-card-menu"} onClick={handleOpen} size="small" aria-label="More actions" sx={sx}>
         <MoreVertIcon />
       </IconButton>
 

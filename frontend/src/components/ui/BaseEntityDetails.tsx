@@ -19,7 +19,7 @@ export interface BaseEntityDetailsProps {
 const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
   imageUrl,
   imagePlaceholderIcon,
-  imageWidth = 200,
+  imageWidth = 250,
   imageHeight,
   imageAspectRatio,
   leftColumnAppend,
@@ -34,106 +34,224 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
     <Card
       sx={{
         display: "flex",
-        flexDirection: { xs: "column", md: "row" },
-        p: 2,
-        m: "20px auto",
+        flexDirection: "column",
+        p: { xs: 2, sm: 2.5, md: 3 },
+        m: { xs: "10px auto", sm: "20px auto" },
         width: "100%",
       }}
     >
+      {/* DESKTOP LAYOUT (md+) */}
       <Box
         sx={{
-          width: { xs: "100%", md: imageWidth },
-          flexShrink: 0,
-          alignSelf: "flex-start",
-          mr: { xs: 0, md: 3 },
-          mb: { xs: 2, md: 0 },
+          display: { xs: "none", md: "flex" },
+          flexDirection: "row",
+          gap: 3,
+          width: "100%",
+          alignItems: "flex-start",
         }}
       >
-        {imageUrl ? (
-          <CardMedia
-            component="img"
-            sx={{
-              width: "100%",
-              height: imageHeight ?? "auto",
-              aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
-              objectFit: "cover",
-              borderRadius: 1,
-            }}
-            image={imageUrl}
-            alt="Entity image"
-          />
-        ) : (
+        {/* Left Column on desktop */}
+        <Box
+          sx={{
+            width: imageWidth,
+            minWidth: imageWidth,
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {imageUrl ? (
+            <CardMedia
+              component="img"
+              sx={{
+                width: "100%",
+                height: imageHeight ?? "auto",
+                aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
+                objectFit: "cover",
+                borderRadius: 0,
+                border: "1px solid #2d2f33",
+              }}
+              image={imageUrl}
+              alt="Entity image"
+            />
+          ) : (
+            <Box
+              sx={{
+                width: "100%",
+                height: imageHeight ?? "auto",
+                aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 0,
+                border: "1px dashed rgba(255, 255, 255, 0.1)",
+                backgroundColor: "rgba(255, 255, 255, 0.02)",
+              }}
+            >
+              {imagePlaceholderIcon}
+            </Box>
+          )}
+
+          {leftColumnAppend && (
+            <Box sx={{ mt: 2, width: "100%" }}>
+              {leftColumnAppend}
+            </Box>
+          )}
+        </Box>
+
+        {/* Right Info on desktop */}
+        <CardContent
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            p: 0,
+            "&:last-child": { pb: 0 },
+          }}
+        >
           <Box
             sx={{
-              width: "100%",
-              height: imageHeight ?? "auto",
-              aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 1,
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 1,
+              width: "100%",
+              mb: 1,
             }}
           >
-            {imagePlaceholderIcon}
+            <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>{title}</Box>
+            {actions && <Box sx={{ flex: "0 0 auto" }}>{actions}</Box>}
           </Box>
-        )}
-        {leftColumnAppend}
+
+          {subtitle && (
+            <Box sx={{ width: "100%", maxWidth: "100%", mb: 1.5 }}>
+              {subtitle}
+            </Box>
+          )}
+
+          {tags && (
+            <Box sx={{ width: "100%", maxWidth: "100%", mb: 2 }}>
+              {tags}
+            </Box>
+          )}
+
+          {description && (
+            <Box sx={{ width: "100%", maxWidth: "100%", mb: 2 }}>
+              {description}
+            </Box>
+          )}
+
+          {footer && (
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: "auto", pt: 1 }}>
+              {footer}
+            </Box>
+          )}
+        </CardContent>
       </Box>
 
-      <CardContent
+      {/* MOBILE / TABLET LAYOUT (xs, sm) */}
+      <Box
         sx={{
-          flex: 1,
-          minWidth: 0,
-          display: "flex",
+          display: { xs: "flex", md: "none" },
           flexDirection: "column",
-          p: 0,
-          pb: "0 !important",
+          width: "100%",
         }}
       >
+        {/* 1. Centered Cover */}
+        <Box
+          sx={{
+            width: typeof imageWidth === 'number' ? imageWidth : 300,
+            maxWidth: "100%",
+            mx: "auto",
+            mb: 1.5,
+            flexShrink: 0,
+          }}
+        >
+          {imageUrl ? (
+            <CardMedia
+              component="img"
+              sx={{
+                width: "100%",
+                height: imageHeight ?? "auto",
+                aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
+                objectFit: "cover",
+                borderRadius: 0,
+                border: "1px solid #2d2f33",
+              }}
+              image={imageUrl}
+              alt="Entity image"
+            />
+          ) : (
+            <Box
+              sx={{
+                width: "100%",
+                height: imageHeight ?? "auto",
+                aspectRatio: imageHeight ? undefined : (imageAspectRatio || "1/1.414"),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 0,
+                border: "1px dashed rgba(255, 255, 255, 0.1)",
+                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                py: 4,
+              }}
+            >
+              {imagePlaceholderIcon}
+            </Box>
+          )}
+        </Box>
+
+        {/* 2. Action Toolbar under cover */}
+        {leftColumnAppend && (
+          <Box sx={{ width: "100%", maxWidth: typeof imageWidth === 'number' ? imageWidth : 300, mx: "auto", mb: 2 }}>
+            {leftColumnAppend}
+          </Box>
+        )}
+
+        {/* 3. Title */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            gap: 2,
+            gap: 1,
             width: "100%",
+            mb: 1,
           }}
         >
           <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>{title}</Box>
-          {actions && <Box sx={{ flex: "0 0 auto" }}>{actions}</Box>}
+          {actions && !leftColumnAppend && <Box sx={{ flex: "0 0 auto" }}>{actions}</Box>}
         </Box>
 
+        {/* 4. Subtitle (Authors) */}
         {subtitle && (
-          <Box sx={{ width: "100%", maxWidth: "100%" }}>
+          <Box sx={{ width: "100%", maxWidth: "100%", mb: 1.5 }}>
             {subtitle}
           </Box>
         )}
+
+        {/* 5. Tags (100% full width) */}
         {tags && (
-          <Box sx={{ width: "100%", maxWidth: "100%", mt: 1, mb: 1 }}>
+          <Box sx={{ width: "100%", maxWidth: "100%", mb: 2 }}>
             {tags}
           </Box>
         )}
+
+        {/* 6. Description (100% full width) */}
         {description && (
-          <Box sx={{ width: "100%", maxWidth: "100%" }}>
+          <Box sx={{ width: "100%", maxWidth: "100%", mb: 1 }}>
             {description}
           </Box>
         )}
 
-        <Box sx={{ flexGrow: 1 }} />
-
+        {/* 7. Footer (if any) */}
         {footer && (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "flex-end",
-              mt: 2,
-            }}
-          >
-            <Box>{footer}</Box>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+            {footer}
           </Box>
         )}
-      </CardContent>
+      </Box>
     </Card>
   );
 };

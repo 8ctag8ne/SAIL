@@ -33,15 +33,18 @@ export default function RegisterPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "100vh",
+        minHeight: "calc(100vh - 160px)",
         backgroundColor: "transparent",
+        py: 3,
+        px: { xs: 1, sm: 2 },
       }}
     >
       <Paper
         elevation={3}
         sx={{
-          padding: 4,
-          width: 400,
+          padding: { xs: 2.5, sm: 4 },
+          maxWidth: 400,
+          width: "100%",
           textAlign: "center",
         }}
       >

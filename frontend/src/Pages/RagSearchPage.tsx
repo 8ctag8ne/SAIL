@@ -256,8 +256,9 @@ const RagSearchPage: React.FC = () => {
       sx={{
         maxWidth: 800,
         mx: "auto",
-        mt: 4,
-        px: { xs: 2, sm: 3 },
+        mt: { xs: 1.5, sm: 3 },
+        px: { xs: 0.5, sm: 2 },
+        width: "100%",
       }}
     >
       <Box className="tour-rag-controls">
