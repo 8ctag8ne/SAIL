@@ -16,7 +16,7 @@ const AuthorsPageComponent: React.FC = () => {
     });
 
     return (
-        <Box sx={{ padding: 2 }}>
+        <Box sx={{ width: "100%" }}>
             {isLoading ? (
                 <LoadingIndicator />
             ) : isError || !data || data.items.length === 0 ? (
@@ -26,10 +26,12 @@ const AuthorsPageComponent: React.FC = () => {
                     {data.items.map((author) => (
                         <AuthorCard key={author.id} author={author} />
                     ))}
-                    <Box sx={{ display: "flex", justifyContent: "center", marginTop: 2 }}>
+                    <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, mb: 2 }}>
                         <Pagination
                             count={data.totalPages}
                             page={pageNumber}
+                            siblingCount={0}
+                            boundaryCount={1}
                             onChange={(e, value) => {
                                 setSearchParams(prev => {
                                     const params = new URLSearchParams(prev);
@@ -38,6 +40,13 @@ const AuthorsPageComponent: React.FC = () => {
                                 });
                             }}
                             color="primary"
+                            sx={{
+                                '& .MuiPaginationItem-root': {
+                                    minWidth: { xs: 28, sm: 36 },
+                                    height: { xs: 28, sm: 36 },
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                }
+                            }}
                         />
                     </Box>
                 </>

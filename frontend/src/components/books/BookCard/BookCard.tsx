@@ -227,8 +227,19 @@ const BookCard: React.FC<BookCardProps> = ({
         title={title}
         subtitle={
           authors.length > 0 ? (
-            <Typography variant="subtitle2" color="primary">
-              Авторство:{" "}
+            <Typography
+              variant="subtitle2"
+              color="primary"
+              sx={{
+                fontSize: { xs: "0.8rem", sm: "0.85rem", md: "0.9rem" },
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                wordBreak: "break-word",
+                lineHeight: 1.3,
+              }}
+            >
               {authors.map((a, idx) => (
                 <React.Fragment key={a.id}>
                   <Box
@@ -257,28 +268,54 @@ const BookCard: React.FC<BookCardProps> = ({
         }
         description={info}
         tags={
-          tags.map(tag => (
-            <Chip
-              key={tag.id}
-              label={
-                <Box component="span" sx={{ display: "inline-block", maxWidth: "40ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
-                  {tag.title}
-                </Box>
-              }
-              clickable
-              onClick={(e) => handleTagClick(e, tag.id)}
-              sx={{
-                cursor: "pointer",
-                maxWidth: "100%",
-              }}
-            />
-          ))
+          (() => {
+            const MAX_VISIBLE_TAGS = 3;
+            const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
+            const remainingCount = tags.length - MAX_VISIBLE_TAGS;
+
+            return (
+              <>
+                {visibleTags.map(tag => (
+                  <Chip
+                    key={tag.id}
+                    size="small"
+                    label={
+                      <Box component="span" sx={{ display: "inline-block", maxWidth: { xs: "16ch", sm: "24ch", md: "35ch" }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom", fontSize: { xs: "0.72rem", sm: "0.78rem", md: "0.82rem" } }}>
+                        {tag.title}
+                      </Box>
+                    }
+                    clickable
+                    onClick={(e) => handleTagClick(e, tag.id)}
+                    sx={{
+                      cursor: "pointer",
+                      maxWidth: "100%",
+                      height: { xs: 22, sm: 26 },
+                      flexShrink: 0,
+                    }}
+                  />
+                ))}
+                {remainingCount > 0 && (
+                  <Chip
+                    size="small"
+                    label={`+${remainingCount}`}
+                    sx={{
+                      height: { xs: 22, sm: 26 },
+                      fontSize: { xs: "0.72rem", sm: "0.78rem" },
+                      opacity: 0.75,
+                      borderColor: "divider",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+              </>
+            );
+          })()
         }
         footer={
           likesCount !== undefined ? (
-            <IconButton onClick={handleLikeToggle} color={liked ? "primary" : "default"}>
-              {liked ? <ThumbUp /> : <ThumbUpOffAlt />}
-              <Typography sx={{ ml: 0.5 }}>{likeCount}</Typography>
+            <IconButton onClick={handleLikeToggle} color={liked ? "primary" : "default"} size="small">
+              {liked ? <ThumbUp fontSize="small" /> : <ThumbUpOffAlt fontSize="small" />}
+              <Typography sx={{ ml: 0.5, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>{likeCount}</Typography>
             </IconButton>
           ) : undefined
         }

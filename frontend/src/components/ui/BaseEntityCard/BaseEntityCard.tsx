@@ -40,13 +40,14 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
       onClick={onClick}
       sx={{
         display: "flex",
-        flexDirection: { xs: "column", sm: "row" },
-        minHeight: minHeight || { xs: "auto", sm: 220 },
-        padding: 2,
-        marginY: 2,
+        flexDirection: "row", // 2 колонки на всіх екранах (фото ліворуч, інфо праворуч)
+        minHeight: minHeight || { xs: 110, sm: 120, md: 190 },
+        padding: { xs: 1, sm: 1.25, md: 2 },
+        marginY: { xs: 1, sm: 1.25, md: 2 },
         marginX: "auto",
         position: "relative",
-        overflow: "ellipsis",
+        overflow: "hidden",
+        width: "100%",
         ...(onClick ? { cursor: "pointer" } : {}),
       }}
     >
@@ -56,29 +57,33 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           image={imageUrl}
           alt="Entity Image"
           sx={{
-            width: { xs: "100%", sm: 150 },
+            width: { xs: 80, sm: 95, md: 140 },
+            minWidth: { xs: 80, sm: 95, md: 140 },
             height: "auto",
             aspectRatio: imageAspectRatio || "1/1.414",
             objectFit: "cover",
             flexShrink: 0,
-            alignSelf: "flex-start",
-            marginRight: { xs: 0, sm: 2 },
-            marginBottom: { xs: 2, sm: 0 },
+            alignSelf: "center", // Вертикальне центрування обкладинки
+            marginRight: { xs: 1.25, sm: 1.5, md: 2 },
+            marginBottom: 0,
           }}
         />
       ) : (
         <Box
           sx={{
-            width: { xs: "100%", sm: 150 },
+            width: { xs: 80, sm: 95, md: 140 },
+            minWidth: { xs: 80, sm: 95, md: 140 },
             height: "auto",
             aspectRatio: imageAspectRatio || "1/1.414",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            alignSelf: "flex-start",
-            marginRight: { xs: 0, sm: 2 },
-            marginBottom: { xs: 2, sm: 0 },
+            alignSelf: "center", // Вертикальне центрування плейсхолдера
+            marginRight: { xs: 1.25, sm: 1.5, md: 2 },
+            marginBottom: 0,
+            backgroundColor: "rgba(255, 255, 255, 0.02)",
+            border: "1px dashed rgba(255, 255, 255, 0.1)",
           }}
         >
           {imagePlaceholderIcon}
@@ -91,22 +96,26 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           flexDirection: "column",
           flexGrow: 1,
           minWidth: 0,
-          p: 2,
-          overflow: "hidden", // Replaced invalid overflow: "ellipsis"
-          "&:last-child": { pb: 2 } // Keep padding standard visually despite absolute bounds removal
+          p: { xs: 0.5, sm: 0.75, md: 1.5 },
+          overflow: "hidden",
+          "&:last-child": { pb: { xs: 0.5, sm: 0.75, md: 1.5 } }
         }}
       >
         {/* Top Row (Title & Actions) */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1, mb: 1, width: "100%" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1, mb: 0.5, width: "100%" }}>
           <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>
             <Typography
               variant="h5"
               fontWeight="bold"
               sx={{
+                fontSize: { xs: "0.92rem", sm: "1.02rem", md: "1.25rem" },
+                lineHeight: 1.25,
                 width: "100%",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
                 overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                wordBreak: "break-word",
               }}
             >
               {title}
@@ -114,35 +123,34 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           </Box>
 
           {actions && (
-            <Box sx={{ flex: "0 0 auto", display: "flex", gap: 1 }}>
+            <Box sx={{ flex: "0 0 auto", display: "flex", gap: 0.5 }}>
               {actions}
             </Box>
           )}
         </Box>
 
         {/* Middle Section (Subtitle & Description) */}
-        {subtitle && <Box sx={{ mb: 1 }}>{subtitle}</Box>}
-
-        {tags && (
-          <Box sx={{ mb: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {tags}
+        {subtitle && (
+          <Box sx={{ mb: 0.5, fontSize: { xs: "0.8rem", sm: "0.85rem", md: "0.9rem" } }}>
+            {subtitle}
           </Box>
         )}
 
         {description && (
-          <Box sx={{ mb: 1, width: "100%", maxWidth: "100%" }}>
+          <Box sx={{ mb: 0.5, width: "100%", maxWidth: "100%", display: { xs: "none", md: "block" } }}>
             <Typography
-              variant="body1"
+              variant="body2"
               color="text.secondary"
               component="div"
               sx={{
                 display: "-webkit-box",
-                WebkitLineClamp: 4,
+                WebkitLineClamp: { md: 2, lg: 3 },
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
                 whiteSpace: "pre-line",
                 wordBreak: "break-word",
                 m: 0,
+                fontSize: { md: "0.82rem", lg: "0.875rem" }
               }}
             >
               {description}
@@ -150,12 +158,18 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
           </Box>
         )}
 
-        {/* Spacer (Crucial for standardized height) */}
-        <Box sx={{ flexGrow: 1 }} />
+        {tags && (
+          <Box sx={{ mb: 0.5, display: "flex", flexWrap: "wrap", gap: { xs: 0.5, sm: 0.75 } }}>
+            {tags}
+          </Box>
+        )}
 
-        {/* Bottom Row (Footer) */}
+        {/* Spacer - pushes footer strictly to the bottom */}
+        <Box sx={{ flexGrow: 1, minHeight: 4 }} />
+
+        {/* Bottom Row (Footer strictly at the bottom) */}
         {footer && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", mt: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", mt: "auto", pt: 0.5, width: "100%" }}>
             <Box sx={{ flexShrink: 0 }}>
               {footer}
             </Box>

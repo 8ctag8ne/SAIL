@@ -25,7 +25,7 @@ const TagsPageComponent: React.FC = () => {
     const totalPages = data?.totalPages || 1;
 
     return (
-        <Box sx={{ padding: 2 }}>
+        <Box sx={{ width: "100%" }}>
             {/* Додайте фільтри, як у BooksPageComponent */}
             {/* <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
                 <Select
@@ -46,7 +46,7 @@ const TagsPageComponent: React.FC = () => {
                         <Switch
                             checked={searchParams.get("isDescending") === "true"}
                             onChange={(e) => 
-                                setSearchParams({ 
+                                 setSearchParams({ 
                                     ...Object.fromEntries(searchParams), 
                                     isDescending: e.target.checked.toString(),
                                     page: "1" 
@@ -66,10 +66,12 @@ const TagsPageComponent: React.FC = () => {
                     {tags.map((tag) => (
                         <TagCard key={tag.id} tag={tag} />
                     ))}
-                    <Box sx={{ display: "flex", justifyContent: "center", marginTop: 2 }}>
+                    <Box sx={{ display: "flex", justifyContent: "center", marginTop: 3, mb: 2 }}>
                         <Pagination
                             count={totalPages}
                             page={pageNumber}
+                            siblingCount={0}
+                            boundaryCount={1}
                             onChange={(e, value) => {
                                 setSearchParams(prev => {
                                     const params = new URLSearchParams(prev);
@@ -78,6 +80,13 @@ const TagsPageComponent: React.FC = () => {
                                 });
                             }}
                             color="primary"
+                            sx={{
+                                '& .MuiPaginationItem-root': {
+                                    minWidth: { xs: 28, sm: 36 },
+                                    height: { xs: 28, sm: 36 },
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                }
+                            }}
                         />
                     </Box>
                 </>

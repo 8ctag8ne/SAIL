@@ -257,8 +257,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         }
         subtitle={
           authors.length > 0 && (
-            <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>
-              Авторство:{" "}
+            <Typography variant="subtitle1" color="primary" sx={{ mb: 1, wordBreak: "break-word" }}>
               {authors.map((a, idx) => (
                 <React.Fragment key={a.id}>
                   <Box
