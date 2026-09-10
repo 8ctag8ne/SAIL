@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import {
   Typography, Box,
-  IconButton, Chip
+  IconButton, Chip, Tooltip,
+  useTheme, useMediaQuery
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToggleLike, useUpdateBook, useDeleteBook } from "../../../hooks/useBooks";
@@ -49,6 +50,8 @@ const BookCard: React.FC<BookCardProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [liked, setLiked] = useState(isLiked);
   const [likeCount, setLikeCount] = useState(likesCount);
@@ -269,9 +272,9 @@ const BookCard: React.FC<BookCardProps> = ({
         description={info}
         tags={
           (() => {
-            const MAX_VISIBLE_TAGS = 3;
-            const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
-            const remainingCount = tags.length - MAX_VISIBLE_TAGS;
+            const maxVisibleTags = isMobile ? 2 : 3;
+            const visibleTags = tags.slice(0, maxVisibleTags);
+            const remainingCount = tags.length - maxVisibleTags;
 
             return (
               <>
@@ -279,6 +282,7 @@ const BookCard: React.FC<BookCardProps> = ({
                   <Chip
                     key={tag.id}
                     size="small"
+                    variant="outlined"
                     label={
                       <Box component="span" sx={{ display: "inline-block", maxWidth: { xs: "16ch", sm: "24ch", md: "35ch" }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom", fontSize: { xs: "0.72rem", sm: "0.78rem", md: "0.82rem" } }}>
                         {tag.title}
@@ -312,12 +316,38 @@ const BookCard: React.FC<BookCardProps> = ({
           })()
         }
         footer={
-          likesCount !== undefined ? (
-            <IconButton onClick={handleLikeToggle} color={liked ? "primary" : "default"} size="small">
-              {liked ? <ThumbUp fontSize="small" /> : <ThumbUpOffAlt fontSize="small" />}
-              <Typography sx={{ ml: 0.5, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>{likeCount}</Typography>
-            </IconButton>
-          ) : undefined
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+            {processed && (
+              <Tooltip title="В базі знань (RAG / AI-пошук)" arrow placement="top">
+                <Box
+                  component="span"
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "text.primary",
+                    opacity: 0.75,
+                    cursor: "help",
+                    p: "4px",
+                    transition: "all 0.15s ease",
+                    "&:hover": {
+                      opacity: 1,
+                      color: "primary.main",
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <AutoAwesomeIcon sx={{ fontSize: { xs: "1rem", sm: "1.15rem" } }} />
+                </Box>
+              </Tooltip>
+            )}
+            {likesCount !== undefined && (
+              <IconButton onClick={handleLikeToggle} color={liked ? "primary" : "default"} size="small">
+                {liked ? <ThumbUp fontSize="small" /> : <ThumbUpOffAlt fontSize="small" />}
+                <Typography sx={{ ml: 0.5, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>{likeCount}</Typography>
+              </IconButton>
+            )}
+          </Box>
         }
         actions={<EntityActionMenu actions={menuActions} />}
       />

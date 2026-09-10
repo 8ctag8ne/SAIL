@@ -125,25 +125,25 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
           </Box>
 
           {subtitle && (
-            <Box sx={{ width: "100%", maxWidth: "100%", mb: 1.5 }}>
+            <Box sx={{ width: "100%", maxWidth: "100%", mb: 0.75 }}>
               {subtitle}
             </Box>
           )}
 
           {tags && (
-            <Box sx={{ width: "100%", maxWidth: "100%", mb: 2 }}>
+            <Box sx={{ width: "100%", maxWidth: "100%", mb: 1 }}>
               {tags}
             </Box>
           )}
 
           {description && (
-            <Box sx={{ width: "100%", maxWidth: "100%", mb: 2 }}>
+            <Box sx={{ width: "100%", maxWidth: "100%", mb: 1 }}>
               {description}
             </Box>
           )}
 
           {footer && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: "auto", pt: 1 }}>
+            <Box sx={{ display: "flex", width: "100%", justifyContent: "flex-start", alignItems: "center", mt: 0.5 }}>
               {footer}
             </Box>
           )}
@@ -226,28 +226,28 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
 
         {/* 4. Subtitle (Authors) */}
         {subtitle && (
-          <Box sx={{ width: "100%", maxWidth: "100%", mb: 1.5 }}>
+          <Box sx={{ width: "100%", maxWidth: "100%", mb: 0.75 }}>
             {subtitle}
           </Box>
         )}
 
         {/* 5. Tags (100% full width) */}
         {tags && (
-          <Box sx={{ width: "100%", maxWidth: "100%", mb: 2 }}>
+          <Box sx={{ width: "100%", maxWidth: "100%", mb: 1 }}>
             {tags}
           </Box>
         )}
 
         {/* 6. Description (100% full width) */}
         {description && (
-          <Box sx={{ width: "100%", maxWidth: "100%", mb: 1 }}>
+          <Box sx={{ width: "100%", maxWidth: "100%", mb: 0.75 }}>
             {description}
           </Box>
         )}
 
         {/* 7. Footer (if any) */}
         {footer && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+          <Box sx={{ display: "flex", width: "100%", justifyContent: "flex-start", alignItems: "center", mt: 0.5 }}>
             {footer}
           </Box>
         )}

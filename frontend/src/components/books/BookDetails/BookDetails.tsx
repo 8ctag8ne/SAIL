@@ -5,6 +5,7 @@ import {
   IconButton,
   Box,
   Chip,
+  Tooltip,
 } from "@mui/material";
 import BaseEntityDetails from "../../ui/BaseEntityDetails";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -388,12 +389,11 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         description={
           <>
             {info && (
-              <Box sx={{ position: "relative", mb: 2 }}>
+              <Box sx={{ position: "relative", mb: 0.5 }}>
                 <Typography
                   ref={infoRef}
                   variant="body1"
                   color="text.secondary"
-                  paragraph
                   sx={{
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
@@ -404,6 +404,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
                     WebkitLineClamp: !expanded && showReadMore ? 7 : "unset",
                     WebkitBoxOrient: "vertical",
                     pr: 3,
+                    m: 0,
                   }}
                 >
                   {info}
@@ -417,7 +418,8 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               <Button
                 size="small"
                 sx={{
-                  mb: 2,
+                  mb: 0.5,
+                  mt: 0.5,
                   px: 1,
                   minWidth: "unset",
                   fontSize: 14,
@@ -431,7 +433,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
           </>
         }
         tags={
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", marginBottom: 2 }}>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 0.5 }}>
             {tags.map((tag) => (
               <Chip
                 key={tag.id}
@@ -449,6 +451,30 @@ const BookDetails: React.FC<BookDetailsProps> = ({
               />
             ))}
           </Box>
+        }
+        footer={
+          processed ? (
+            <Tooltip title="В базі знань (RAG / AI-пошук)" arrow placement="top">
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "text.primary",
+                  opacity: 0.75,
+                  cursor: "help",
+                  p: "4px",
+                  transition: "all 0.15s ease",
+                  "&:hover": {
+                    opacity: 1,
+                    color: "primary.main",
+                  },
+                }}
+              >
+                <AutoAwesomeIcon sx={{ fontSize: { xs: "1.1rem", sm: "1.25rem" } }} />
+              </Box>
+            </Tooltip>
+          ) : undefined
         }
         actions={<EntityActionMenu actions={menuActions} />}
       />
