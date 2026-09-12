@@ -226,24 +226,19 @@ namespace MilLib.Controllers
 
             var deviceId = Request.Headers["X-Device-Id"].FirstOrDefault();
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            var (isAllowed, quota) = await _ragQuotaService.TryConsumeQuotaAsync(User, deviceId, ip);
+            var currentQuota = await _ragQuotaService.GetQuotaAsync(User, deviceId, ip);
 
-            if (!isAllowed)
+            if (!currentQuota.IsUnlimited && currentQuota.Remaining <= 0)
             {
                 Response.StatusCode = StatusCodes.Status429TooManyRequests;
                 Response.ContentType = "application/json";
                 var errorResponse = new
                 {
                     message = "Денний ліміт запитів RAG вичерпано",
-                    quota = quota
+                    quota = currentQuota
                 };
                 await Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
                 return;
-            }
-
-            if (!quota.IsUnlimited && quota.Remaining.HasValue)
-            {
-                Response.Headers.Append("X-RateLimit-Remaining", quota.Remaining.Value.ToString());
             }
 
             var client = _httpClientFactory.CreateClient("AiService");
@@ -281,8 +276,23 @@ namespace MilLib.Controllers
             using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             var buffer = new byte[8192];
             int bytesRead;
+            bool hasConsumedQuota = false;
+
             while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
             {
+                if (!hasConsumedQuota)
+                {
+                    var chunkText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    if (chunkText.Contains("\"type\":\"answer\"") ||
+                        chunkText.Contains("\"type\": \"answer\"") ||
+                        chunkText.Contains("\"type\":\"thinking\"") ||
+                        chunkText.Contains("\"type\": \"thinking\""))
+                    {
+                        await _ragQuotaService.TryConsumeQuotaAsync(User, deviceId, ip);
+                        hasConsumedQuota = true;
+                    }
+                }
+
                 await Response.Body.WriteAsync(buffer, 0, bytesRead, cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
             }
@@ -298,20 +308,15 @@ namespace MilLib.Controllers
 
             var deviceId = Request.Headers["X-Device-Id"].FirstOrDefault();
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            var (isAllowed, quota) = await _ragQuotaService.TryConsumeQuotaAsync(User, deviceId, ip);
+            var currentQuota = await _ragQuotaService.GetQuotaAsync(User, deviceId, ip);
 
-            if (!isAllowed)
+            if (!currentQuota.IsUnlimited && currentQuota.Remaining <= 0)
             {
                 return StatusCode(StatusCodes.Status429TooManyRequests, new
                 {
                     message = "Денний ліміт запитів RAG вичерпано",
-                    quota = quota
+                    quota = currentQuota
                 });
-            }
-
-            if (!quota.IsUnlimited && quota.Remaining.HasValue)
-            {
-                Response.Headers.Append("X-RateLimit-Remaining", quota.Remaining.Value.ToString());
             }
 
             var client = _httpClientFactory.CreateClient("AiService");
@@ -335,6 +340,11 @@ namespace MilLib.Controllers
             }
 
             var responseData = await response.Content.ReadAsStringAsync();
+            if (responseData.Contains("\"answer\"") && !responseData.Contains("\"answer\":\"\"") && !responseData.Contains("\"answer\": \"\""))
+            {
+                await _ragQuotaService.TryConsumeQuotaAsync(User, deviceId, ip);
+            }
+
             return Content(responseData, "application/json");
         }
     }

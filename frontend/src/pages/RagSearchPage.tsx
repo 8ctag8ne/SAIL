@@ -157,18 +157,6 @@ const RagSearchPage: React.FC = () => {
         throw new Error(`Сталася помилка при пошуку (код ${response.status})`);
       }
 
-      const remainingHeader = response.headers.get("X-RateLimit-Remaining");
-      if (remainingHeader !== null) {
-        const remVal = parseInt(remainingHeader, 10);
-        if (!isNaN(remVal)) {
-          setQuota(prev => prev ? {
-            ...prev,
-            remaining: remVal,
-            used: prev.dailyLimit !== null ? prev.dailyLimit - remVal : prev.used
-          } : null);
-        }
-      }
-
       const reader = response.body?.getReader();
       if (!reader) throw new Error("Stream not available");
 
@@ -177,6 +165,7 @@ const RagSearchPage: React.FC = () => {
 
       const decoder = new TextDecoder();
       let buffer = "";
+      let hasDecrementedQuota = false;
 
       setRagResult({ ...partialResult });
 
@@ -218,9 +207,33 @@ const RagSearchPage: React.FC = () => {
                 partialResult.suggestedQuestions = data.data;
                 setRagResult({ ...partialResult });
               } else if (data.type === "thinking") {
+                if (!hasDecrementedQuota) {
+                  hasDecrementedQuota = true;
+                  setQuota(prev => {
+                    if (!prev || prev.isUnlimited || prev.remaining === null) return prev;
+                    const newRemaining = Math.max(0, prev.remaining - 1);
+                    return {
+                      ...prev,
+                      remaining: newRemaining,
+                      used: (prev.dailyLimit ?? 0) - newRemaining
+                    };
+                  });
+                }
                 accumulatedThinking += data.text;
                 setThinkingText(prev => prev + data.text);
               } else if (data.type === "answer") {
+                if (!hasDecrementedQuota) {
+                  hasDecrementedQuota = true;
+                  setQuota(prev => {
+                    if (!prev || prev.isUnlimited || prev.remaining === null) return prev;
+                    const newRemaining = Math.max(0, prev.remaining - 1);
+                    return {
+                      ...prev,
+                      remaining: newRemaining,
+                      used: (prev.dailyLimit ?? 0) - newRemaining
+                    };
+                  });
+                }
                 setAnswerText(prev => prev + data.text);
                 partialResult.answer += data.text;
                 setRagResult({ ...partialResult });
