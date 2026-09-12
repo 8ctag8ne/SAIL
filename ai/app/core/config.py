@@ -1,12 +1,14 @@
 # core/config.py
+from __future__ import annotations
+from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
-    DATABASE_URL: str | None = None
-    SUPABASE_SESSION_POOLER: str | None = None
-    OPENROUTER_API_KEY: str | None = None
-    OLLAMA_API_BASE: str | None = None  
+    DATABASE_URL: Optional[str] = None
+    SUPABASE_SESSION_POOLER: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    OLLAMA_API_BASE: Optional[str] = None  
     MAIN_API_URL: str = "http://localhost:8080"
     
     @property

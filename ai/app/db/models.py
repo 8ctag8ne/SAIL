@@ -33,8 +33,8 @@ class DocumentChunk(Base):
     level = Column(Integer, nullable=False)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("document_chunks.id"), nullable=True)
     
-    page_start = Column(Integer, nullable=False)
-    page_end = Column(Integer, nullable=False)
+    page_start = Column(Integer, nullable=True)
+    page_end = Column(Integer, nullable=True)
     text = Column(Text, nullable=False)
     # similarity_score = Column(float, nullable=True)
     

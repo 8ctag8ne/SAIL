@@ -11,6 +11,7 @@ pymupdf
 # База даних (Entity Framework style)
 sqlalchemy
 asyncpg            # Асинхронний драйвер для Postgres
+greenlet           # AsyncIO concurrency for SQLAlchemy
 pgvector           # Підтримка векторів у SQLAlchemy
 
 # ШІ та RAG
