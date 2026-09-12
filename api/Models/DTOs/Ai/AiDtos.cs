@@ -35,4 +35,14 @@ namespace MilLib.Models.DTOs.Ai
         public string Text { get; set; } = string.Empty;
         public double SimilarityScore { get; set; }
     }
+
+    public class RagQuotaDto
+    {
+        public int? DailyLimit { get; set; }
+        public int? Remaining { get; set; }
+        public int Used { get; set; }
+        public bool IsUnlimited { get; set; }
+        public DateTime ResetAt { get; set; }
+        public int SecondsUntilReset { get; set; }
+    }
 }

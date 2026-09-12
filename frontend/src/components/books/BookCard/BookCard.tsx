@@ -282,7 +282,6 @@ const BookCard: React.FC<BookCardProps> = ({
                   <Chip
                     key={tag.id}
                     size="small"
-                    variant="outlined"
                     label={
                       <Box component="span" sx={{ display: "inline-block", maxWidth: { xs: "16ch", sm: "24ch", md: "35ch" }, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom", fontSize: { xs: "0.72rem", sm: "0.78rem", md: "0.82rem" } }}>
                         {tag.title}
@@ -306,7 +305,6 @@ const BookCard: React.FC<BookCardProps> = ({
                       height: { xs: 22, sm: 26 },
                       fontSize: { xs: "0.72rem", sm: "0.78rem" },
                       opacity: 0.75,
-                      borderColor: "divider",
                       flexShrink: 0,
                     }}
                   />

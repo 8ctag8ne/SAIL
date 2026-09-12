@@ -1,7 +1,7 @@
-//api/Controllers/AiController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using MilLib.Models.DTOs.Ai;
+using MilLib.Services.Interfaces;
 using System.Text.Json;
 using System.Text;
 
@@ -14,10 +14,12 @@ namespace MilLib.Controllers
     public class AiController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IRagQuotaService _ragQuotaService;
 
-        public AiController(IHttpClientFactory httpClientFactory)
+        public AiController(IHttpClientFactory httpClientFactory, IRagQuotaService ragQuotaService)
         {
             _httpClientFactory = httpClientFactory;
+            _ragQuotaService = ragQuotaService;
         }
 
         // 1. Ендпоїнт для завантаження файлу
@@ -203,6 +205,15 @@ namespace MilLib.Controllers
             return Content(responseData, "application/json");
         }
 
+        [HttpGet("rag/quota")]
+        public async Task<IActionResult> GetRagQuota()
+        {
+            var deviceId = Request.Headers["X-Device-Id"].FirstOrDefault();
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            var quota = await _ragQuotaService.GetQuotaAsync(User, deviceId, ip);
+            return Ok(quota);
+        }
+
         [HttpPost("rag/ask")]
         public async Task AskRagQuestion([FromBody] RagAskRequestDto request, CancellationToken cancellationToken)
         {
@@ -211,7 +222,24 @@ namespace MilLib.Controllers
                 Response.StatusCode = 400;
                 await Response.WriteAsync("Query cannot be empty.");
                 return;
-            }   
+            }
+
+            var deviceId = Request.Headers["X-Device-Id"].FirstOrDefault();
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            var currentQuota = await _ragQuotaService.GetQuotaAsync(User, deviceId, ip);
+
+            if (!currentQuota.IsUnlimited && currentQuota.Remaining <= 0)
+            {
+                Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                Response.ContentType = "application/json";
+                var errorResponse = new
+                {
+                    message = "Денний ліміт запитів RAG вичерпано",
+                    quota = currentQuota
+                };
+                await Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
+                return;
+            }
 
             var client = _httpClientFactory.CreateClient("AiService");
             var payload = new
@@ -248,8 +276,23 @@ namespace MilLib.Controllers
             using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             var buffer = new byte[8192];
             int bytesRead;
+            bool hasConsumedQuota = false;
+
             while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
             {
+                if (!hasConsumedQuota)
+                {
+                    var chunkText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    if (chunkText.Contains("\"type\":\"answer\"") ||
+                        chunkText.Contains("\"type\": \"answer\"") ||
+                        chunkText.Contains("\"type\":\"thinking\"") ||
+                        chunkText.Contains("\"type\": \"thinking\""))
+                    {
+                        await _ragQuotaService.TryConsumeQuotaAsync(User, deviceId, ip);
+                        hasConsumedQuota = true;
+                    }
+                }
+
                 await Response.Body.WriteAsync(buffer, 0, bytesRead, cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
             }
@@ -261,7 +304,20 @@ namespace MilLib.Controllers
             if (string.IsNullOrWhiteSpace(request.Query))
             {
                 return BadRequest("Query cannot be empty.");
-            }   
+            }
+
+            var deviceId = Request.Headers["X-Device-Id"].FirstOrDefault();
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            var currentQuota = await _ragQuotaService.GetQuotaAsync(User, deviceId, ip);
+
+            if (!currentQuota.IsUnlimited && currentQuota.Remaining <= 0)
+            {
+                return StatusCode(StatusCodes.Status429TooManyRequests, new
+                {
+                    message = "Денний ліміт запитів RAG вичерпано",
+                    quota = currentQuota
+                });
+            }
 
             var client = _httpClientFactory.CreateClient("AiService");
             var payload = new
@@ -284,6 +340,11 @@ namespace MilLib.Controllers
             }
 
             var responseData = await response.Content.ReadAsStringAsync();
+            if (responseData.Contains("\"answer\"") && !responseData.Contains("\"answer\":\"\"") && !responseData.Contains("\"answer\": \"\""))
+            {
+                await _ragQuotaService.TryConsumeQuotaAsync(User, deviceId, ip);
+            }
+
             return Content(responseData, "application/json");
         }
     }

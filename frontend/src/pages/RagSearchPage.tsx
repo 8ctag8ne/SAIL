@@ -7,13 +7,16 @@ import RagSearchView from "../components/ui/RagSearchView/RagSearchView";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TuneIcon from "@mui/icons-material/Tune";
 import { RagResponse } from "../types";
-import { askRagQuestion } from "../api/AiApi";
+import { getRagQuota, RagQuota, formatTimeUntilReset } from "../api/AiApi";
 import { toast } from "react-fox-toast";
 import { MOCK_RAG_RESPONSE } from "../mocks/ragTourMock";
 import BASE_URL from "../config";
 import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { useTour } from "../contexts/TourContext";
+import { useAuth } from "../contexts/AuthContext";
+import { getDeviceId } from "../utils/deviceId";
+import RagQuotaBadge from "../components/ui/RagQuotaBadge";
 
 const memoryCache = new Map<string, { ragResult: RagResponse; thinkingText: string }>();
 
@@ -37,6 +40,7 @@ const setCachedResult = (key: string, data: { ragResult: RagResponse; thinkingTe
 };
 
 const RagSearchPage: React.FC = () => {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
   const urlTemp = parseFloat(searchParams.get("temp") || "0.1");
@@ -56,8 +60,26 @@ const RagSearchPage: React.FC = () => {
   const [rewrite, setRewrite] = useState<boolean>(urlRewrite);
   const [thinkingText, setThinkingText] = useState("");
   const [answerText, setAnswerText] = useState("");
+  const [quota, setQuota] = useState<RagQuota | null>(null);
+  const [quotaLoading, setQuotaLoading] = useState(false);
   const ragResultRef = React.useRef<HTMLDivElement>(null);
   const { activeTour, stepIndex, run, setRun, stopTour } = useTour();
+
+  const refreshQuota = useCallback(async () => {
+    try {
+      setQuotaLoading(true);
+      const quotaData = await getRagQuota();
+      setQuota(quotaData);
+    } catch {
+      // Ignore quota fetch error
+    } finally {
+      setQuotaLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshQuota();
+  }, [user, refreshQuota]);
 
   useEffect(() => {
     if (activeTour === "user_rag" && stepIndex === 1 && !run) {
@@ -90,7 +112,8 @@ const RagSearchPage: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       const headers: Record<string, string> = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-Device-Id": getDeviceId()
       };
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
@@ -114,6 +137,22 @@ const RagSearchPage: React.FC = () => {
         })
       });
 
+      if (response.status === 429) {
+        try {
+          const errData = await response.json();
+          if (errData?.quota) {
+            setQuota(errData.quota);
+            const timeMsg = formatTimeUntilReset(errData.quota.secondsUntilReset);
+            throw new Error(`Денний ліміт запитів вичерпано. Скидання через ${timeMsg}.`);
+          }
+        } catch (parseErr: any) {
+          if (parseErr.message && parseErr.message.includes("Денний ліміт")) {
+            throw parseErr;
+          }
+        }
+        throw new Error("Денний ліміт запитів вичерпано. Спробуйте пізніше.");
+      }
+
       if (!response.ok) {
         throw new Error(`Сталася помилка при пошуку (код ${response.status})`);
       }
@@ -126,6 +165,7 @@ const RagSearchPage: React.FC = () => {
 
       const decoder = new TextDecoder();
       let buffer = "";
+      let hasDecrementedQuota = false;
 
       setRagResult({ ...partialResult });
 
@@ -167,9 +207,33 @@ const RagSearchPage: React.FC = () => {
                 partialResult.suggestedQuestions = data.data;
                 setRagResult({ ...partialResult });
               } else if (data.type === "thinking") {
+                if (!hasDecrementedQuota) {
+                  hasDecrementedQuota = true;
+                  setQuota(prev => {
+                    if (!prev || prev.isUnlimited || prev.remaining === null) return prev;
+                    const newRemaining = Math.max(0, prev.remaining - 1);
+                    return {
+                      ...prev,
+                      remaining: newRemaining,
+                      used: (prev.dailyLimit ?? 0) - newRemaining
+                    };
+                  });
+                }
                 accumulatedThinking += data.text;
                 setThinkingText(prev => prev + data.text);
               } else if (data.type === "answer") {
+                if (!hasDecrementedQuota) {
+                  hasDecrementedQuota = true;
+                  setQuota(prev => {
+                    if (!prev || prev.isUnlimited || prev.remaining === null) return prev;
+                    const newRemaining = Math.max(0, prev.remaining - 1);
+                    return {
+                      ...prev,
+                      remaining: newRemaining,
+                      used: (prev.dailyLimit ?? 0) - newRemaining
+                    };
+                  });
+                }
                 setAnswerText(prev => prev + data.text);
                 partialResult.answer += data.text;
                 setRagResult({ ...partialResult });
@@ -240,15 +304,23 @@ const RagSearchPage: React.FC = () => {
   const handleSearchSubmit = (newQuery: string) => {
     if (!newQuery.trim()) {
       setSearchParams({});
-    } else {
-      setSearchParams({
-        q: newQuery.trim(),
-        temp: temperature.toString(),
-        thinking: enableThinking.toString(),
-        hybrid: useHybridSearch.toString(),
-        rewrite: rewrite.toString()
-      });
+      return;
     }
+
+    if (quota && !quota.isUnlimited && quota.remaining === 0) {
+      const timeMsg = formatTimeUntilReset(quota.secondsUntilReset);
+      toast.warning(`Денний ліміт запитів вичерпано. Скидання через ${timeMsg}.`);
+      setError(`Денний ліміт запитів вичерпано. Скидання через ${timeMsg}.`);
+      return;
+    }
+
+    setSearchParams({
+      q: newQuery.trim(),
+      temp: temperature.toString(),
+      thinking: enableThinking.toString(),
+      hybrid: useHybridSearch.toString(),
+      rewrite: rewrite.toString()
+    });
   };
 
   return (
@@ -262,6 +334,18 @@ const RagSearchPage: React.FC = () => {
       }}
     >
       <Box className="tour-rag-controls">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            mb: 1,
+            px: 0.5,
+          }}
+        >
+          <RagQuotaBadge quota={quota} loading={quotaLoading} />
+        </Box>
+
         <SearchBar
           placeholder="Введіть фразу для пошуку по знаннях..."
           onSearch={handleSearchSubmit}
@@ -334,13 +418,7 @@ const RagSearchPage: React.FC = () => {
                 onClick={() => {
                   const targetQuery = query.trim() || urlQuery.trim();
                   if (targetQuery) {
-                    setSearchParams({
-                      q: targetQuery,
-                      temp: temperature.toString(),
-                      thinking: enableThinking.toString(),
-                      hybrid: useHybridSearch.toString(),
-                      rewrite: rewrite.toString()
-                    });
+                    handleSearchSubmit(targetQuery);
                   }
                 }}
               >
