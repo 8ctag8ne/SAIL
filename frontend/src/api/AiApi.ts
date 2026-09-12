@@ -38,3 +38,32 @@ export const getProcessBookStatus = async (taskId: string): Promise<{ taskId: st
         error: (response.data as any).error
     };
 };
+
+export interface RagQuota {
+    dailyLimit: number | null;
+    remaining: number | null;
+    used: number;
+    isUnlimited: boolean;
+    resetAt: string;
+    secondsUntilReset: number;
+}
+
+export const getRagQuota = async (): Promise<RagQuota> => {
+    const response = await instance.get<RagQuota>("/Ai/rag/quota");
+    return response.data;
+};
+
+export const formatTimeUntilReset = (seconds: number): string => {
+    if (seconds <= 0) return "найближчим часом";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (hours > 0 && minutes > 0) {
+        return `${hours} год. ${minutes} хв.`;
+    } else if (hours > 0) {
+        return `${hours} год.`;
+    } else {
+        return `${Math.max(1, minutes)} хв.`;
+    }
+};
+

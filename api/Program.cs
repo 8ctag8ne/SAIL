@@ -146,6 +146,9 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
 
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IRagQuotaService, RagQuotaService>();
+
 var aiServiceUrl = builder.Configuration["AI_SERVICE_URL"] ?? "http://localhost:8000";
 
 builder.Services.AddHttpClient("AiService", c => c.BaseAddress = new Uri(aiServiceUrl));
