@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography,
   Button,
@@ -14,7 +14,6 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import BASE_URL from "../../../config";
 import { SimpleAuthor, SimpleTag } from "../../../types";
-import { downloadBookFile } from "../../../api/BookApi";
 import { useToggleLike, useUpdateBook, useDeleteBook } from "../../../hooks/useBooks";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
@@ -30,7 +29,6 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import RagIndexDialog from "./RagIndexDialog";
 import MarkdownEditorModal from "./MarkdownEditorModal";
-import { useLocation } from "react-router-dom";
 import { toast } from "react-fox-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -63,13 +61,21 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const { id } = useParams(); // Отримуємо ID з URL
   const navigate = useNavigate();
   const { user } = useAuth();
-  const location = useLocation();
 
   const [showReadMore, setShowReadMore] = useState(false);
   const infoRef = React.useRef<HTMLDivElement>(null);
 
   const [liked, setLiked] = useState(isLiked || false);
   const [likeCount, setLikeCount] = useState(likesCount || 0);
+
+  useEffect(() => {
+    setLiked(isLiked || false);
+  }, [isLiked]);
+
+  useEffect(() => {
+    setLikeCount(likesCount || 0);
+  }, [likesCount]);
+
   const [addToListsOpen, setAddToListsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -498,6 +504,10 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         open={isRagIndexOpen}
         bookId={Number(id)}
         onClose={() => setIsRagIndexOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["books"] });
+          queryClient.invalidateQueries({ queryKey: ["books", Number(id)] });
+        }}
       />
 
       {isMarkdownEditorOpen && (
@@ -507,7 +517,7 @@ const BookDetails: React.FC<BookDetailsProps> = ({
           onClose={() => setIsMarkdownEditorOpen(false)}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ["books"] });
-            queryClient.invalidateQueries({ queryKey: ["book", id] });
+            queryClient.invalidateQueries({ queryKey: ["books", Number(id)] });
           }}
           parsed={parsed}
         />

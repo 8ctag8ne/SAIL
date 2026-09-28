@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import ConfirmDialog from '../../ui/ConfirmDialog';
 import { processBookForRag, getProcessBookStatus } from '../../../api/AiApi';
 import { toast } from 'react-fox-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface RagIndexDialogProps {
   open: boolean;
   bookId: number;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-const RagIndexDialog: React.FC<RagIndexDialogProps> = ({ open, bookId, onClose }) => {
+const RagIndexDialog: React.FC<RagIndexDialogProps> = ({ open, bookId, onClose, onSuccess }) => {
+  const queryClient = useQueryClient();
   const [internalState, setInternalState] = useState<"idle" | "polling">("idle");
 
   useEffect(() => {
@@ -31,6 +34,9 @@ const RagIndexDialog: React.FC<RagIndexDialogProps> = ({ open, bookId, onClose }
             if (statusResult.status === 'completed' || statusResult.status === 'success') {
               clearInterval(poll);
               toast.success('Книгу успішно проіндексовано', { isCloseBtn: true });
+              queryClient.invalidateQueries({ queryKey: ['books'] });
+              queryClient.invalidateQueries({ queryKey: ['books', bookId] });
+              if (onSuccess) onSuccess();
               resolve();
               onClose();
             } else if (statusResult.status === 'failed') {

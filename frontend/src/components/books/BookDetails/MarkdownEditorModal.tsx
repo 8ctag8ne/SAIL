@@ -24,6 +24,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getMarkdownByBookId, createMarkdown, updateMarkdown, autoParsePdfToMarkdown, getParseStatus } from "../../../api/markdownApi";
 import { toast } from "react-fox-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 type MarkdownEditorModalProps = {
   open: boolean;
@@ -34,6 +35,7 @@ type MarkdownEditorModalProps = {
 };
 
 const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId, onClose, onSaved, parsed }) => {
+  const queryClient = useQueryClient();
   const [tabIndex, setTabIndex] = useState(0);
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -88,6 +90,8 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId,
         await createMarkdown(bookId, content);
       }
       toast.success("Markdown збережено успішно", { isCloseBtn: true });
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['books', bookId] });
       if (onSaved) onSaved();
       onClose();
     } catch (error) {
@@ -110,6 +114,9 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({ open, bookId,
             if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
             setIsParsing(false);
             toast.success("Аналіз успішно завершено", { isCloseBtn: true });
+            queryClient.invalidateQueries({ queryKey: ['books'] });
+            queryClient.invalidateQueries({ queryKey: ['books', bookId] });
+            if (onSaved) onSaved();
             if (markdown) {
               setContent(markdown);
             }

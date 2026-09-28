@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Typography, Box,
   IconButton, Chip, Tooltip,
   useTheme, useMediaQuery
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToggleLike, useUpdateBook, useDeleteBook } from "../../../hooks/useBooks";
 import { useAuth } from "../../../contexts/AuthContext";
 import { SimpleAuthor, SimpleTag } from "../../../types";
@@ -12,7 +12,6 @@ import { toast } from "react-fox-toast";
 import ConfirmDialog from "../../ui/ConfirmDialog";
 import EntityModal from "../../ui/EntityModal/EntityModal";
 import BookForm from "../BookForm/BookForm";
-import { updateBook } from "../../../api/BookApi";
 import { useQueryClient } from "@tanstack/react-query";
 import { ThumbUp, ThumbUpOffAlt, Edit, Delete, MenuBook, Book, Download as DownloadIcon, PlaylistAdd as PlaylistAddIcon, RemoveCircleOutline as RemoveCircleOutlineIcon, AutoAwesome as AutoAwesomeIcon } from "@mui/icons-material";
 import BaseEntityCard from "../../ui/BaseEntityCard/BaseEntityCard";
@@ -38,8 +37,6 @@ type BookCardProps = {
   onRemoveFromList?: () => void;
 };
 
-const MAX_INFO_HEIGHT = 120;
-
 const BookCard: React.FC<BookCardProps> = ({
   className,
   id, title, imageUrl, info, tags, fileUrl,
@@ -48,13 +45,20 @@ const BookCard: React.FC<BookCardProps> = ({
   onRemoveFromList
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [liked, setLiked] = useState(isLiked);
   const [likeCount, setLikeCount] = useState(likesCount);
+
+  useEffect(() => {
+    setLiked(isLiked);
+  }, [isLiked]);
+
+  useEffect(() => {
+    setLikeCount(likesCount);
+  }, [likesCount]);
 
   const isAdmin = user?.roles.includes("Admin");
   const canEditOrDelete = isAdmin || user?.roles.includes("Librarian");
@@ -92,16 +96,9 @@ const BookCard: React.FC<BookCardProps> = ({
     }
   };
 
-
-
   const handleTagClick = (e: React.MouseEvent, tagId: number) => {
     e.stopPropagation();
     navigate(`/tags/${tagId}`);
-  };
-
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async (formData: FormData) => {
@@ -116,11 +113,6 @@ const BookCard: React.FC<BookCardProps> = ({
         isCloseBtn: true,
       });
     }
-  };
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setConfirmOpen(true);
   };
 
   const handleConfirmDelete = async () => {
@@ -369,6 +361,10 @@ const BookCard: React.FC<BookCardProps> = ({
         open={isRagIndexOpen}
         bookId={id}
         onClose={() => setIsRagIndexOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["books"] });
+          queryClient.invalidateQueries({ queryKey: ["books", id] });
+        }}
       />
 
       {isMarkdownEditorOpen && (
@@ -378,7 +374,7 @@ const BookCard: React.FC<BookCardProps> = ({
           onClose={() => setIsMarkdownEditorOpen(false)}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ["books"] });
-            queryClient.invalidateQueries({ queryKey: ["book", id.toString()] });
+            queryClient.invalidateQueries({ queryKey: ["books", id] });
           }}
           parsed={parsed}
         />

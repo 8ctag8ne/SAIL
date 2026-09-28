@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getAuthorById } from "../api/AuthorApi";
-import { Author } from "../types";
-import { useDeleteAuthor } from "../hooks/useAuthors";
+import { useAuthor, useDeleteAuthor } from "../hooks/useAuthors";
 import PageContainer from "../components/layout/PageContainer/PageContainer";
 import BooksPageComponent from "../components/books/BooksPageComponent/BooksPageComponent";
 import AuthorDetails from "../components/authors/AuthorDetails/AuthorDetails";
@@ -14,27 +12,9 @@ import ConfirmDialog from "../components/ui/ConfirmDialog";
 const AuthorDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [author, setAuthor] = useState<Author | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: author, isLoading: loading } = useAuthor(Number(id));
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { mutateAsync: deleteAuthorMutation } = useDeleteAuthor();
-
-  useEffect(() => {
-    const fetchAuthor = async () => {
-      try {
-        if (id) {
-          const authorData = await getAuthorById(Number(id));
-          setAuthor(authorData);
-        }
-      } catch (error) {
-        console.error("Failed to fetch author:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAuthor();
-  }, [id]);
 
   const handleDelete = async () => {
     try {
