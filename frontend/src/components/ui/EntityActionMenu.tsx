@@ -30,7 +30,7 @@ export interface EntityActionMenuProps {
 
 const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassName, sx }) => {
   const [open, setOpen] = useState(false);
-  const { activeTour, stepIndex, setStepIndex, setRun } = useTour();
+  const { activeTour, stepIndex, setStepIndex, stopTour } = useTour();
   const [clickedAction, setClickedAction] = useState(false);
 
   const wasOpenRef = React.useRef(false);
@@ -45,7 +45,7 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassN
         setStepIndex(1);
       }
       if (!open && wasOpenRef.current && stepIndex === 1 && !clickedAction) {
-        setRun(false);
+        stopTour();
         wasOpenRef.current = false;
       }
     } else if (activeTour === 'lib_rag_index') {
@@ -53,7 +53,7 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassN
         setStepIndex(2);
       }
       if (!open && wasOpenRef.current && stepIndex === 2 && !clickedAction) {
-        setRun(false);
+        stopTour();
         wasOpenRef.current = false;
       }
     } else if (activeTour === 'admin_users') {
@@ -64,11 +64,11 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassN
         setStepIndex(targetStep + 1);
       }
       if (!open && wasOpenRef.current && stepIndex === targetStep + 1 && !clickedAction) {
-        setRun(false);
+        stopTour();
         wasOpenRef.current = false;
       }
     }
-  }, [open, activeTour, stepIndex, setStepIndex, setRun, clickedAction]);
+  }, [open, activeTour, stepIndex, setStepIndex, stopTour, clickedAction]);
   const handleOpen = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -120,7 +120,7 @@ const EntityActionMenu: React.FC<EntityActionMenuProps> = ({ actions, menuClassN
             {actions.map((action, index) => {
               let className = undefined;
               if (action.label === 'Додати до списку') className = 'tour-add-to-list-option';
-              if (action.label === 'Згенерувати RAG-індекс (AI)') className = 'tour-index-option';
+              if (action.label.includes('RAG-індекс') || action.label.includes('індекс')) className = 'tour-index-option';
               if (action.label === 'Редагувати') className = 'tour-user-action-edit';
               
               return (

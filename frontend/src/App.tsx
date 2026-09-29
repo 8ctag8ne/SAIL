@@ -11,7 +11,6 @@ import AuthorListPage from "./pages/AuthorListPage";
 import TagListPage from "./pages/TagListPage";
 import TagDetailsPage from "./pages/TagDetailsPage";
 import UserProfilePage from "./pages/UserProfilePage";
-import { useSearchParams } from "react-router-dom";
 import BookListPage from "./pages/BookListPage";
 import UsersPage from "./pages/UsersPage";
 import RagSearchPage from "./pages/RagSearchPage";
@@ -57,60 +56,83 @@ const GlobalJoyride = () => {
             run={run}
             stepIndex={stepIndex}
             continuous
+            scrollToFirstStep={true}
             locale={{ back: 'Назад', close: 'Закрити', last: 'Завершити', next: 'Далі', skip: 'Пропустити' }}
             onEvent={(data: any) => {
                 const { action, index, status, type } = data;
 
-                if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-                    if (activeTour === "user_rag") {
+                if (
+                    status === STATUS.FINISHED ||
+                    status === STATUS.SKIPPED ||
+                    action === ACTIONS.CLOSE ||
+                    action === ACTIONS.RESET ||
+                    action === ACTIONS.SKIP ||
+                    type === EVENTS.TOUR_END
+                ) {
+                    if (activeTour === "user_rag" && status === STATUS.FINISHED) {
                         navigate("/help");
                     }
                     stopTour();
                     return;
                 }
 
-                if (type === EVENTS.STEP_AFTER) {
-                    const nextStepIndex = index + (action === ACTIONS.PREV ? -1 : 1);
+                if (type === EVENTS.TARGET_NOT_FOUND) {
+                    stopTour();
+                    return;
+                }
 
-                    if (activeTour === "guest_navigation") {
-                        if (index === 3 && action === ACTIONS.NEXT) {
-                            // Navigate to Author page
-                            const authorLink = document.querySelector('.tour-author-link') as HTMLElement;
-                            if (authorLink) {
-                                authorLink.click();
-                            } else {
-                                navigate("/authors/1");
+                if (type === EVENTS.STEP_AFTER) {
+                    if (action === ACTIONS.PREV) {
+                        const prevStepIndex = index - 1;
+                        if (activeTour === "guest_navigation") {
+                            if (index === 4) {
+                                navigate("/");
+                                setTimeout(() => setStepIndex(prevStepIndex), 400);
+                                return;
+                            } else if (index === 5) {
+                                navigate(-1);
+                                setTimeout(() => setStepIndex(prevStepIndex), 400);
+                                return;
                             }
-                            setTimeout(() => setStepIndex(nextStepIndex), 400);
-                        } else if (index === 4 && action === ACTIONS.PREV) {
-                            // Go back from Author page to Home page
-                            navigate("/");
-                            setTimeout(() => setStepIndex(nextStepIndex), 400);
-                        } else if (index === 4 && action === ACTIONS.NEXT) {
-                            // Navigate from Author page to Book page
-                            const bookCard = document.querySelector('.tour-book-card') as HTMLElement;
-                            if (bookCard) {
-                                bookCard.click();
-                            } else {
-                                navigate("/books/1");
+                        }
+                        setStepIndex(prevStepIndex);
+                        return;
+                    }
+
+                    if (action === ACTIONS.NEXT) {
+                        const nextStepIndex = index + 1;
+
+                        if (activeTour === "guest_navigation") {
+                            if (index === 3) {
+                                // Navigate to Author page
+                                const authorLink = document.querySelector('.tour-author-link') as HTMLElement;
+                                if (authorLink) {
+                                    authorLink.click();
+                                } else {
+                                    navigate("/authors/1");
+                                }
+                                setTimeout(() => setStepIndex(nextStepIndex), 400);
+                                return;
+                            } else if (index === 4) {
+                                // Navigate from Author page to Book page
+                                const bookCard = document.querySelector('.tour-book-card') as HTMLElement;
+                                if (bookCard) {
+                                    bookCard.click();
+                                } else {
+                                    navigate("/books/1");
+                                }
+                                setTimeout(() => setStepIndex(nextStepIndex), 400);
+                                return;
                             }
-                            setTimeout(() => setStepIndex(nextStepIndex), 400);
-                        } else if (index === 5 && action === ACTIONS.PREV) {
-                            // Go back from Book page to Author page
-                            navigate(-1);
-                            setTimeout(() => setStepIndex(nextStepIndex), 400);
-                        } else {
-                            setStepIndex(nextStepIndex);
+                        } else if (activeTour === "user_rag") {
+                            if (index === 0) {
+                                setRun(false);
+                                setStepIndex(1);
+                                navigate("/rag-search?q=Що робити при критичній кровотечі?");
+                                return;
+                            }
                         }
-                    } else if (activeTour === "user_rag") {
-                        if (index === 0 && action === ACTIONS.NEXT) {
-                            setRun(false);
-                            setStepIndex(1); // Set to next step, will resume in RagSearchPage
-                            navigate("/rag-search?q=Що робити при критичній кровотечі?");
-                        } else {
-                            setStepIndex(nextStepIndex);
-                        }
-                    } else {
+
                         setStepIndex(nextStepIndex);
                     }
                 }
@@ -123,6 +145,9 @@ const GlobalJoyride = () => {
                 textColor: '#e0e0e0',
                 showProgress: true,
                 disableFocusTrap: true,
+                scrollOffset: 120,
+                closeButtonAction: 'skip',
+                targetWaitTimeout: 5000,
                 buttons: ['back', 'close', 'primary', 'skip'],
                 zIndex: 10000,
             }}

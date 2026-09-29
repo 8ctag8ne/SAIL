@@ -11,7 +11,7 @@ const HelpPage = () => {
   const navigate = useNavigate();
 
   const handleStartTour = (tourName: string) => {
-    if (tourName === "guest_navigation" || tourName === "lib_rag_index") {
+    if (tourName === "guest_navigation" || tourName === "lib_rag_index" || tourName === "user_save_books") {
       navigate("/");
       setTimeout(() => startTour(tourName), 200);
     } else if (tourName === "user_rag") {

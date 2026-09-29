@@ -6,6 +6,8 @@ import {
   Box,
   Chip,
   Tooltip,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import BaseEntityDetails from "../../ui/BaseEntityDetails";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -61,6 +63,8 @@ const BookDetails: React.FC<BookDetailsProps> = ({
   const { id } = useParams(); // Отримуємо ID з URL
   const navigate = useNavigate();
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [showReadMore, setShowReadMore] = useState(false);
   const infoRef = React.useRef<HTMLDivElement>(null);
@@ -215,129 +219,134 @@ const BookDetails: React.FC<BookDetailsProps> = ({
         imagePlaceholderIcon={<MenuBookIcon sx={{ fontSize: 64, color: "#bdbdbd" }} />}
         leftColumnAppend={
           <Box sx={{ width: "100%", maxWidth: 250, mx: "auto" }}>
-            {/* DESKTOP (md+): Vertical stacked full-width buttons */}
-            <Box
-              sx={{
-                display: { xs: "none", md: "flex" },
-                flexDirection: "column",
-                gap: 1,
-                width: "100%",
-                mt: 0,
-              }}
-            >
-              {fileUrl && (
-                <>
-                  <Button
-                    className="tour-read-button"
-                    variant="outlined"
-                    color="primary"
-                    href={fileUrl}
-                    target="_blank"
-                    startIcon={<BookIcon />}
-                    sx={{
-                      width: "100%",
-                      py: 1,
-                      borderRadius: 0,
-                    }}
-                  >
-                    Читати
-                  </Button>
-
-                  <Button
-                    className="tour-download-button"
-                    variant="outlined"
-                    color="secondary"
-                    component="a"
-                    href={`${BASE_URL}/api/book/${id}/download`}
-                    download
-                    startIcon={<DownloadIcon />}
-                    sx={{
-                      width: "100%",
-                      py: 1,
-                      borderRadius: 0,
-                    }}
-                  >
-                    Завантажити
-                  </Button>
-                </>
-              )}
-
-              <Button
-                variant="outlined"
-                color={liked ? "primary" : "inherit"}
-                onClick={handleLikeClick}
-                startIcon={liked ? <ThumbUpIcon /> : <ThumbUpOffAltIcon />}
+            {isMobile ? (
+              /* MOBILE (xs, sm): Horizontal icon toolbar */
+              <Box
                 sx={{
+                  display: "flex",
+                  flexDirection: "row",
                   width: "100%",
-                  py: 1,
-                  borderRadius: 0,
-                  borderColor: liked ? "primary.main" : "divider",
-                  backgroundColor: liked ? "rgba(126, 211, 33, 0.08)" : "transparent",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  px: 0.5,
                 }}
               >
-                {liked ? `Вподобано (${likeCount})` : `Вподобати (${likeCount})`}
-              </Button>
-            </Box>
+                {/* Like Button (First on the left) */}
+                <IconButton
+                  onClick={handleLikeClick}
+                  color={liked ? "primary" : "default"}
+                  size="small"
+                  title={liked ? "Вподобано" : "Поставити лайк"}
+                >
+                  {liked ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOffAltIcon fontSize="small" />}
+                  <Typography sx={{ ml: 0.5, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
+                    {likeCount}
+                  </Typography>
+                </IconButton>
 
-            {/* MOBILE (xs, sm): Horizontal icon toolbar */}
-            <Box
-              sx={{
-                display: { xs: "flex", md: "none" },
-                flexDirection: "row",
-                width: "100%",
-                justifyContent: "space-between",
-                alignItems: "center",
-                px: 0.5,
-              }}
-            >
-              {/* Like Button (First on the left) */}
-              <IconButton
-                onClick={handleLikeClick}
-                color={liked ? "primary" : "default"}
-                size="small"
-                title={liked ? "Вподобано" : "Поставити лайк"}
+                {/* Read Button */}
+                <IconButton
+                  className="tour-read-button"
+                  component="a"
+                  href={fileUrl || "#"}
+                  target={fileUrl ? "_blank" : undefined}
+                  rel="noreferrer"
+                  disabled={!fileUrl}
+                  title="Читати онлайн"
+                  size="small"
+                  sx={{ pointerEvents: fileUrl ? "auto" : "none" }}
+                >
+                  <BookIcon fontSize="small" />
+                </IconButton>
+
+                {/* Download Button */}
+                <IconButton
+                  className="tour-download-button"
+                  component="a"
+                  href={fileUrl ? `${BASE_URL}/api/book/${id}/download` : "#"}
+                  download={!!fileUrl}
+                  disabled={!fileUrl}
+                  title="Завантажити файл"
+                  size="small"
+                  sx={{ pointerEvents: fileUrl ? "auto" : "none" }}
+                >
+                  <DownloadIcon fontSize="small" />
+                </IconButton>
+
+                {/* Action Menu (only on mobile) */}
+                {menuActions.length > 0 && (
+                  <Box sx={{ display: "inline-flex" }}>
+                    <EntityActionMenu actions={menuActions} />
+                  </Box>
+                )}
+              </Box>
+            ) : (
+              /* DESKTOP (md+): Vertical stacked full-width buttons */
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                  width: "100%",
+                  mt: 0,
+                }}
               >
-                {liked ? <ThumbUpIcon fontSize="small" /> : <ThumbUpOffAltIcon fontSize="small" />}
-                <Typography sx={{ ml: 0.5, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
-                  {likeCount}
-                </Typography>
-              </IconButton>
+                <Button
+                  className="tour-read-button"
+                  variant="outlined"
+                  color="primary"
+                  component="a"
+                  href={fileUrl || "#"}
+                  target={fileUrl ? "_blank" : undefined}
+                  rel="noreferrer"
+                  disabled={!fileUrl}
+                  startIcon={<BookIcon />}
+                  sx={{
+                    width: "100%",
+                    py: 1,
+                    borderRadius: 0,
+                    pointerEvents: fileUrl ? "auto" : "none",
+                  }}
+                >
+                  Читати
+                </Button>
 
-              {fileUrl && (
-                <>
-                  {/* Read Button */}
-                  <IconButton
-                    className="tour-read-button"
-                    component="a"
-                    href={fileUrl}
-                    target="_blank"
-                    title="Читати онлайн"
-                    size="small"
-                  >
-                    <BookIcon fontSize="small" />
-                  </IconButton>
+                <Button
+                  className="tour-download-button"
+                  variant="outlined"
+                  color="secondary"
+                  component="a"
+                  href={fileUrl ? `${BASE_URL}/api/book/${id}/download` : "#"}
+                  download={!!fileUrl}
+                  disabled={!fileUrl}
+                  startIcon={<DownloadIcon />}
+                  sx={{
+                    width: "100%",
+                    py: 1,
+                    borderRadius: 0,
+                    pointerEvents: fileUrl ? "auto" : "none",
+                  }}
+                >
+                  Завантажити
+                </Button>
 
-                  {/* Download Button */}
-                  <IconButton
-                    className="tour-download-button"
-                    component="a"
-                    href={`${BASE_URL}/api/book/${id}/download`}
-                    download
-                    title="Завантажити файл"
-                    size="small"
-                  >
-                    <DownloadIcon fontSize="small" />
-                  </IconButton>
-                </>
-              )}
-
-              {/* Action Menu (only on mobile) */}
-              {menuActions.length > 0 && (
-                <Box sx={{ display: "inline-flex" }}>
-                  <EntityActionMenu actions={menuActions} />
-                </Box>
-              )}
-            </Box>
+                <Button
+                  variant="outlined"
+                  color={liked ? "primary" : "inherit"}
+                  onClick={handleLikeClick}
+                  startIcon={liked ? <ThumbUpIcon /> : <ThumbUpOffAltIcon />}
+                  sx={{
+                    width: "100%",
+                    py: 1,
+                    borderRadius: 0,
+                    borderColor: liked ? "primary.main" : "divider",
+                    backgroundColor: liked ? "rgba(126, 211, 33, 0.08)" : "transparent",
+                  }}
+                >
+                  {liked ? `Вподобано (${likeCount})` : `Вподобати (${likeCount})`}
+                </Button>
+              </Box>
+            )}
 
             <AddBookToListsDialog
               open={addToListsOpen}

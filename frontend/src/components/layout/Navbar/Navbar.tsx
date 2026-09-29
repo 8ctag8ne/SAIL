@@ -495,7 +495,7 @@ const Navbar = () => {
           <Box
             component={Link}
             to="/"
-            className="tour-logo-desktop"
+            className="tour-logo"
             sx={{
               display: "flex",
               alignItems: "center",

@@ -25,7 +25,7 @@ type Props = {
 const RagSearchView = forwardRef<HTMLDivElement, Props>(({ ragResponse, thinkingText, answerText, onSearch, rewrittenQuery }, ref) => {
   const navigate = useNavigate();
   
-  const displayAnswer = answerText !== undefined ? answerText : ragResponse.answer;
+  const displayAnswer = answerText || ragResponse.answer;
 
   return (
     <Box

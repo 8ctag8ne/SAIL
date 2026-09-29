@@ -32,7 +32,7 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
       case "guest_navigation":
         tourSteps = [
           {
-            target: window.innerWidth >= 1200 ? ".tour-logo-desktop" : ".tour-logo-mobile",
+            target: ".tour-logo",
             content: "Вітаємо в MARS! Натисніть на логотип у будь-який час, щоб повернутися на головну сторінку бібліотеки.",
             placement: "bottom",
             skipBeacon: true,
@@ -60,12 +60,12 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
           {
             target: ".tour-read-button",
             content: "На сторінці книги скористайтеся цією кнопкою, щоб читати документ прямо в браузері.",
-            placement: "top",
+            placement: "auto",
           },
           {
             target: ".tour-download-button",
             content: "Або скористайтеся цією кнопкою, щоб завантажити документ для доступу офлайн.",
-            placement: "right",
+            placement: "auto",
           },
         ];
         break;
@@ -372,6 +372,8 @@ export const TourProvider = ({ children }: { children: ReactNode }) => {
   const stopTour = () => {
     setRun(false);
     setActiveTour(null);
+    setStepIndex(0);
+    setSteps([]);
   };
 
   return (

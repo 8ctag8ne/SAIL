@@ -280,6 +280,8 @@ const RagSearchPage: React.FC = () => {
 
     if (activeTour === "user_rag") {
       setRagResult(MOCK_RAG_RESPONSE);
+      setAnswerText(MOCK_RAG_RESPONSE.answer);
+      setThinkingText("");
       setLoading(false);
       setError(null);
     } else if (urlQuery.trim()) {

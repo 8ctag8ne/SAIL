@@ -5,13 +5,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import UniversalCreatableSelector from "../../ui/UniversalCreatableSelector";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { SimpleAuthor, SimpleTag } from "../../../types";
-import BASE_URL from "../../../config";
 import { renderPdfFirstPage } from "../../../api/FileApi";
 import { startMetadataExtraction, checkMetadataStatus } from "../../../api/AiApi";
 import { toast } from "react-fox-toast";
 import { useTags } from "../../../hooks/useTags";
 import { useAuthors } from "../../../hooks/useAuthors";
-import { useTour } from "../../../contexts/TourContext";
 
 type BookFormProps = {
   initialData?: {
@@ -47,20 +45,6 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
   );
   const [generatingCover, setGeneratingCover] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { run, activeTour, stepIndex, stopTour } = useTour();
-
-  useEffect(() => {
-    if (run && activeTour === "lib_create_book") {
-      // stepIndex 4 is .tour-ai-analyze
-      if (stepIndex === 4) {
-        if (!form.file || form.file.type !== "application/pdf") {
-          toast.info("Тур завершено, оскільки файл не було завантажено. Ви можете продовжувати самостійно.", { isCloseBtn: true });
-          stopTour();
-        }
-      }
-    }
-  }, [run, activeTour, stepIndex, form.file, stopTour]);
 
   const { data: tagsData, isLoading: tagsLoading } = useTags({ PageSize: 1000 });
   const allTags = tagsData?.items.map((t) => ({ id: t.id, title: t.title || "" })) || [];
@@ -451,18 +435,16 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
               {fileName && `Файл: ${fileName}`}
             </Typography>
 
-            {form.file && form.file.type === "application/pdf" && (
-              <Button
-                className="tour-ai-analyze"
-                variant="outlined"
-                fullWidth
-                type="button"
-                onClick={handleAnalyzeBook}
-                disabled={analyzing}
-              >
-                {analyzing ? <LoadingIndicator minHeight={20} /> : "Аналізувати книгу"}
-              </Button>
-            )}
+            <Button
+              className="tour-ai-analyze"
+              variant="outlined"
+              fullWidth
+              type="button"
+              onClick={handleAnalyzeBook}
+              disabled={analyzing || !form.file || form.file.type !== "application/pdf"}
+            >
+              {analyzing ? <LoadingIndicator minHeight={20} /> : "Аналізувати книгу"}
+            </Button>
           </Box>
           {/* Права частина: форма */}
           <Box sx={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>

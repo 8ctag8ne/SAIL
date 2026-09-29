@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, CardMedia, Box } from "@mui/material";
+import { Card, CardContent, CardMedia, Box, useTheme, useMediaQuery } from "@mui/material";
 
 export interface BaseEntityDetailsProps {
   imageUrl?: string | null;
@@ -30,6 +30,9 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
   actions,
   footer,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   return (
     <Card
       sx={{
@@ -40,16 +43,17 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
         width: "100%",
       }}
     >
-      {/* DESKTOP LAYOUT (md+) */}
-      <Box
-        sx={{
-          display: { xs: "none", md: "flex" },
-          flexDirection: "row",
-          gap: 3,
-          width: "100%",
-          alignItems: "flex-start",
-        }}
-      >
+      {!isMobile ? (
+        /* DESKTOP LAYOUT (md+) */
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 3,
+            width: "100%",
+            alignItems: "flex-start",
+          }}
+        >
         {/* Left Column on desktop */}
         <Box
           sx={{
@@ -149,11 +153,11 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
           )}
         </CardContent>
       </Box>
-
-      {/* MOBILE / TABLET LAYOUT (xs, sm) */}
+      ) : (
+      /* MOBILE / TABLET LAYOUT (xs, sm) */
       <Box
         sx={{
-          display: { xs: "flex", md: "none" },
+          display: "flex",
           flexDirection: "column",
           width: "100%",
         }}
@@ -252,6 +256,7 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
           </Box>
         )}
       </Box>
+      )}
     </Card>
   );
 };

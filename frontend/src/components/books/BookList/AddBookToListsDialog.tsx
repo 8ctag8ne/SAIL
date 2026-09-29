@@ -27,7 +27,7 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
   const [alreadyInLists, setAlreadyInLists] = useState<number[]>([]);
   const [refresh, setRefresh] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { activeTour, stepIndex, setStepIndex, setRun } = useTour();
+  const { activeTour, stepIndex, setStepIndex, stopTour } = useTour();
   const wasOpenRef = React.useRef(false);
 
   useEffect(() => {
@@ -39,11 +39,11 @@ const AddBookToListsDialog: React.FC<Props> = ({ open, onClose, bookId, onBookAd
       if (open && stepIndex === 1) {
         setStepIndex(2);
       } else if (!open && wasOpenRef.current && (stepIndex === 2 || stepIndex === 3 || stepIndex === 4)) {
-        setRun(false);
+        stopTour();
         wasOpenRef.current = false;
       }
     }
-  }, [open, activeTour, stepIndex, setStepIndex, setRun]);
+  }, [open, activeTour, stepIndex, setStepIndex, stopTour]);
 
   useEffect(() => {
     if (user?.id && open) {
