@@ -146,6 +146,7 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPdfRenderService, PdfService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IRagQuotaService, RagQuotaService>();
@@ -190,6 +191,22 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }
+        )
+    );
+
+    // 4. Feedback Submission Rate Limiter (3 requests per minute per Device ID)
+    options.AddPolicy("FeedbackRateLimiter", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Request.Headers["X-Device-Id"].FirstOrDefault()
+                ?? httpContext.Connection.RemoteIpAddress?.ToString() 
+                ?? httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault() 
+                ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }

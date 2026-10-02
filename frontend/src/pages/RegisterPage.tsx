@@ -17,8 +17,13 @@ export default function RegisterPage() {
       await register(form);
 
       // Логін після реєстрації
-      const response = await login({ id: form.id, userName: form.userName, password: form.password }); // API має повернути { token, username, roles }
-      doLogin(response.token, { id: form.id, username: response.userName, roles: response.roles });
+      const response = await login({ id: form.id, userName: form.userName, password: form.password }); // API має повернути { token, username, email, roles }
+      doLogin(response.token, {
+        id: response.id || form.id,
+        username: response.userName || form.userName,
+        email: response.email || form.email,
+        roles: response.roles,
+      });
 
       // Перенаправлення на головну сторінку
       navigate("/");

@@ -1,8 +1,11 @@
 import React from 'react';
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, Link as MuiLink } from '@mui/material';
 import PageContainer from '../components/layout/PageContainer/PageContainer';
+import { useFeedbackModal } from '../contexts/FeedbackContext';
 
 const PrivacyPolicy: React.FC = () => {
+    const { openFeedbackModal } = useFeedbackModal();
+
     return (
         <PageContainer>
             <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
@@ -45,7 +48,26 @@ const PrivacyPolicy: React.FC = () => {
                         4. Авторське право та співпраця
                     </Typography>
                     <Typography variant="body1">
-                        MARS поважає інтелектуальну власність. Якщо ви вважаєте, що матеріали, розміщені в системі, порушують ваші авторські права, або якщо ви бажаєте обговорити можливості співпраці, будь ласка, зв'яжіться з адміністратором за адресою: <strong>nazaryagotin@gmail.com</strong>.
+                        MARS поважає інтелектуальну власність. Якщо ви вважаєте, що матеріали, розміщені в системі, порушують ваші авторські права, або якщо ви бажаєте обговорити можливості співпраці, будь ласка, зв'яжіться з адміністратором через{' '}
+                        <MuiLink
+                            component="button"
+                            onClick={() => openFeedbackModal({ category: "Авторське право / Співпраця" })}
+                            sx={{
+                                color: 'primary.main',
+                                textDecoration: 'underline',
+                                fontSize: 'inherit',
+                                fontFamily: 'inherit',
+                                verticalAlign: 'baseline',
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: 'none',
+                                p: 0,
+                                fontWeight: 'bold',
+                            }}
+                        >
+                            форму зворотного зв'язку
+                        </MuiLink>{' '}
+                        або за адресою: <strong>mars.mil.lib@gmail.com</strong>.
                     </Typography>
                 </Box>
 
@@ -54,7 +76,26 @@ const PrivacyPolicy: React.FC = () => {
                         5. Права користувачів та контакти
                     </Typography>
                     <Typography variant="body1">
-                        Ви маєте право на доступ до своїх персональних даних, їх виправлення або видалення в будь-який час. Для цього, а також з будь-яких інших питань, звертайтеся до адміністратора за адресою: <strong>nazaryagotin@gmail.com</strong>.
+                        Ви маєте право на доступ до своїх персональних даних, їх виправлення або видалення в будь-який час. Для цього, а також з будь-яких інших питань, звертайтеся до адміністратора через{' '}
+                        <MuiLink
+                            component="button"
+                            onClick={() => openFeedbackModal()}
+                            sx={{
+                                color: 'primary.main',
+                                textDecoration: 'underline',
+                                fontSize: 'inherit',
+                                fontFamily: 'inherit',
+                                verticalAlign: 'baseline',
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: 'none',
+                                p: 0,
+                                fontWeight: 'bold',
+                            }}
+                        >
+                            форму зворотного зв'язку
+                        </MuiLink>{' '}
+                        або за адресою: <strong>mars.mil.lib@gmail.com</strong>.
                     </Typography>
                     <Typography variant="body1" sx={{ mt: 1 }}>
                         Обробка запитів на видалення або зміну даних займає не більше 7 робочих днів.

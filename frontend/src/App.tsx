@@ -19,6 +19,7 @@ import TermsOfUse from "./pages/TermsOfUse";
 import Footer from "./components/layout/Footer/Footer";
 import HelpPage from "./pages/HelpPage";
 import { TourProvider, useTour } from "./contexts/TourContext";
+import { FeedbackProvider } from "./contexts/FeedbackContext";
 import { Joyride, EVENTS, STATUS, ACTIONS } from "react-joyride";
 import { Box } from "@mui/material";
 import { ToastContainer } from "react-fox-toast";
@@ -167,42 +168,44 @@ function App() {
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                     <TourProvider>
-                        <ToastContainer position="top-center" />
-                        <BrowserRouter>
-                            <GlobalJoyride />
-                            <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                                <Navbar />
-                                <Box
-                                    component="main"
-                                    sx={{
-                                        pt: { xs: '64px', sm: '80px' }, // Адаптивний відступ під висоту навбару
-                                        flexGrow: 1,
-                                        px: { xs: 1, sm: 2, md: 3 }, // Адаптивні бокові відступи
-                                        pb: 4,
-                                    }}
-                                >
-                                    <Routes>
-                                        <Route path="/" element={<BookSearchPage />} />
-                                        <Route path="/books" element={<BookSearchPage />} />
-                                        <Route path="/login" element={<LoginPage />} />
-                                        <Route path="/register" element={<RegisterPage />} />
-                                        <Route path="/books/:id" element={<BookDetailsPage />} />
-                                        <Route path="/authors/:id" element={<AuthorDetailsPage />} />
-                                        <Route path="/authors" element={<AuthorListPage />} />
-                                        <Route path="/tags" element={<TagListPage />} />
-                                        <Route path="/tags/:id" element={<TagDetailsPage />} />
-                                        <Route path="/users" element={<UsersPage />} />
-                                        <Route path="/users/:id" element={<UserProfilePage />} />
-                                        <Route path="/booklists/:id" element={<BookListPage />} />
-                                        <Route path="/rag-search" element={<RagSearchPage />} />
-                                        <Route path="/privacy" element={<PrivacyPolicy />} />
-                                        <Route path="/terms" element={<TermsOfUse />} />
-                                        <Route path="/help" element={<HelpPage />} />
-                                    </Routes>
+                        <FeedbackProvider>
+                            <ToastContainer position="top-center" />
+                            <BrowserRouter>
+                                <GlobalJoyride />
+                                <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                                    <Navbar />
+                                    <Box
+                                        component="main"
+                                        sx={{
+                                            pt: { xs: '64px', sm: '80px' }, // Адаптивний відступ під висоту навбару
+                                            flexGrow: 1,
+                                            px: { xs: 1, sm: 2, md: 3 }, // Адаптивні бокові відступи
+                                            pb: 4,
+                                        }}
+                                    >
+                                        <Routes>
+                                            <Route path="/" element={<BookSearchPage />} />
+                                            <Route path="/books" element={<BookSearchPage />} />
+                                            <Route path="/login" element={<LoginPage />} />
+                                            <Route path="/register" element={<RegisterPage />} />
+                                            <Route path="/books/:id" element={<BookDetailsPage />} />
+                                            <Route path="/authors/:id" element={<AuthorDetailsPage />} />
+                                            <Route path="/authors" element={<AuthorListPage />} />
+                                            <Route path="/tags" element={<TagListPage />} />
+                                            <Route path="/tags/:id" element={<TagDetailsPage />} />
+                                            <Route path="/users" element={<UsersPage />} />
+                                            <Route path="/users/:id" element={<UserProfilePage />} />
+                                            <Route path="/booklists/:id" element={<BookListPage />} />
+                                            <Route path="/rag-search" element={<RagSearchPage />} />
+                                            <Route path="/privacy" element={<PrivacyPolicy />} />
+                                            <Route path="/terms" element={<TermsOfUse />} />
+                                            <Route path="/help" element={<HelpPage />} />
+                                        </Routes>
+                                    </Box>
+                                    <Footer />
                                 </Box>
-                                <Footer />
-                            </Box>
-                        </BrowserRouter>
+                            </BrowserRouter>
+                        </FeedbackProvider>
                     </TourProvider>
                 </AuthProvider>
             </QueryClientProvider>

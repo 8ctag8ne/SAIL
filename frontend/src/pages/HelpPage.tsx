@@ -2,11 +2,13 @@ import React from "react";
 import { Box, Typography, Button, Container, Divider } from "@mui/material";
 import { useTour } from "../contexts/TourContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useFeedbackModal } from "../contexts/FeedbackContext";
 import { useNavigate } from "react-router-dom";
 
 const HelpPage = () => {
   const { startTour } = useTour();
   const { user } = useAuth();
+  const { openFeedbackModal } = useFeedbackModal();
 
   const navigate = useNavigate();
 
@@ -91,6 +93,24 @@ const HelpPage = () => {
           </Box>
         </Box>
       )}
+
+      <Box sx={{ mt: 5 }}>
+        <Typography variant="h6" gutterBottom sx={{ color: "primary.main", fontFamily: "'JetBrains Mono', monospace" }}>
+          [ Зворотний зв'язок та пропозиції ]
+        </Typography>
+        <Divider sx={{ mb: 2, borderColor: "#2d2f33" }} />
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          Маєте ідеї щодо покращення системи, знайшли помилку або бажаєте запропонувати матеріали для бібліотеки? Напишіть нам.
+        </Typography>
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => openFeedbackModal()}
+          sx={{ borderRadius: 0 }}
+        >
+          Надіслати звернення
+        </Button>
+      </Box>
 
     </Container>
   );

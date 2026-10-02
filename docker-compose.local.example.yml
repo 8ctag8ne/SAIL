@@ -38,6 +38,11 @@ services:
       - Gemini__Publisher="google"
       - Gemini__JsonKeyPath=PATH
       - Gemini__Credentials_Base64=BASE_64_CREDS
+      - SMTP_HOST=SMTP_HOST
+      - SMTP_PORT=PORT
+      - SMTP_USER=EMAIL
+      - SMTP_PASS=PASSWORD
+      - FEEDBACK_RECIPIENT_EMAIL=EMAIL
     ports:
       - "8080:8080"
     depends_on:

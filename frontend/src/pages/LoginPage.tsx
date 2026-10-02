@@ -13,8 +13,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await login(form); // API має повернути { token, username, roles }
-      doLogin(response.token, { id: response.id, username: response.userName, roles: response.roles });
+      const response = await login(form); // API має повернути { token, username, email, roles }
+      doLogin(response.token, {
+        id: response.id,
+        username: response.userName,
+        email: response.email,
+        roles: response.roles,
+      });
       navigate("/");
     } catch (err: any) {
       showApiError(err, "Логін не вдався. Перевірте ім'я користувача та пароль.");
