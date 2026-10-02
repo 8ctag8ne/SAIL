@@ -87,28 +87,71 @@ Email: {feedbackDto.Email}
         message.Body = bodyBuilder.ToMessageBody();
 
         using var client = new SmtpClient();
-        try
-        {
-            client.CheckCertificateRevocation = false;
-            // Remove XOAUTH2 to force password-based SASL (PLAIN/LOGIN) for Gmail App Passwords
-            client.AuthenticationMechanisms.Remove("XOAUTH2");
+        client.Timeout = 10000; // 10s timeout to prevent cloud gateway hangs
+        client.CheckCertificateRevocation = false;
+        client.AuthenticationMechanisms.Remove("XOAUTH2");
 
-            _logger.LogInformation("Connecting to SMTP {Host}:{Port} as {User}...", smtpHost, smtpPort, smtpUser);
+        var portsToTry = new List<(int port, SecureSocketOptions socketOption)>();
 
-            var secureSocketOption = smtpPort == 465 
+        // 1. First attempt with configured port
+        portsToTry.Add((
+            smtpPort,
+            smtpPort == 465 
                 ? SecureSocketOptions.SslOnConnect 
-                : (smtpPort == 587 ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto);
+                : (smtpPort == 587 ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto)
+        ));
 
-            await client.ConnectAsync(smtpHost, smtpPort, secureSocketOption);
-            await client.AuthenticateAsync(smtpUser, smtpPass);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
-            _logger.LogInformation("Feedback email successfully sent from {SenderEmail} for {Name}", feedbackDto.Email, feedbackDto.Name);
-        }
-        catch (Exception ex)
+        // 2. Add fallback port (Cloud providers like Railway/AWS often block 587 and require 465 SSL, or vice versa)
+        if (smtpPort == 587)
         {
-            _logger.LogError(ex, "Failed to send feedback email from {Email}. Host={Host}, Port={Port}, User={User}", feedbackDto.Email, smtpHost, smtpPort, smtpUser);
-            throw new InvalidOperationException("Не вдалося надіслати повідомлення. Спробуйте пізніше або зверніться напряму.", ex);
+            portsToTry.Add((465, SecureSocketOptions.SslOnConnect));
+        }
+        else if (smtpPort == 465)
+        {
+            portsToTry.Add((587, SecureSocketOptions.StartTls));
+        }
+
+        Exception? lastException = null;
+        bool emailSent = false;
+
+        foreach (var (port, socketOption) in portsToTry)
+        {
+            try
+            {
+                _logger.LogInformation("Connecting to SMTP {Host}:{Port} ({Option}) as {User}...", smtpHost, port, socketOption, smtpUser);
+
+                if (!client.IsConnected)
+                {
+                    await client.ConnectAsync(smtpHost, port, socketOption);
+                }
+
+                if (!client.IsAuthenticated)
+                {
+                    await client.AuthenticateAsync(smtpUser, smtpPass);
+                }
+
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+                _logger.LogInformation("Feedback email successfully sent via {Host}:{Port} from {SenderEmail}", smtpHost, port, feedbackDto.Email);
+                emailSent = true;
+                break;
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                _logger.LogWarning(ex, "Failed attempt to connect/send via {Host}:{Port}. Trying next option if available...", smtpHost, port);
+
+                if (client.IsConnected)
+                {
+                    try { await client.DisconnectAsync(true); } catch { }
+                }
+            }
+        }
+
+        if (!emailSent)
+        {
+            _logger.LogError(lastException, "Failed to send feedback email after trying all available ports. Host={Host}, User={User}", smtpHost, smtpUser);
+            throw new InvalidOperationException("Не вдалося надіслати повідомлення. Спробуйте пізніше або зверніться напряму.", lastException);
         }
     }
 }

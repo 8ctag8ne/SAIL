@@ -107,7 +107,13 @@ export const theme = createTheme({
                     ...(ownerState.color === 'error' && {
                         borderColor: theme.palette.error.main,
                         color: theme.palette.error.main,
-                        '&:hover': {
+                        '@media (hover: hover)': {
+                            '&:hover': {
+                                backgroundColor: theme.palette.error.main,
+                                color: '#0d0f12',
+                            },
+                        },
+                        '&:active': {
                             backgroundColor: theme.palette.error.main,
                             color: '#0d0f12',
                         },
@@ -115,7 +121,13 @@ export const theme = createTheme({
                     ...(ownerState.color === 'primary' && {
                         borderColor: theme.palette.primary.main,
                         color: theme.palette.primary.main,
-                        '&:hover': {
+                        '@media (hover: hover)': {
+                            '&:hover': {
+                                backgroundColor: theme.palette.primary.main,
+                                color: '#0d0f12',
+                            },
+                        },
+                        '&:active': {
                             backgroundColor: theme.palette.primary.main,
                             color: '#0d0f12',
                         },
@@ -123,7 +135,13 @@ export const theme = createTheme({
                     ...(ownerState.color === 'secondary' && {
                         borderColor: theme.palette.secondary.main,
                         color: theme.palette.secondary.main,
-                        '&:hover': {
+                        '@media (hover: hover)': {
+                            '&:hover': {
+                                backgroundColor: theme.palette.secondary.main,
+                                color: '#0d0f12',
+                            },
+                        },
+                        '&:active': {
                             backgroundColor: theme.palette.secondary.main,
                             color: '#0d0f12',
                         },
@@ -204,10 +222,12 @@ export const theme = createTheme({
                     '&.MuiCard-interactive': {
                         transition: 'all 0.2s ease-in-out',
                         cursor: 'pointer',
-                        '&:hover': {
-                            borderColor: theme.palette.primary.main,
-                            backgroundColor: 'rgba(126, 211, 33, 0.04)',
-                            transform: 'translateY(-2px)',
+                        '@media (hover: hover)': {
+                            '&:hover': {
+                                borderColor: theme.palette.primary.main,
+                                backgroundColor: 'rgba(126, 211, 33, 0.04)',
+                                transform: 'translateY(-2px)',
+                            },
                         },
                     },
                 }),
