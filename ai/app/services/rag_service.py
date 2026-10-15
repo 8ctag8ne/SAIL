@@ -97,7 +97,7 @@ class RAGService:
         #     # Nothing matched — skip the LLM call entirely and use the raw query.
         #     return query, query
 
-        print("QueryProcessor matched glossary terms:\n%s", glossary_context)
+        print(f"QueryProcessor matched glossary terms:\n{glossary_context}")
 
         # Dense retrieval path — full LLM rewrite.
         rewritten_query = await self.llm_service.rewrite_query(query, glossary_context, uncensored=uncensored)

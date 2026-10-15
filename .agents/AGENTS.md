@@ -18,7 +18,7 @@ MARS — це відмовостійка інформаційно-пошуков
   - `sail-ai` (FastAPI AI microservice): Сервіс ШІ (порт 8000).
   - `sail-frontend` (Node 22 React PWA): Інтерфейс користувача (порт 3000).
 - **Хмарне розгортання:** Docker-контейнери, розгорнуті в хмарі через Railway. Використання PgBouncer connection pooler (`SUPABASE_SESSION_POOLER`).
-- **LLM / Embedding Провайдер:** OpenRouter API (моделі Qwen3-VL-32B-Instruct, Qwen3-Embedding-4B, Dolphin-Mistral-24B).
+- **LLM / Embedding Провайдер:** OpenRouter API (моделі Qwen3.8-27B, Qwen3-VL-8B-Instruct, Qwen3-Embedding-4B, Dolphin-Mistral-24B).
 
 ## Загальні правила середовища Antigravity IDE
 - Дотримуватися підходу vibe coding та чіткого розподілу відповідальності між мікросервісами.

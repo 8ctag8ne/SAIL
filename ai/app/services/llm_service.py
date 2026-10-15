@@ -20,6 +20,9 @@ class LLMService:
         self.embedding_model = os.getenv("EMBEDDING_MODEL", "qwen/qwen3-embedding-4b")
         self.summary_model = os.getenv("SUMMARY_MODEL", "qwen/qwen3-vl-8b-instruct")
         self.chat_model = os.getenv("CHAT_MODEL", "qwen/qwen3-vl-8b-instruct")
+        self.rag_model = os.getenv("RAG_MODEL", "qwen/qwen3.8-27b")
+        self.thinking_model = os.getenv("THINKING_MODEL", "qwen/qwen3.8-27b")
+        self.metadata_model = os.getenv("METADATA_MODEL", "qwen/qwen3.8-27b")
         
         # Обмежуємо кількість одночасних запитів до API
         self.semaphore = asyncio.Semaphore(5)
@@ -160,13 +163,14 @@ class LLMService:
             
             async with self.semaphore:
                 response = await self.client.chat.completions.create(
-                    model=self.chat_model,
+                    model=self.metadata_model,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_content}
                     ],
                     temperature=0.0,
-                    max_tokens=3000
+                    max_tokens=3000,
+                    extra_body={"reasoning": {"effort": "none"}}
                 )
             
             raw_content = response.choices[0].message.content.strip()
@@ -191,7 +195,7 @@ class LLMService:
         async with self.semaphore:
             try:
                 response = await self.client.chat.completions.create(
-                    model=self.chat_model,
+                    model=self.rag_model,
                     messages = [
                         {
                             "role": "system",
@@ -217,7 +221,8 @@ class LLMService:
                             "content": f"Контекст:\n{context}\n\nЗапит: {query}"
                         }
                     ],
-                    temperature=temperature
+                    temperature=temperature,
+                    extra_body={"reasoning": {"effort": "none"}}
                 )
                 
                 # Безпечна перевірка наявності відповіді
@@ -232,7 +237,7 @@ class LLMService:
                 return f"Виникла помилка при зверненні до ШІ: {str(e)}"
 
     async def generate_rag_answer_stream(self, query: str, context: str, temperature: float = 0.7, enable_thinking: bool = False, req = None):
-        model_name = "qwen/qwen3-vl-8b-thinking" if enable_thinking else "qwen/qwen3-vl-32b-instruct"
+        model_name = self.thinking_model if enable_thinking else self.rag_model
         async with self.semaphore:
             try:
                 response_stream = await self.client.chat.completions.create(
@@ -266,6 +271,7 @@ class LLMService:
                     stream=True,
                     frequency_penalty=0.5,
                     presence_penalty=0.7,
+                    extra_body={"reasoning": {"effort": "medium" if enable_thinking else "none"}}
                 )
                 
                 async for chunk in response_stream:
@@ -275,8 +281,9 @@ class LLMService:
                         
                     if chunk.choices:
                         delta = chunk.choices[0].delta
-                        if getattr(delta, "reasoning", None):
-                            yield f'data: {json.dumps({"type": "thinking", "text": delta.reasoning}, ensure_ascii=False)}\n\n'
+                        reasoning_chunk = getattr(delta, "reasoning", None) or getattr(delta, "reasoning_content", None)
+                        if reasoning_chunk and enable_thinking:
+                            yield f'data: {json.dumps({"type": "thinking", "text": reasoning_chunk}, ensure_ascii=False)}\n\n'
                         if getattr(delta, "content", None):
                             yield f'data: {json.dumps({"type": "answer", "text": delta.content}, ensure_ascii=False)}\n\n'
                         
@@ -356,7 +363,7 @@ class LLMService:
 
         # Перелік моделей залежно від параметра uncensored
         uncensored_model = getattr(self, "uncensored_model", "cognitivecomputations/dolphin-mistral-24b-venice-edition:free")
-        models_to_try = [uncensored_model, self.chat_model] if uncensored else [self.chat_model]
+        models_to_try = [uncensored_model, self.rag_model] if uncensored else [self.rag_model]
 
         for model_name in models_to_try:
             try:
@@ -369,6 +376,7 @@ class LLMService:
                         ],
                         temperature=0.0,
                         max_tokens=150,
+                        extra_body={"reasoning": {"effort": "none"}}
                     )
                 
                 rewritten = response.choices[0].message.content.strip()
