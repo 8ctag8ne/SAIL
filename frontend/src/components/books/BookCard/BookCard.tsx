@@ -383,9 +383,11 @@ const BookCard: React.FC<BookCardProps> = ({
       <EntityModal open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <BookForm
           initialData={{
+            id: id,
             title: title,
             info: info ?? "",
             imageUrl: fullImageUrl ?? undefined,
+            fileUrl: fileUrl,
             tags: tags,
             authors: authors,
           }}

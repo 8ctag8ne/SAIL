@@ -13,10 +13,40 @@ namespace MilLib.Controllers
     public class PdfController : ControllerBase
     {
         private readonly IPdfRenderService _pdfRenderService;
+        private readonly IBookService _bookService;
 
-        public PdfController(IPdfRenderService pdfRenderService, IAuthorService authorService, ITagService tagService)
+        public PdfController(IPdfRenderService pdfRenderService, IBookService bookService)
         {
             _pdfRenderService = pdfRenderService;
+            _bookService = bookService;
+        }
+
+        [HttpPost("render-book-cover/{bookId}")]
+        [Authorize(Roles = "Admin,Librarian")]
+        public async Task<IActionResult> RenderBookCover(int bookId)
+        {
+            try
+            {
+                var fileResponse = await _bookService.GetBookFileAsync(bookId);
+                using var ms = new MemoryStream();
+                await fileResponse.Content.CopyToAsync(ms);
+                var pdfBytes = ms.ToArray();
+
+                using var image = await _pdfRenderService.RenderPageAsync(pdfBytes, 0, 50);
+
+                using var outMs = new MemoryStream();
+                await image.SaveAsync(outMs, new WebpEncoder { Quality = 80 });
+
+                return File(outMs.ToArray(), "image/webp");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error processing PDF: {ex.Message}");
+            }
         }
 
         [HttpPost("render-first-page")]

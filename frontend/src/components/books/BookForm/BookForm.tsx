@@ -5,7 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import UniversalCreatableSelector from "../../ui/UniversalCreatableSelector";
 import LoadingIndicator from "../../../components/ui/LoadingIndicator";
 import { SimpleAuthor, SimpleTag } from "../../../types";
-import { renderPdfFirstPage } from "../../../api/FileApi";
+import { renderPdfFirstPage, renderBookCover } from "../../../api/FileApi";
 import { startMetadataExtraction, checkMetadataStatus } from "../../../api/AiApi";
 import { toast } from "react-fox-toast";
 import { useTags } from "../../../hooks/useTags";
@@ -13,6 +13,7 @@ import { useAuthors } from "../../../hooks/useAuthors";
 
 type BookFormProps = {
   initialData?: {
+    id?: number;
     title: string;
     info: string;
     imageUrl?: string;
@@ -84,7 +85,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
       setGeneratingCover(true);
       try {
         const blob = await renderPdfFirstPage(file);
-        const coverFile = new File([blob], "cover.png", { type: "image/png" });
+        const coverFile = new File([blob], "cover.webp", { type: "image/webp" });
         setForm((prev) => ({ ...prev, image: coverFile }));
         setImagePreview(URL.createObjectURL(blob));
       } catch (err) {
@@ -95,16 +96,29 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
   };
 
   const handleGenerateCover = async () => {
-    if (form.file && form.file.type === "application/pdf") {
-      setGeneratingCover(true);
-      try {
-        const blob = await renderPdfFirstPage(form.file);
-        const coverFile = new File([blob], "cover.webp", { type: "image/webp" });
-        setForm((prev) => ({ ...prev, image: coverFile }));
-        setImagePreview(URL.createObjectURL(blob));
-      } catch (err) {
-        // handle error
+    const hasPdfFile = form.file && form.file.type === "application/pdf";
+    const hasExistingPdf = Boolean(initialData?.id && initialData?.fileUrl);
+
+    if (!hasPdfFile && !hasExistingPdf) return;
+
+    setGeneratingCover(true);
+    try {
+      let blob: Blob;
+      if (hasPdfFile && form.file) {
+        blob = await renderPdfFirstPage(form.file);
+      } else if (initialData?.id) {
+        blob = await renderBookCover(initialData.id);
+      } else {
+        return;
       }
+
+      const coverFile = new File([blob], "cover.webp", { type: "image/webp" });
+      setForm((prev) => ({ ...prev, image: coverFile }));
+      setImagePreview(URL.createObjectURL(blob));
+    } catch (err) {
+      console.error("Помилка генерації обкладинки:", err);
+      toast.error("Не вдалося згенерувати обкладинку з PDF", { isCloseBtn: true });
+    } finally {
       setGeneratingCover(false);
     }
   };
@@ -393,7 +407,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
                 {form.image && form.image.name}
               </Typography>
 
-              {form.file && form.file.type === "application/pdf" && (
+              {((form.file && form.file.type === "application/pdf") || Boolean(initialData?.id && initialData?.fileUrl)) && (
                 <Button
                   className="tour-generate-cover"
                   variant="outlined"

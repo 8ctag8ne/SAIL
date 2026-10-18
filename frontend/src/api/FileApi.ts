@@ -1,11 +1,19 @@
 import { BookAnalysisResult, CheatSheet } from "../types";
 import instance from "./axios";
 
-// Рендер першої сторінки PDF (залишаємо як було)
+// Рендер першої сторінки PDF
 export const renderPdfFirstPage = async (file: File): Promise<Blob> => {
   const formData = new FormData();
   formData.append("File", file);
   const res = await instance.post("/Pdf/render-first-page", formData, {
+    responseType: "blob",
+  });
+  return res.data as Blob;
+};
+
+// Рендер обкладинки для вже збереженої книги
+export const renderBookCover = async (bookId: number): Promise<Blob> => {
+  const res = await instance.post(`/Pdf/render-book-cover/${bookId}`, null, {
     responseType: "blob",
   });
   return res.data as Blob;
