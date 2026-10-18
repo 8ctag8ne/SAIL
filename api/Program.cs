@@ -222,7 +222,17 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var path = ctx.Context.Request.Path.Value?.ToLowerInvariant() ?? "";
+        if (path.Contains("/images/") || path.EndsWith(".webp") || path.EndsWith(".jpg") || path.EndsWith(".jpeg") || path.EndsWith(".png"))
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=2592000, immutable");
+        }
+    }
+});
 app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthentication();

@@ -99,7 +99,7 @@ const BookForm: React.FC<BookFormProps> = ({ initialData, onSubmit, onClose }) =
       setGeneratingCover(true);
       try {
         const blob = await renderPdfFirstPage(form.file);
-        const coverFile = new File([blob], "cover.png", { type: "image/png" });
+        const coverFile = new File([blob], "cover.webp", { type: "image/webp" });
         setForm((prev) => ({ ...prev, image: coverFile }));
         setImagePreview(URL.createObjectURL(blob));
       } catch (err) {

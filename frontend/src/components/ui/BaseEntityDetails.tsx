@@ -67,6 +67,8 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
           {imageUrl ? (
             <CardMedia
               component="img"
+              loading="lazy"
+              decoding="async"
               sx={{
                 width: "100%",
                 height: imageHeight ?? "auto",
@@ -76,7 +78,7 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
                 border: "1px solid #2d2f33",
               }}
               image={imageUrl}
-              alt="Entity image"
+              alt={typeof title === "string" ? title : "Обкладинка"}
             />
           ) : (
             <Box
@@ -175,6 +177,8 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
           {imageUrl ? (
             <CardMedia
               component="img"
+              loading="lazy"
+              decoding="async"
               sx={{
                 width: "100%",
                 height: imageHeight ?? "auto",
@@ -184,7 +188,7 @@ const BaseEntityDetails: React.FC<BaseEntityDetailsProps> = ({
                 border: "1px solid #2d2f33",
               }}
               image={imageUrl}
-              alt="Entity image"
+              alt={typeof title === "string" ? title : "Обкладинка"}
             />
           ) : (
             <Box

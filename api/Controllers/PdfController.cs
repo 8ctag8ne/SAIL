@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MilLib.Models.DTOs.Pdf;
 using MilLib.Services.Interfaces;
-using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace MilLib.Controllers
 {
@@ -36,11 +36,11 @@ namespace MilLib.Controllers
                 // Рендеримо першу сторінку з DPI 50
                 using var image = await _pdfRenderService.RenderPageAsync(pdfBytes, 0, 50);
 
-                // Конвертуємо у PNG
+                // Конвертуємо у WebP (Quality = 80 значно зменшує розмір без втрати читабельності)
                 using var ms = new MemoryStream();
-                await image.SaveAsync(ms, new PngEncoder());
+                await image.SaveAsync(ms, new WebpEncoder { Quality = 80 });
 
-                return File(ms.ToArray(), "image/png");
+                return File(ms.ToArray(), "image/webp");
             }
             catch (ArgumentOutOfRangeException)
             {

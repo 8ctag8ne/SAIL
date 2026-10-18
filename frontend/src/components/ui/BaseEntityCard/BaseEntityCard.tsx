@@ -55,7 +55,9 @@ const BaseEntityCard: React.FC<BaseEntityCardProps> = ({
         <CardMedia
           component="img"
           image={imageUrl}
-          alt="Entity Image"
+          alt={typeof title === "string" ? title : "Обкладинка"}
+          loading="lazy"
+          decoding="async"
           sx={{
             width: { xs: 80, sm: 95, md: 140 },
             minWidth: { xs: 80, sm: 95, md: 140 },

@@ -52,6 +52,11 @@ namespace MilLib.Services.Implementations
                 CannedACL = isPrivate ? S3CannedACL.Private : S3CannedACL.PublicRead
             };
 
+            if (!isPrivate)
+            {
+                uploadRequest.Headers.CacheControl = "public, max-age=31536000, immutable";
+            }
+
             await transferUtility.UploadAsync(uploadRequest);
 
             return key; // Повертаємо ключ (шлях) для БД
