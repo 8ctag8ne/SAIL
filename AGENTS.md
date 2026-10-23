@@ -8,6 +8,10 @@ date (no SQL Server, Gemini or Tesseract any more); trust this file and the code
 Detailed per-part specs (Ukrainian, written for the Antigravity IDE) live in `.agents/`:
 [`.agents/AGENTS.md`](.agents/AGENTS.md) and `.agents/skills/mars-{backend,frontend,ai-microservice}/SKILL.md`.
 Read the matching one before larger changes to a part. Code comments and UI text are Ukrainian.
+`.claude/skills/mars-*` are relative symlinks to those skill folders, so Claude Code loads them too;
+edit the originals in `.agents/skills/`, and symlink any new skill there the same way (`git add -f`
+if `.claude/` is excluded locally). On Windows they check out as plain files unless `core.symlinks`
+is on.
 
 ## How the parts fit
 
