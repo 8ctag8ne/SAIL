@@ -50,8 +50,11 @@ description: Інструкції та специфікація для розр�
 - **Екстракція метаданих (`/convert/extract-metadata`):**
   - Промпт для Qwen3.8-27B з передачею обкладинки та тексту перших сторінок.
   - Повернення валідного JSON: `title`, `author`, `description` (українською, 200–500 символів), `tags` (3–5 тегів з пріоритетним збігом проти існуючих тегів у БД).
-- **Фонові завдання (`BackgroundTasks`):**
-  - Відстеження стану задач у пам'яті через `TASKS_DB` за допомогою унікальних `uuid.uuid4()`.
+- **Фонові завдання (`BackgroundTasks`) та черга (`TaskService`):**
+  - Відстеження та перзистентність стану задач у PostgreSQL таблиці `ai_tasks` за допомогою `TaskService` (`UUID` ідентифікатори).
+  - Підтримка паралельних воркерів через `SELECT ... FOR UPDATE SKIP LOCKED`.
+  - Детальний опис архітектури черги, життєвого циклу задач та правил очищення наведено в [references/task_queue_architecture.md](file:///Users/nazarii/Desktop/University/SAIL/.agents/skills/mars-ai-microservice/references/task_queue_architecture.md).
+  - **КРИТИЧНО (Управління схемою БД):** Спільна база даних PostgreSQL управляється виключно через EF Core міграції у бекенді `/api`. Будь-яка нова таблиця чи зміна схеми для AI-сервісу повинна синхронно додаватися в `api/Models/Entities/` та фіксуватися локальною міграцією через `dotnet ef migrations add` в `api/Migrations/`.
 
 ---
 

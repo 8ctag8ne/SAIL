@@ -11,7 +11,7 @@ description: Інструкції та специфікація для розр�
 - **Автентифікація & Безпека:** ASP.NET Core Identity, JWT Bearer Tokens (`Microsoft.AspNetCore.Authentication.JwtBearer`).
 - **Обробка документів & Медіа:** Docnet.Core (PDF rendering), SixLabors.ImageSharp / System.Drawing.Common.
 - **Об'єктне сховище & Інтеграції:** AWSSDK.S3 (BackBlaze B2 S3-сумісний API), `IHttpClientFactory` для зв'язку з AI мікросервісом.
-- **Автоматична ініціалізація:** Виконання EF Core міграцій БД (`db.Database.Migrate()`) та авто-посів ролей/адміністратора (`RoleHelper.SeedRolesAndAdmin`) під час старту застосунку.
+- **Автоматична ініціалізація & Управління схемою:** Виконання EF Core міграцій БД (`db.Database.Migrate()`) та авто-посів ролей/адміністратора (`RoleHelper.SeedRolesAndAdmin`) під час старту застосунку. EF Core є єдиним джерелом правди для всієї спільної бази PostgreSQL (включно з таблицями AI-мікросервісу: `document_chunks`, `book_markdowns`, `ai_tasks`). Детальний регламент створення та синхронізації міграцій наведено в [references/database_schema_and_migrations.md](file:///Users/nazarii/Desktop/University/SAIL/.agents/skills/mars-backend/references/database_schema_and_migrations.md).
 
 ---
 
