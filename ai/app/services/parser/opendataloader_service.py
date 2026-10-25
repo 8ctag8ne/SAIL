@@ -21,12 +21,28 @@ class OpenDataLoaderService(IDocumentParser):
                 f.write(file_bytes)
             
             def _convert_sync() -> List[Dict[str, Any]]:
-                # Based on the documentation, this batch processes the file and spawns a JVM
-                opendataloader_pdf.convert(
-                    input_path=[temp_pdf_path],
-                    output_dir=out_dir,
-                    format="json"
-                )
+                # Обмежуємо максимальне виділення пам'яті для JVM до 384MB та використовуємо легкий SerialGC
+                os.environ.setdefault("_JAVA_OPTIONS", "-Xms64m -Xmx384m -XX:+UseSerialGC")
+
+                # Запускаємо конвертацію з оптимізаціями (вимикаємо важкий експорт картинок на диск,
+                # вмикаємо кластерну детекцію таблиць та впорядкування XY-Cut++)
+                try:
+                    opendataloader_pdf.convert(
+                        input_path=[temp_pdf_path],
+                        output_dir=out_dir,
+                        format="json",
+                        image_output="off",
+                        table_method="cluster",
+                        reading_order="xycut",
+                        quiet=True
+                    )
+                except TypeError:
+                    # Фолбек для старіших версій обгортки, якщо якісь параметри не підтримуються
+                    opendataloader_pdf.convert(
+                        input_path=[temp_pdf_path],
+                        output_dir=out_dir,
+                        format="json"
+                    )
                 
                 # Check for the expected output file (document.json)
                 out_json_path = os.path.join(out_dir, "document.json")

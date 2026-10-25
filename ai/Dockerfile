@@ -1,14 +1,16 @@
 FROM python:3.11-slim
 WORKDIR /app
 
-# 1. Встановлюємо curl, а потім Node.js v20 (LiteParse вимагає Node 18+)
+# Встановлюємо Java JRE для OpenDataLoader
 RUN apt-get update \
-    && apt-get install -y curl \
+    && apt-get install -y --no-install-recommends default-jre curl \
     && apt-get clean \
-    && apt-get install -y default-jre \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Встановлюємо Python-залежності (в requirements.txt має бути liteparse)
+# Обмежуємо споживання RAM для JVM в контейнері
+ENV _JAVA_OPTIONS="-Xms64m -Xmx384m -XX:+UseSerialGC"
+
+# Встановлюємо Python-залежності
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

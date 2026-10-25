@@ -59,6 +59,7 @@ services:
       - DATABASE_URL_LOCAL=postgresql+asyncpg://postgres:password@db:5432/sail_db
       - OPENROUTER_API_KEY=your_key_here
       - UNSTRUCTURED_API_KEY=your_key_here
+      - _JAVA_OPTIONS=-Xms64m -Xmx384m -XX:+UseSerialGC
     ports:
       - "8000:8000"
     depends_on:

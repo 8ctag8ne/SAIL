@@ -203,24 +203,46 @@ class HeuristicService:
                 prev_is_md_table = prev_content.startswith("|") and "\n|" in prev_content
 
                 if prev_item.get("type") == "paragraph" and not prev_is_md_table:
-                    # Сценарій А: Попередній елемент - це відірваний маркер (напр. "1).", "-", "•")
-                    if re.match(r'^(\d+[\.\)]+|\w[\.\)]+|[•\-\*])$', prev_content):
+                    # Сценарій А: Попередній елемент - це відірваний маркер (напр. "1).", "-", "•", "–")
+                    if re.match(r'^(\d+[\.\)]+|\w[\.\)]+|[•\-\*–—])$', prev_content):
                         cleaned[-1]["content"] = prev_content + " " + content
                         continue
                         
-                    # Сценарій Б: Звичайне злиття, якщо попереднє речення не закінчено.
-                    # Не включаємо двокрапку (:), щоб такі речення як "Але є нюанси:" зливалися з наступними!
-                    if prev_content and not re.search(r'[.!?:]$', prev_content):
+                    # Сценарій Б: Звичайне злиття розірваного речення.
+                    # Захист: не зливаємо, якщо поточний блок є початком нового пункту списку
+                    is_current_list_item = bool(re.match(
+                        r'^(\d+[\.\)]+|[a-zA-Zа-яА-ЯіїєґІЇЄҐ][\.\)]+|[•\-\*–—])\s+',
+                        content
+                    ))
+
+                    # Захист: речення або пункт списку завершено (. ! ? : та ; для українських нормативів)
+                    is_prev_finished = bool(re.search(r'[.!?:]$', prev_content)) or prev_content.endswith(';')
+
+                    # Зливаємо тільки якщо попереднє речення не завершене і поточне не є новим пунктом
+                    if not is_current_list_item and not is_prev_finished:
                         cleaned[-1]["content"] = prev_content + " " + content
                         continue
                         
-            # Евристика 5: Злиття розірваних заголовків однакового рівня
+            # Евристика 5: Розумне злиття розірваних заголовків однакового рівня
             if item_type == "heading" and cleaned:
                 prev_item = cleaned[-1]
                 if prev_item.get("type") == "heading" and prev_item.get("heading level") == new_item.get("heading level"):
                     prev_content = str(prev_item.get("content", "")).strip()
-                    cleaned[-1]["content"] = prev_content + " " + content
-                    continue
+
+                    # Перевіряємо, чи це справді один заголовок, розбитий переносом рядка:
+                    # 1. Попередній заголовок не закінчився розділовим знаком
+                    prev_has_terminal = bool(re.search(r'[.!?:;]$', prev_content))
+
+                    # 2. Новий заголовок НЕ починається з номера або ключового слова нової структурної частини
+                    is_new_heading = bool(re.match(
+                        r'^((\d+|[IVXLCDM]+)[\.\)]+|[a-zA-Zа-яА-ЯіїєґІЇЄҐ][\.\)]+|(Розділ|Глава|Стаття|Частина|Параграф|Додаток|Тема|Заняття)\b)',
+                        content,
+                        re.IGNORECASE
+                    ))
+
+                    if not prev_has_terminal and not is_new_heading:
+                        cleaned[-1]["content"] = prev_content + " " + content
+                        continue
                         
             cleaned.append(new_item)
             
