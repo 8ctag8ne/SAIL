@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
     public DbSet<DocumentChunk> DocumentChunks { get; set; }
     public DbSet<BookMarkdown> BookMarkdowns { get; set; }
+    public DbSet<AITask> AITasks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -124,6 +125,19 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<DocumentChunk>().Property(x => x.Embedding).HasColumnType("vector(2560)");
         modelBuilder.Entity<Book>().Property(x => x.Embedding).HasColumnType("vector(2560)");
+
+        modelBuilder.Entity<AITask>(entity =>
+        {
+            entity.ToTable("ai_tasks");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasMaxLength(64);
+            entity.Property(e => e.TaskType).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Result).HasColumnType("jsonb");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()");
+            entity.HasIndex(e => new { e.Status, e.CreatedAt });
+        });
 
 
         List<IdentityRole> roles = new List<IdentityRole>

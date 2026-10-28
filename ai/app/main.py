@@ -14,6 +14,7 @@ from sqlalchemy.future import select
 from typing import Dict, List, Optional
 
 from app.db.database import get_db, AsyncSessionLocal
+import app.db.models
 from app.db.models import Book, Tag, Author
 from app.db.schemas import BookResponse, TagResponse, AuthorResponse, MetadataTaskResponse, DocumentChunkResponse
 from app.core.config import settings
@@ -25,14 +26,13 @@ from app.services.chunking_strategies.simple import SimpleChunkingStrategy
 from app.services.rag_service import ChunkingService, RAGService
 from fastapi.responses import StreamingResponse
 from app.services.query_service import QueryProcessor
+from app.services.task_service import TaskService
 
 app = FastAPI(title="AI Knowledge Service")
 
 @app.get("/")
 def root():
     return {"message": "Я не можу здійснювати розумову діяльність, бо в мене немає повноважень та відповідного наказу."}
-
-TASKS_DB: Dict[str, dict] = {}
 
 class TaskResponse(BaseModel):
     task_id: str
@@ -69,9 +69,9 @@ class QueryRewriteRequest(BaseModel):
     uncensored: bool = True
 
 async def background_conversion_task(task_id: str, file_bytes: bytes, filename: str):
-    """Обгортка для BackgroundTask, яка оновлює статус у словнику"""
+    """Обгортка для BackgroundTask, яка оновлює статус у PostgreSQL"""
     """Виконує повний цикл і записує результати та час"""
-    start_time = time.time() # Початок відліку
+    start_time = time.time()  # Початок відліку
     
     try:
         markdown = await process_document_combined(file_bytes=file_bytes, filename=filename)
@@ -79,29 +79,30 @@ async def background_conversion_task(task_id: str, file_bytes: bytes, filename: 
         # 3. Фіксуємо час
         execution_time = round(time.time() - start_time, 2)
         
-        # Оновлюємо базу тасок
-        TASKS_DB[task_id].update({
-            "status": "completed",
-            "markdown": markdown,
-            "execution_time_seconds": execution_time
-        })
+        # Оновлюємо базу тасок у PostgreSQL
+        await TaskService.update_task(
+            task_id=task_id,
+            status="completed",
+            result={"markdown": markdown, "execution_time_seconds": execution_time}
+        )
         
         print(f"Задача {task_id} завершена за {execution_time} секунд.")
         
     except Exception as e:
         execution_time = round(time.time() - start_time, 2)
-        TASKS_DB[task_id].update({
-            "status": "failed", 
-            "error": str(e),
-            "execution_time_seconds": execution_time
-        })
+        await TaskService.update_task(
+            task_id=task_id,
+            status="failed",
+            error=str(e),
+            result={"execution_time_seconds": execution_time}
+        )
 
 
 @app.post("/rag/convert-to-md/upload", response_model=TaskResponse, status_code=202)
 async def upload_pdf(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """Приймає файл, віддає ID задачі і запускає конвертацію у фоні"""
     task_id = str(uuid.uuid4())
-    TASKS_DB[task_id] = {"status": "processing"}
+    await TaskService.create_task(task_id=task_id, task_type="convert_to_md", status="processing")
     
     file_bytes = await file.read()
     
@@ -113,16 +114,17 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: UploadFile = File(
 @app.get("/rag/convert-to-md/status/{task_id}", response_model=TaskResponse)
 async def get_status(task_id: str):
     """Повертає поточний статус або готовий результат"""
-    if task_id not in TASKS_DB:
+    task = await TaskService.get_task(task_id)
+    if not task:
         raise HTTPException(status_code=404, detail="Task not found")
         
-    task_data = TASKS_DB[task_id]
+    result = task.result or {}
     return TaskResponse(
-        task_id=task_id,
-        status=task_data["status"],
-        markdown=task_data.get("markdown"),
-        execution_time_seconds=task_data.get("execution_time_seconds"),
-        error=task_data.get("error")
+        task_id=task.id,
+        status=task.status,
+        markdown=result.get("markdown"),
+        execution_time_seconds=result.get("execution_time_seconds"),
+        error=task.error
     )
 
 async def background_metadata_task(task_id: str, file_bytes: bytes, filename: str, existing_tags: List[str]):
@@ -143,24 +145,26 @@ async def background_metadata_task(task_id: str, file_bytes: bytes, filename: st
         # 4. Витягнути метадані через LLM
         metadata = await llm_service.extract_metadata(metadata_text, existing_tags, cover_base64)
         
-        # 5. Зберегти у TASKS_DB
-        TASKS_DB[task_id].update({
-            "status": "completed",
-            "metadata": metadata
-        })
+        # 5. Зберегти у PostgreSQL
+        await TaskService.update_task(
+            task_id=task_id,
+            status="completed",
+            result={"metadata": metadata}
+        )
         print(f"Metadata task {task_id} completed successfully.")
         
     except Exception as e:
         print(f"Metadata task {task_id} failed: {e}")
-        TASKS_DB[task_id].update({
-            "status": "failed",
-            "error": str(e)
-        })
+        await TaskService.update_task(
+            task_id=task_id,
+            status="failed",
+            error=str(e)
+        )
 
 @app.post("/convert/extract-metadata", response_model=MetadataTaskResponse, status_code=202)
 async def extract_metadata_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
     task_id = str(uuid.uuid4())
-    TASKS_DB[task_id] = {"status": "processing"}
+    await TaskService.create_task(task_id=task_id, task_type="extract_metadata", status="processing")
     
     file_bytes = await file.read()
     
@@ -175,15 +179,16 @@ async def extract_metadata_endpoint(background_tasks: BackgroundTasks, file: Upl
 
 @app.get("/convert/extract-metadata/status/{task_id}", response_model=MetadataTaskResponse)
 async def get_metadata_status(task_id: str):
-    if task_id not in TASKS_DB:
+    task = await TaskService.get_task(task_id)
+    if not task:
         raise HTTPException(status_code=404, detail="Task not found")
         
-    task_data = TASKS_DB[task_id]
+    result = task.result or {}
     return MetadataTaskResponse(
-        task_id=task_id,
-        status=task_data["status"],
-        metadata=task_data.get("metadata"),
-        error=task_data.get("error")
+        task_id=task.id,
+        status=task.status,
+        metadata=result.get("metadata"),
+        error=task.error
     )
 
 @app.get("/debug/db-tags")
@@ -231,25 +236,27 @@ async def background_chunking_task(task_id: str, book_id: int, markdown_text: st
                 await db.rollback()
                 raise db_err
             
-        TASKS_DB[task_id].update({"status": "completed"})
+        await TaskService.update_task(task_id=task_id, status="completed")
         print(f"Chunking task {task_id} completed successfully.")
     except Exception as e:
         print(f"Chunking task {task_id} failed: {e}")
-        TASKS_DB[task_id].update({
-            "status": "failed",
-            "error": str(e)
-        })
+        await TaskService.update_task(
+            task_id=task_id,
+            status="failed",
+            error=str(e)
+        )
 
 @app.post("/rag/process-book/{book_id}")
 async def process_book_for_rag(book_id: int, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     task_id = str(uuid.uuid4())
-    TASKS_DB[task_id] = {"status": "processing"}
+    await TaskService.create_task(task_id=task_id, task_type="process_book", book_id=book_id, status="processing")
     
     from app.db.models import BookMarkdown
     result = await db.execute(select(BookMarkdown).where(BookMarkdown.book_id == book_id))
     book_md = result.scalar_one_or_none()
     
     if not book_md or not book_md.content:
+        await TaskService.update_task(task_id=task_id, status="failed", error="Книга ще не має розпарсеного Markdown.")
         raise HTTPException(status_code=400, detail="Книга ще не має розпарсеного Markdown. Спершу запустіть аналіз тексту.")
         
     markdown_text = book_md.content
@@ -289,32 +296,35 @@ async def background_md_parser(task_id: str, book_id: int, file_bytes: bytes, sa
                     await db.rollback()
                     raise db_err
                 
-        TASKS_DB[task_id].update({
-            "status": "completed",
-            "markdown": markdown
-        })
+        await TaskService.update_task(
+            task_id=task_id,
+            status="completed",
+            result={"markdown": markdown}
+        )
         print(f"MD Parse task {task_id} completed successfully.")
     except Exception as e:
         print(f"MD Parse task {task_id} failed: {e}")
-        TASKS_DB[task_id].update({
-            "status": "failed",
-            "error": str(e)
-        })
+        await TaskService.update_task(
+            task_id=task_id,
+            status="failed",
+            error=str(e)
+        )
 
 @app.post("/rag/convert-to-md/book/{book_id}")
 async def process_book_for_md(book_id: int, background_tasks: BackgroundTasks, save_to_db: bool = False):
     task_id = str(uuid.uuid4())
-    TASKS_DB[task_id] = {"status": "processing"}
+    await TaskService.create_task(task_id=task_id, task_type="convert_book_md", book_id=book_id, status="processing")
     
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             file_response = await client.get(f"{settings.MAIN_API_URL}/api/Book/{book_id}/download")
             if file_response.status_code != 200:
+                await TaskService.update_task(task_id=task_id, status="failed", error=f"Failed to download book file: status {file_response.status_code}")
                 raise HTTPException(status_code=400, detail=f"Failed to download book file: status {file_response.status_code}")
                 
             file_bytes = file_response.content
     except httpx.RequestError as e:
-        TASKS_DB[task_id] = {"status": "failed", "error": f"Network error: {str(e)}"}
+        await TaskService.update_task(task_id=task_id, status="failed", error=f"Network error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error communicating with Main API: {str(e)}")
         
     background_tasks.add_task(background_md_parser, task_id, book_id, file_bytes, save_to_db)
@@ -322,14 +332,14 @@ async def process_book_for_md(book_id: int, background_tasks: BackgroundTasks, s
 
 @app.get("/rag/process-book/status/{task_id}", response_model=ProcessBookTaskResponse)
 async def get_process_book_status(task_id: str):
-    if task_id not in TASKS_DB:
+    task = await TaskService.get_task(task_id)
+    if not task:
         raise HTTPException(status_code=404, detail="Task not found")
         
-    task_data = TASKS_DB[task_id]
     return ProcessBookTaskResponse(
-        task_id=task_id,
-        status=task_data["status"],
-        error=task_data.get("error")
+        task_id=task.id,
+        status=task.status,
+        error=task.error
     )
 
 @app.post("/rag/ask")

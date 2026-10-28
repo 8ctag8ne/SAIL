@@ -1,9 +1,20 @@
-# db/models.py
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Boolean, DateTime, func
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from pgvector.sqlalchemy import Vector
 from app.db.database import Base
 import uuid
+
+class AITask(Base):
+    __tablename__ = "ai_tasks"
+    
+    id = Column(String(64), primary_key=True)
+    task_type = Column(String(50), nullable=False) # 'convert_to_md', 'extract_metadata', 'process_book', 'convert_book_md'
+    status = Column(String(20), nullable=False, default="processing") # 'pending', 'processing', 'completed', 'failed'
+    book_id = Column(Integer, nullable=True)
+    result = Column(JSONB, nullable=True)
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 class Book(Base):
     __tablename__ = "books" # Назва таблиці в PostgreSQL

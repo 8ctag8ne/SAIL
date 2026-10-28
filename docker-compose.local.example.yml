@@ -28,26 +28,23 @@ services:
       # ВАЖЛИВО: Host=db (назва сервісу в мережі Docker)
       - DB_CONNECTION_LOCAL=Host=db;Database=sail_db;Username=postgres;Password=password
       - AI_SERVICE_URL=http://ai-service:8000 # Посилання на Python сервіс
-      - AllowedOrigins=YOUR_ALLOWED_ORIGINS
+      - AllowedOrigins=http://localhost:3000
       - JWT__Issuer=YOUR_JWT_ISSUER
       - JWT__Audience=YOUR_JWT_AUDIENCE
       - JWT__SigningKey=YOUR_JWT_KEY
-      - Gemini__ProjectId=PROJECT_ID
-      - Gemini__Location=LOCATION
-      - Gemini__Model=MODEL
-      - Gemini__Publisher="google"
-      - Gemini__JsonKeyPath=PATH
-      - Gemini__Credentials_Base64=BASE_64_CREDS
       - SMTP_HOST=SMTP_HOST
       - SMTP_PORT=PORT
       - SMTP_USER=EMAIL
       - SMTP_PASS=PASSWORD
       - FEEDBACK_RECIPIENT_EMAIL=EMAIL
+      - RESEND_API_KEY=YOUR_RESEND_API_KEY
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./local_uploads:/app/wwwroot
 
   # 3. Твій НОВИЙ Python AI-сервіс
   ai-service:
@@ -56,11 +53,16 @@ services:
       dockerfile: Dockerfile
     container_name: sail-ai
     environment:
-      - DATABASE_URL_LOCAL=postgresql+asyncpg://postgres:password@db:5432/sail_db
+      - PORT=8000
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/sail_db
       - OPENROUTER_API_KEY=your_key_here
-      - UNSTRUCTURED_API_KEY=your_key_here
+      - OLLAMA_API_BASE=http://host.docker.internal:11434/v1
+      - MAIN_API_URL=http://api:8080
+      - _JAVA_OPTIONS=-Xms64m -Xmx384m -XX:+UseSerialGC
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
@@ -72,8 +74,10 @@ services:
     working_dir: /app
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     environment:
       - WDS_SOCKET_PORT=0
+      - REACT_APP_BASE_URL=http://localhost:8080
     ports:
       - "3000:3000"
     command: sh -c "npm install && npm start"
@@ -81,3 +85,4 @@ services:
       - api
 volumes:
   postgres_data:
+  local_uploads:
