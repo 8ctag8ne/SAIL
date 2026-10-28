@@ -11,37 +11,29 @@ namespace api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "ai_tasks",
-                columns: table => new
-                {
-                    id = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    task_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    book_id = table.Column<int>(type: "integer", nullable: true),
-                    result = table.Column<string>(type: "jsonb", nullable: true),
-                    error = table.Column<string>(type: "text", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_ai_tasks", x => x.id);
-                });
+            migrationBuilder.Sql(@"
+                CREATE TABLE IF NOT EXISTS ai_tasks (
+                    id character varying(64) NOT NULL,
+                    task_type character varying(50) NOT NULL,
+                    status character varying(20) NOT NULL,
+                    book_id integer NULL,
+                    result jsonb NULL,
+                    error text NULL,
+                    created_at timestamp with time zone NOT NULL DEFAULT now(),
+                    updated_at timestamp with time zone NOT NULL DEFAULT now(),
+                    CONSTRAINT pk_ai_tasks PRIMARY KEY (id)
+                );
 
-            migrationBuilder.CreateIndex(
-                name: "ix_ai_tasks_status_created_at",
-                table: "ai_tasks",
-                columns: new[] { "status", "created_at" });
+                CREATE INDEX IF NOT EXISTS ix_ai_tasks_status_created_at ON ai_tasks (status, created_at);
 
-            migrationBuilder.Sql("ALTER TABLE IF EXISTS ai_tasks ENABLE ROW LEVEL SECURITY;");
+                ALTER TABLE IF EXISTS ai_tasks ENABLE ROW LEVEL SECURITY;
+            ");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ai_tasks");
+            migrationBuilder.Sql("DROP TABLE IF EXISTS ai_tasks;");
         }
     }
 }
