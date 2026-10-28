@@ -14,7 +14,7 @@
 ---
 
 ## 2. Автоматичне Застосування Міграцій
-Під час старту сервісу [Program.cs](file:///Users/nazarii/Desktop/University/SAIL/api/Program.cs) автоматично викликає:
+Під час старту сервісу [Program.cs](../../../../api/Program.cs) автоматично викликає:
 ```csharp
 using (var scope = app.Services.CreateScope())
 {
@@ -32,8 +32,8 @@ using (var scope = app.Services.CreateScope())
 ## 3. Процедура Додавання Нових Міграцій
 
 Якщо з'являється потреба змінити схему або додати таблицю:
-1. Створити або оновити сутність у папці `api/Models/Entities/` (наприклад, [AITask.cs](file:///Users/nazarii/Desktop/University/SAIL/api/Models/Entities/AITask.cs)).
-2. Зареєструвати `DbSet<T>` у [ApplicationDbContext.cs](file:///Users/nazarii/Desktop/University/SAIL/api/Data/ApplicationDbContext.cs) та налаштувати поля / індекси в `OnModelCreating`.
+1. Створити або оновити сутність у папці `api/Models/Entities/` (наприклад, [AITask.cs](../../../../api/Models/Entities/AITask.cs)).
+2. Зареєструвати `DbSet<T>` у [ApplicationDbContext.cs](../../../../api/Data/ApplicationDbContext.cs) та налаштувати поля / індекси в `OnModelCreating`.
 3. Виконати команду генерації міграції:
    ```bash
    cd api
@@ -41,7 +41,7 @@ using (var scope = app.Services.CreateScope())
    ```
 4. У разі потреби додати RLS-політику у згенеровану міграцію (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`).
 5. Перевірити збірку: `dotnet build api/api.csproj`.
-6. Якщо таблиця використовується в Python AI-сервісі — створити або оновити відповідну модель SQLAlchemy у [ai/app/db/models.py](file:///Users/nazarii/Desktop/University/SAIL/ai/app/db/models.py).
+6. Якщо таблиця використовується в Python AI-сервісі — створити або оновити відповідну модель SQLAlchemy у [models.py](../../../../ai/app/db/models.py).
 
 ---
 

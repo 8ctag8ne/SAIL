@@ -53,7 +53,7 @@ description: Інструкції та специфікація для розр�
 - **Фонові завдання (`BackgroundTasks`) та черга (`TaskService`):**
   - Відстеження та перзистентність стану задач у PostgreSQL таблиці `ai_tasks` за допомогою `TaskService` (`UUID` ідентифікатори).
   - Підтримка паралельних воркерів через `SELECT ... FOR UPDATE SKIP LOCKED`.
-  - Детальний опис архітектури черги, життєвого циклу задач та правил очищення наведено в [references/task_queue_architecture.md](file:///Users/nazarii/Desktop/University/SAIL/.agents/skills/mars-ai-microservice/references/task_queue_architecture.md).
+  - Детальний опис архітектури черги, життєвого циклу задач та правил очищення наведено в [references/task_queue_architecture.md](references/task_queue_architecture.md).
   - **КРИТИЧНО (Управління схемою БД):** Спільна база даних PostgreSQL управляється виключно через EF Core міграції у бекенді `/api`. Будь-яка нова таблиця чи зміна схеми для AI-сервісу повинна синхронно додаватися в `api/Models/Entities/` та фіксуватися локальною міграцією через `dotnet ef migrations add` в `api/Migrations/`.
 
 ---

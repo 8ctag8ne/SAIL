@@ -14,8 +14,8 @@
 ## 2. Структура Таблиці `ai_tasks`
 
 Таблиця визначена синхронно у двох сервісах:
-- **C# (.NET API):** [AITask.cs](file:///Users/nazarii/Desktop/University/SAIL/api/Models/Entities/AITask.cs) та [ApplicationDbContext.cs](file:///Users/nazarii/Desktop/University/SAIL/api/Data/ApplicationDbContext.cs)
-- **Python (FastAPI):** [models.py](file:///Users/nazarii/Desktop/University/SAIL/ai/app/db/models.py) (`AITask`)
+- **C# (.NET API):** [AITask.cs](../../../../api/Models/Entities/AITask.cs) та [ApplicationDbContext.cs](../../../../api/Data/ApplicationDbContext.cs)
+- **Python (FastAPI):** [models.py](../../../../ai/app/db/models.py) (`AITask`)
 
 ```sql
 CREATE TABLE IF NOT EXISTS ai_tasks (
@@ -38,7 +38,7 @@ ALTER TABLE IF EXISTS ai_tasks ENABLE ROW LEVEL SECURITY;
 
 ---
 
-## 3. Сервісний Рівень: `TaskService` ([task_service.py](file:///Users/nazarii/Desktop/University/SAIL/ai/app/services/task_service.py))
+## 3. Сервісний Рівень: `TaskService` ([task_service.py](../../../../ai/app/services/task_service.py))
 
 `TaskService` інкапсулює всі операції над чергою задач:
 
