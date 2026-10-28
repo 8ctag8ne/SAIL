@@ -1,0 +1,8 @@
+bin/
+obj/
+.env
+.env.*
+.git
+.gitignore
+.DS_Store
+local_uploads/

@@ -13,6 +13,7 @@ class HeuristicService:
           - видалення зайвих пробілів і переносів рядків
         """
         combined = self._extract_text_from_node(cell)
+        combined = combined.replace('\x00', 'ї')
 
         # Нормалізуємо маркований список: '• А;• Б;' → 'А; Б'
         if "•" in combined:

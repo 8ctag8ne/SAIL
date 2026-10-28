@@ -7,14 +7,13 @@ import httpx
 import pymupdf
 import base64
 
-from contextlib import asynccontextmanager
 from fastapi import BackgroundTasks, FastAPI, Depends, File, HTTPException, UploadFile, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import Dict, List, Optional
 
-from app.db.database import get_db, AsyncSessionLocal, engine, Base
+from app.db.database import get_db, AsyncSessionLocal
 import app.db.models
 from app.db.models import Book, Tag, Author
 from app.db.schemas import BookResponse, TagResponse, AuthorResponse, MetadataTaskResponse, DocumentChunkResponse
@@ -29,18 +28,7 @@ from fastapi.responses import StreamingResponse
 from app.services.query_service import QueryProcessor
 from app.services.task_service import TaskService
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Автоматично створюємо таблиці (зокрема ai_tasks), якщо вони ще не існують
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        print("База даних: таблиці перевірено / створено успішно.")
-    except Exception as e:
-        print(f"Попередження під час ініціалізації таблиць БД: {e}")
-    yield
-
-app = FastAPI(title="AI Knowledge Service", lifespan=lifespan)
+app = FastAPI(title="AI Knowledge Service")
 
 @app.get("/")
 def root():

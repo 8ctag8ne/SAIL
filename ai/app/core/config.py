@@ -1,6 +1,7 @@
 # core/config.py
 from __future__ import annotations
 from typing import Optional
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -10,6 +11,14 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: Optional[str] = None
     OLLAMA_API_BASE: Optional[str] = None  
     MAIN_API_URL: str = "http://localhost:8080"
+    
+    @field_validator("MAIN_API_URL", mode="after")
+    @classmethod
+    def normalize_main_api_url(cls, v: str) -> str:
+        v = v.strip().rstrip("/")
+        if not v.startswith("http://") and not v.startswith("https://"):
+            return f"http://{v}"
+        return v
     
     @property
     def is_development(self) -> bool:
